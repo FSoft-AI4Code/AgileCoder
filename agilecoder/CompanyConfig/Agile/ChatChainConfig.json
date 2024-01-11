@@ -1,0 +1,257 @@
+{
+  "chain": [
+    {
+      "phase": "DemandAnalysis",
+      "phaseType": "SimplePhase",
+      "max_turn_step": -1,
+      "need_reflect": "True"
+    },
+    {
+      "phase": "LanguageChoose",
+      "phaseType": "SimplePhase",
+      "max_turn_step": -1,
+      "need_reflect": "True"
+    },
+    {
+      "phase": "ProductBacklogCreating",
+      "phaseType": "SimplePhase",
+      "max_turn_step": 1,
+      "need_reflect": "False"
+    },
+    {
+      "phase": "ProductBacklogUpdate",
+      "phaseType": "ComposedPhase",
+      "cycleNum": 2,
+      "Composition": [
+        {
+          "phase": "ProductBacklogReview",
+          "phaseType": "SimplePhase",
+          "max_turn_step": 1,
+          "need_reflect": "False"
+        },
+        {
+          "phase": "ProductBacklogModification",
+          "phaseType": "SimplePhase",
+          "max_turn_step": 1,
+          "need_reflect": "False"
+        }
+      ]
+    },
+    {
+      "phase": "SprintCompletion",
+      "phaseType": "ComposedPhase",
+      "cycleNum": 1,
+      "Composition": [
+        {
+          "phase": "SprintBacklogCreating",
+          "phaseType": "SimplePhase",
+          "max_turn_step": 1,
+          "need_reflect": "False"
+        },
+        {
+          "phase": "SprintBacklogUpdate",
+          "phaseType": "ComposedPhase",
+          "cycleNum": 1,
+          "Composition": [
+            {
+              "phase": "SprintBacklogReview",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
+            {
+              "phase": "SprintBacklogModification",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            }
+          ]
+        },
+        {
+          "phase": "CodeAndFormat",
+          "phaseType": "ComposedPhase",
+          "cycleNum": 1,
+          "Composition": [
+            {
+              "phase": "Coding",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
+            {
+              "phase": "CodeFormatting",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            }
+          ]
+        },
+        {
+          "phase": "CodeReview",
+          "phaseType": "ComposedPhase",
+          "cycleNum": 3,
+          "Composition": [
+            {
+              "phase": "CodeReviewComment",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
+            {
+              "phase": "CodeReviewModification",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            }
+          ]
+        },
+        {
+          "phase": "Test",
+          "phaseType": "ComposedPhase",
+          "cycleNum": 3,
+          "Composition": [
+            {
+              "phase": "TestErrorSummary",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
+            {
+              "phase": "TestModification",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            }
+          ]
+        },
+        {
+          "phase": "SprintReview",
+          "phaseType": "SimplePhase",
+          "max_turn_step": 1,
+          "need_reflect": "False"
+        }
+      ]
+    },
+    {
+      "phase": "SprintCompletion",
+      "phaseType": "ComposedPhase",
+      "cycleNum": 1,
+      "Composition": [
+        {
+          "phase": "NextSprintBacklogCreating",
+          "phaseType": "SimplePhase",
+          "max_turn_step": 1,
+          "need_reflect": "False"
+        },
+        {
+          "phase": "SprintBacklogUpdate",
+          "phaseType": "ComposedPhase",
+          "cycleNum": 1,
+          "Composition": [
+            {
+              "phase": "SprintBacklogReview",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
+            {
+              "phase": "SprintBacklogModification",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            }
+          ]
+        },
+        {
+          "phase": "CodeAndFormat",
+          "phaseType": "ComposedPhase",
+          "cycleNum": 1,
+          "Composition": [
+            {
+              "phase": "InheritCoding",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
+            {
+              "phase": "CodeFormatting",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            }
+          ]
+        },
+        {
+          "phase": "CodeReview",
+          "phaseType": "ComposedPhase",
+          "cycleNum": 3,
+          "Composition": [
+            {
+              "phase": "CodeReviewComment",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
+            {
+              "phase": "CodeReviewModification",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            }
+          ]
+        },
+        {
+          "phase": "Test",
+          "phaseType": "ComposedPhase",
+          "cycleNum": 5,
+          "Composition": [
+            {
+              "phase": "TestErrorSummary",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
+            {
+              "phase": "TestModification",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            }
+          ]
+        },
+        {
+          "phase": "SprintReview",
+          "phaseType": "SimplePhase",
+          "max_turn_step": 1,
+          "need_reflect": "False"
+        }
+      ]
+    },
+
+    {
+      "phase": "EnvironmentDoc",
+      "phaseType": "SimplePhase",
+      "max_turn_step": 1,
+      "need_reflect": "True"
+    },
+    {
+      "phase": "Manual",
+      "phaseType": "SimplePhase",
+      "max_turn_step": 1,
+      "need_reflect": "False"
+    }
+  ],
+  "recruitments": [
+    "Programmer",
+    "Code Reviewer",
+    "Software Test Engineer",
+    "User",
+    "Product Owner",
+    "Development Team"
+  ],
+  "clear_structure": "True",
+  "brainstorming": "False",
+  "gui_design": "True",
+  "git_management": "False",
+  "self_improve": "False"
+}
