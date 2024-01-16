@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(name='agilecoder',
-version='0.1',
-description='',
+version='0.1.1',
+description='AgileCoder',
 url='https://github.com/FSoft-AI4Code/AgileCoder',
 author='FSoft-AI4Code',
 author_email='support.aic@fpt.com',

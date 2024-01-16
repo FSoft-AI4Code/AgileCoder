@@ -824,18 +824,18 @@ class SprintBacklogModification(Phase):
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         sprint_goal = ''
+        list_of_sprint_backlog_items = []
         if len(self.seminar_conclusion) > 0 and 'Sprint Backlog:' in self.seminar_conclusion:
             coms = self.seminar_conclusion.split('Sprint Backlog:')
             sprint_goal = coms[0].split('Sprint Goals:')[1].strip()
             sprint_backlog_items = coms[1].strip().splitlines()
-            list_of_sprint_backlog_items = []
             for item in sprint_backlog_items:
                 if check_if_string_starts_with_number(item):
                     if '.' in item:
                         list_of_sprint_backlog_items.append(item.split('.')[1].strip())
                     else:
                         list_of_sprint_backlog_items.append(item.strip())
-                else: break
+                # else: break
         if 'all-sprints' not in chat_env.env_dict:
             chat_env.env_dict['all-sprints'] = []
         if 'all-sprint-goals' not in chat_env.env_dict:
