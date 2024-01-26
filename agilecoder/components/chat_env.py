@@ -32,7 +32,23 @@ class ChatEnvConfig:
         string += "ChatEnvConfig.brainstorming: {}\n".format(self.brainstorming)
         return string
 
+import ast
 
+def has_entry_point(code):
+    try:
+        tree = ast.parse(code)
+
+        # Check for if __name__ == "__main__": condition
+      
+        # Check for standalone code (no functions or classes)
+        for node in ast.iter_child_nodes(tree):
+            if not isinstance(node, (ast.Module, ast.FunctionDef, ast.ClassDef)):
+                return True
+
+        return False
+
+    except SyntaxError:
+        return False
 class ChatEnv:
     def __init__(self, chat_env_config: ChatEnvConfig):
         self.config = chat_env_config
@@ -58,8 +74,8 @@ class ChatEnv:
         if "ModuleNotFoundError" in test_reports:
             for match in re.finditer(r"No module named '(\S+)'", test_reports, re.DOTALL):
                 module = match.group(1)
-                subprocess.Popen("pip install {}".format(module), shell=True).wait()
-                log_and_print_online("**[CMD Execute]**\n\n[CMD] pip install {}".format(module))
+                subprocess.Popen("pip3 install {}".format(module), shell=True).wait()
+                log_and_print_online("**[CMD Execute]**\n\n[CMD] pip3 install {}".format(module))
                 return module
 
     def set_directory(self, directory):
@@ -109,17 +125,24 @@ class ChatEnv:
                                         stderr=subprocess.PIPE
                                         )
                 else:
+                    flag = False
                     for file in all_files:
                         if not file.endswith('.py'): continue
-                        command = "cd {}; ls -l; python3 ".format(directory) + file
-                        process = subprocess.Popen(command,
-                                        shell=True,
-                                        preexec_fn=os.setsid,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE
-                                        )
-                        if len(process.stderr.read().decode('utf-8')) > 0: break
-                
+                        with open(os.path.join(directory, file)) as f:
+                            code = f.read()
+                        if has_entry_point(code):
+                            command = "cd {}; ls -l; python3 ".format(directory) + file
+                            flag = True
+                            process = subprocess.Popen(command,
+                                            shell=True,
+                                            preexec_fn=os.setsid,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE
+                                            )
+                            break
+                        # if len(process.stderr.read().decode('utf-8')) > 0: break
+                    if not flag:
+                        return False, "Error: the software lacks the entry point to start"
             time.sleep(3)
             return_code = process.returncode
             # Check if the software is still running
@@ -159,7 +182,7 @@ class ChatEnv:
         self.roster._print_employees()
 
     def update_codes(self, generated_content):
-        self.codes._update_codes(generated_content)
+       return self.codes._update_codes(generated_content)
 
     def rewrite_codes(self) -> None:
         self.codes._rewrite_codes(self.config.git_management)

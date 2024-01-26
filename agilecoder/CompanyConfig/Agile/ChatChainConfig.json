@@ -21,7 +21,7 @@
     {
       "phase": "ProductBacklogUpdate",
       "phaseType": "ComposedPhase",
-      "cycleNum": 2,
+      "cycleNum": 1,
       "Composition": [
         {
           "phase": "ProductBacklogReview",

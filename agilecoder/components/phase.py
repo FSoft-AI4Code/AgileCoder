@@ -347,10 +347,10 @@ import re
 def check_if_string_starts_with_number(text):
     pattern = r"^\d"
     if re.search(pattern,  text):
-        return True
+        return 1
     elif text.strip().startswith('-'):
-        return True
-    return False
+        return 2
+    return 0
 
 class ProductBacklogCreating(Phase):
     def __init__(self, **kwargs):
@@ -375,6 +375,7 @@ class ProductBacklogCreating(Phase):
                         product_backlog.append(item)
                     else:
                         acceptance_criteria.append(item)
+                elif item.startswith('Acceptance Criteria'): break
                 # else: 
                 #     flag = False
             chat_env.env_dict['product-backlog'] = product_backlog
@@ -390,6 +391,7 @@ class ProductBacklogCreating(Phase):
                         product_backlog.append(item)
                     else:
                         acceptance_criteria.append(item)
+                elif item.startswith('Acceptance Criteria'): break
                 # else: 
                 #     flag = False
             chat_env.env_dict['product-backlog'] = product_backlog
@@ -418,8 +420,9 @@ class SprintBacklogCreating(Phase):
             sprint_goal = coms[0].split('Sprint Goals:')[1].strip()
             sprint_backlog_items = coms[1].strip().splitlines()
             for item in sprint_backlog_items:
-                if check_if_string_starts_with_number(item):
-                    if '.' in item:
+                flag = check_if_string_starts_with_number(item)
+                if flag > 0:
+                    if flag == 1 and '. ' in item:
                         list_of_sprint_backlog_items.append(item.split('.')[1].strip())
                     else:
                         list_of_sprint_backlog_items.append(item.strip())
@@ -432,6 +435,7 @@ class SprintBacklogCreating(Phase):
         chat_env.env_dict['all-sprint-goals'].append(sprint_goal)
         chat_env.env_dict['current-sprint-backlog'] = list_of_sprint_backlog_items
         chat_env.env_dict['current-sprint-goals'] = sprint_goal
+        chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
         current_tasks = []
         
         task_id = 1
@@ -461,6 +465,7 @@ class NextSprintBacklogCreating(Phase):
                                "ideas": chat_env.env_dict['ideas'],
                                'plain_product_backlog': plain_product_backlog,
                                'all_done_tasks': all_done_tasks,
+                               'num_sprints': chat_env.env_dict.get('num-sprints', 0),
                                'all_undone_tasks': all_undone_tasks})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
@@ -483,8 +488,9 @@ class NextSprintBacklogCreating(Phase):
             sprint_backlog_items = coms[1].strip().splitlines()
 
             for item in sprint_backlog_items:
-                if check_if_string_starts_with_number(item):
-                    if '.' in item:
+                flag = check_if_string_starts_with_number(item)
+                if flag > 0:
+                    if flag == 1 and '. ' in item:
                         list_of_sprint_backlog_items.append(item.split('.')[1].strip())
                     else:
                         list_of_sprint_backlog_items.append(item.strip())
@@ -498,7 +504,7 @@ class NextSprintBacklogCreating(Phase):
         chat_env.env_dict['current-sprint-backlog'] = list_of_sprint_backlog_items
         chat_env.env_dict['current-sprint-goals'] = sprint_goal
         current_tasks = []
-        
+        chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
         task_id = 1
         for task in list_of_sprint_backlog_items:
             if len(task.strip()) == 0: continue
@@ -580,8 +586,8 @@ class Coding(Phase):
                                "gui": gui})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        chat_env.update_codes(self.seminar_conclusion)
-        if hasattr(chat_env.codes, 'has_correct_format') and chat_env.codes.has_correct_format:
+        has_correct_format = chat_env.update_codes(self.seminar_conclusion)
+        if has_correct_format:
             chat_env.rewrite_codes()
             log_and_print_online("**[Software Info]**:\n\n {}".format(get_info(chat_env.env_dict['directory'],self.log_filepath)))
             self.phase_env.update({
@@ -602,7 +608,7 @@ class CodeFormatting(Phase):
         super().__init__(**kwargs)
 
     def update_phase_env(self, chat_env):
-        self.phase_env.update({"code": chat_env.env_dict['raw_code_conclusion']})
+        self.phase_env.update({"codes": chat_env.env_dict['raw_code_conclusion']})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         chat_env.update_codes(self.seminar_conclusion)
@@ -800,10 +806,26 @@ class ProductBacklogModification(Phase):
         print('ProductBacklogModification:', self.seminar_conclusion)
         if len(self.seminar_conclusion) > 0:
             lists_of_backlog_items = self.seminar_conclusion.splitlines()
-            chat_env.env_dict['product-backlog'] = list(filter(check_if_string_starts_with_number, lists_of_backlog_items))
+            lst = []
+            flag = False
+            for item in lists_of_backlog_items:
+                if check_if_string_starts_with_number(item):
+                    lst.append(item)
+                    flag = True
+                elif len(item.strip()) and flag: break
+                # else: break
+            chat_env.env_dict['product-backlog'] = lst#list(filter(check_if_string_starts_with_number, lists_of_backlog_items))
         elif 'product-backlog' not in chat_env.env_dict:
             lists_of_backlog_items = self.seminar_conclusion.splitlines()
-            chat_env.env_dict['product-backlog'] = list(filter(check_if_string_starts_with_number, lists_of_backlog_items))
+            # chat_env.env_dict['product-backlog'] = list(filter(check_if_string_starts_with_number, lists_of_backlog_items))
+            lst = []
+            flag = False
+            for item in lists_of_backlog_items:
+                if check_if_string_starts_with_number(item):
+                    lst.append(item)
+                    flag = True
+                elif len(item.strip()) and flag: break
+            chat_env.env_dict['product-backlog'] = lst
         print("chat_env.env_dict['product-backlog']", chat_env.env_dict['product-backlog'])
         return chat_env
 
@@ -830,8 +852,9 @@ class SprintBacklogModification(Phase):
             sprint_goal = coms[0].split('Sprint Goals:')[1].strip()
             sprint_backlog_items = coms[1].strip().splitlines()
             for item in sprint_backlog_items:
-                if check_if_string_starts_with_number(item):
-                    if '.' in item:
+                flag = check_if_string_starts_with_number(item)
+                if flag > 0:
+                    if flag == 1 and '. ' in item:
                         list_of_sprint_backlog_items.append(item.split('.')[1].strip())
                     else:
                         list_of_sprint_backlog_items.append(item.strip())
@@ -1018,7 +1041,7 @@ def extract_code_and_filename(file_content):
     for match in matches:
         language = match.group(1)
         code = match.group(2).strip()
-        code_sections.append((language, code))
+        code_sections.append((language, '```' + code + '\n```'))
     
     return code_sections
 class TestModification(Phase):
@@ -1094,6 +1117,7 @@ class TestModification(Phase):
         
         module = ''
         modules = ''
+        file_names = extract_file_names(test_reports)
         if 'ModuleNotFoundError' in test_reports:
             for match in re.finditer(r"No module named '(\S+)'", test_reports, re.DOTALL):
                 module = match.group(1)
@@ -1122,8 +1146,13 @@ class TestModification(Phase):
                 "There is a raised issue relevant to ModuleNotFoundError because you have not implemented the required module {missing_module}. To fix this error, you must take a great care to current source code to implement the module {missing_module} accurately.",
                 "Now, use the format exemplified above and modify the problematic codes based on the error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE where FILENAME is the file name, LANGUAGE is the programming language and CODE is the source code; incomplete \"TODO\" codes are strictly prohibited). If no bugs are reported, please return only one line like \"<INFO> Finished\"."
             ])
+        elif 'AttributeError' in test_reports:
+            error_line = test_reports.split('AttributeError')[1]
+            class_name = re.search(r"'(\w+)'", error_line).group(1)
+            for filename, code in chat_env.codes.codebooks.items():
+                if class_name.lower() in filename:
+                    file_names.append(filename)
 
-        file_names = extract_file_names(test_reports)
         if len(file_names) > 1:
             all_relevant_code = []
             code_sections = extract_code_and_filename(chat_env.get_codes())

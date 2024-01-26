@@ -256,7 +256,7 @@ class ChatChain:
 
         post_info += "Software Info: {}".format(
             get_info(self.chat_env.env_dict['directory'], self.log_filepath) + "\n\n🕑**duration**={:.2f}s\n\n".format(duration))
-
+        post_info += f'Number of sprints {self.chat_env.env_dict["num-sprints"]}\n\n'
         post_info += "AgileCoder Starts ({})".format(self.start_time) + "\n\n"
         post_info += "AgileCoder Ends ({})".format(now_time) + "\n\n"
 

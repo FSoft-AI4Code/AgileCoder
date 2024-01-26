@@ -43,8 +43,10 @@
       "Your answer must adhere to the following format:",
       "Product Backlog:",
       "PRODUCT_BACKLOG",
-      "where PRODUCT_BACKLOG is the product backlog for the user's task.",
-      "Importantly, you must consider the skills of the development team to write the feasible product backlog. Advanced features like sounds can not be implemented properly."
+      "Acceptance Criteria:",
+      "ACCEPTANCE_CRITERIA",
+      "where PRODUCT_BACKLOG is the product backlog for the user's task and ACCEPTANCE_CRITERIA is the corresponding acceptance criteria of the product backlog.",
+      "Importantly, you must consider the skills of the development team to write the feasible product backlog. Advanced features like AI and sounds can not be implemented properly."
     ]
   },
   "ProductBacklogReview": {
@@ -92,9 +94,9 @@
       "Sprint backlog:\n\"{current_programming_task}\"",
       "As the {assistant_role}, you should review and provide useful feedback about sprint goals and sprint backlog to make the software run flawlessly by obeying the regulations below",
       "1) considering the proficiency of the members, all the tasks are feasible and finished by at least one member,",
-      "2) the sprint backlog must not incorporate enhanced features like AI, animations and sound effects unless explicitly specified in the user's task,",
+      "2) the sprint backlog must not incorporate enhanced features like AI and sound effects unless explicitly specified in the user's task,",
       "3) all the items in sprint backlog are from the product backlog.",
-      "Now, you should check the above regulations one by one and review the sprint goals and sprint backlog in detail, propose one comment with the highest priority about them, and give me instructions on how to fix. Tell me your comment with the highest priority and corresponding suggestions on revision. If the sprint goals and sprint backlog are perfect and you have no comment on them, return only one line like \"<INFO> Finished\"."
+      "Now, you should check the above regulations one by one and review the sprint goals and sprint backlog in detail, propose one comment with the highest priority about them, and give me instructions on how to fix to ensure the sprint backlog aligns well with the regulations above. Tell me your comment with the highest priority and corresponding suggestions on revision. If the sprint goals and sprint backlog are perfect and you have no comment on them, return only one line like \"<INFO> Finished\"."
     ]
   },
   "SprintBacklogModification": {
@@ -111,7 +113,7 @@
       "Comments on sprint goals and sprint backlog:",
       "\"{sprint_backlog_comments}\"",
       "We have decided to complete the task through a executable software with multiple files implemented via {language}.",
-      "As the {assistant_role}, to satisfy the user's demand and make the software executive and robust, and ensure that the sprint goals and sprint backlog are feasible and can be accomplished, you should modify corresponding product backlog according to the comments. Then, output the full and complete product backlog with all based on the comments. Return the output strictly following the required format:",
+      "As the {assistant_role}, to satisfy the user's demand and make the software executive and robust, and ensure that the sprint goals and sprint backlog are feasible and can be accomplished, you should modify corresponding sprint backlog according to the comments. Then, output the full and complete sprint backlog with all based on the comments. Return the output strictly following the required format:",
       "Sprint Goals:",
       "SPRINT_GOALS",
       "Sprint Backlog:",
@@ -130,18 +132,18 @@
       "Product backlog:\n\"{plain_product_backlog}\"",
       "We have decided to complete the task through a executable software with multiple files implemented via {language}. As the {assistant_role}, to satisfy the user's demands, you must create the first sprint backlog and the goals of this sprint from the product backlog.",
       "Think step by step and reason yourself to the right decisions to make sure we get it right.",
-      "Your answer only has a single sprint backlog and strictly obeys the following format:",
+      "Your answer strictly obeys the following format:",
       "Sprint Goals:",
       "SPRINT_GOALS",
       "Sprint Backlog:",
       "BACKLOG_DETAILS",
       "where SPRINT_GOALS are the goals of the sprint, and BACKLOG_DETAILS is the sprint backlog whose items are from the product backlog.",
       "You must ensure that SPRINT_GOALS and BACKLOG_DETAILS must not be empty and BACKLOG_DETAILS aligns with SPRINT_GOALS.",
-      "As the Product Owner, you must adhere to the following regulations:",
+      "As the Product Owner, you must create the first sprint and adhere to the following regulations:",
       "1) considering the proficiency of the members, all the tasks are feasible and finished by at least one member,",
       "2) the sprint backlog must not include enhanced features like AI, animations and sound effects,",
-      "3) the sprint backlog chosen sets the stage for next sprints.",
-      "Note that the product backlog is divided into at least 2 sprints and each sprint should contain enough workload."
+      "3) importantly, the product backlog should be divided into at least 2 sprints and each sprint should contain enough workload,",
+      "4) the first sprint backlog sets the stage for next sprints."
     ]
   },
   "NextSprintBacklogCreating": {
@@ -265,6 +267,12 @@
       "where \"FILENAME\" is the lowercase file name including the file extension, \"LANGUAGE\" in the programming language, \"DOCSTRING\" is a string literal specified in source code that is used to document a specific segment of code, and \"CODE\" is the original code.",
       "Comments:",
       "The code above contains enough values for the required fields: \"FILENAME\", \"LANGUAGE\", \"DOCSTRING\" and  \"CODE\". However, they are not written to follow the format properly. You should rearrange them to satisfy the requirement.",
+      "Example:",
+      "a.py",
+      "```python",
+      "def a():",
+      "    pass",
+      "```",
       "As the {assistant_role}, to make the code satisfy the required format, you should modify corresponding codes according to the comments and then return all codes strictly following the required format.",
       "Please note that you are not allowed to write new code or change the values of any fields, meaning that the new code is only different from the original code in terms of the format."
     ]

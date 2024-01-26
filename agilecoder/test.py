@@ -3,13 +3,20 @@ import re
 
 from strsimpy.normalized_levenshtein import NormalizedLevenshtein
 import difflib
+def is_valid_syntax(code):
+    try:
+        ast.parse(code)
+        return True
+    except SyntaxError:
+        return False
 def extract_files(code_string):
     """Extracts code and names for each file from the given string."""
 
     files = {}
     current_file = None
     current_code = ""
-
+    flag = False
+    flag1 = False
     for line in code_string.splitlines():
     # Check for file header lines
         if line.startswith('FILENAME:'):
@@ -17,13 +24,19 @@ def extract_files(code_string):
                 files[current_file] = current_code
             current_file = line.split()[1].strip()
             current_code = ""
+            flag1 = True
         elif line.startswith('DOCSTRING') or line.startswith('CODE'): continue
-        elif line.startswith('```'): continue
+        elif line.startswith('```'): 
+            if flag:
+                flag1 = False
+            flag = not flag
+            # continue
         elif not line.startswith('LANGUAGE'):
-            current_code += line + "\n"
+            if flag1:
+                current_code += line + "\n"
 
   # Add the last file
-    if current_file:
+    if current_file and not flag:
         files[current_file] = current_code
 
     return files
@@ -45,40 +58,44 @@ class Codes:
             file_name = ""
             regex_extract = r"class (\S+?):\n"
             matches_extract = re.finditer(regex_extract, code, re.DOTALL)
+            count = 0
             for match_extract in matches_extract:
                 file_name = match_extract.group(1)
+                count += 1
+            if count > 1:
+                return None
             file_name = file_name.lower().split("(")[0] + ".py"
             return file_name
 
         if generated_content != "":
-            regex = r"(.+?\.\w+)\n```.*?\n(.*?)```"
+            regex = r"FILENAME\n```.*?\n(.*?)```"
             matches = re.finditer(regex, self.generated_content, re.DOTALL)
+            unmatched_codes = []
             flag = False
-            nonamed_codes = []
             for match in matches:
-                code = match.group(2)
+                print('dakjdsaghsdjkas')
                 flag = True
+                code = match.group(1)
                 if "CODE" in code:
                     continue
-                group1 = match.group(1)
-                filename = extract_filename_from_line(group1)
                 if "__main__" in code:
                     filename = "main.py"
-                if filename == "":  # post-processing
+                else:
                     filename = extract_filename_from_code(code)
-                # assert filename != ""
-                if filename == '.py':
-                    scores = []
-                    normalized_levenshtein = NormalizedLevenshtein()
-                    formatted_code = self._format_code(code)
-                    for filename, file_code in self.codebooks.items():
-                        scores.append((filename, formatted_code, normalized_levenshtein.similarity(formatted_code, file_code)))
-                    if len(scores) > 0:
-                        scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
-                        if scores[2] > 0.7:
-                            self.codebooks[scores[0]] = scores[1]
-                elif filename is not None and code is not None and len(filename) > 0 and len(code) > 0:
+                if filename is not None and code is not None and len(filename) > 0 and len(code) > 0:
                     self.codebooks[filename] = self._format_code(code)
+                else:
+                    unmatched_codes.append(self._format_code(code))
+            normalized_levenshtein = NormalizedLevenshtein()
+            for code in unmatched_codes:
+                scores = []
+                for filename, file_code in self.codebooks.items():
+                    scores.append((filename, code, normalized_levenshtein.similarity(code, file_code)))
+                if len(scores) > 0:
+                    scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
+                    if scores[2] > 0.7:
+                        self.codebooks[scores[0]] = scores[1]
+           
             
             if not flag:
                 regex = r"FILENAME: ([a-z_0-9]+\.\w+)\n```.*?\n(.*?)```"
@@ -91,58 +108,90 @@ class Codes:
                     if "CODE" in code:
                         continue
                     if filename is not None and code is not None and len(filename) > 0 and len(code) > 0:
-                        self.codebooks[filename] = self._format_code(code)
+                        if filename.endswith('.py'):
+                            if is_valid_syntax(code):
+                                self.codebooks[filename] = self._format_code(code)
+                        else:
+                            self.codebooks[filename] = self._format_code(code)
                     
             if not flag:
-                regex = r"FILENAME\n```.*?\n(.*?)```"
+                regex = r"(.+?\.\w+)\n```.*?\n(.*?)```"
                 matches = re.finditer(regex, self.generated_content, re.DOTALL)
-                unmatched_codes = []
                 for match in matches:
-                    flag = True
-                    code = match.group(1)
-                    print('code:', code)
-                    if "CODE" in code:
-                        continue
-                    filename = extract_filename_from_code(code)
-                    if filename is not None and code is not None and len(filename) > 0 and len(code) > 0:
-                        self.codebooks[filename] = self._format_code(code)
-                    else:
-                        unmatched_codes.append(self._format_code(code))
-                normalized_levenshtein = NormalizedLevenshtein()
-                for code in unmatched_codes:
-                    scores = []
-                    for filename, file_code in self.codebooks.items():
-                        scores.append((filename, code, normalized_levenshtein.similarity(code, file_code)))
-                    scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
-                    if scores[2] > 0.7:
-                        self.codebooks[scores[0]] = scores[1]
-            if not flag:
-                regex = r"## (\w+.py)\n\n```.*?\n(.*?)```"
-                matches = re.finditer(regex, self.generated_content, re.DOTALL)
-                unmatched_codes = []
-                for match in matches:
-                    flag = True
-                    filename = match.group(1)
+                    print('1111')
                     code = match.group(2)
-                    print('code:', code)
                     if "CODE" in code:
                         continue
-                    if filename is not None and code is not None and len(filename) > 0 and len(code) > 0:
-                        self.codebooks[filename] = self._format_code(code)
-                    else:
-                        unmatched_codes.append(self._format_code(code))
-                normalized_levenshtein = NormalizedLevenshtein()
-                for code in unmatched_codes:
-                    scores = []
-                    for filename, file_code in self.codebooks.items():
-                        scores.append((filename, code, normalized_levenshtein.similarity(code, file_code)))
-                    scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
-                    if scores[2] > 0.7:
-                        self.codebooks[scores[0]] = scores[1]
+                    flag = True
+                    group1 = match.group(1)
+                    print(group1)
+                    print('code', code, '122')
+                    filename = extract_filename_from_line(group1)
+                    old_filename = None
+                    if "__main__" in code or 'main.py' in code:
+                        new_filename = "main.py"
+                        if new_filename != filename:
+                            old_filename = filename
+                            filename = new_filename
+                    if filename == "":  # post-processing
+                        filename = extract_filename_from_code(code)
+                    # assert filename != ""
+                    if filename == '.py':
+                        scores = []
+                        normalized_levenshtein = NormalizedLevenshtein()
+                        formatted_code = self._format_code(code)
+                        for _filename, file_code in self.codebooks.items():
+                            scores.append((_filename, formatted_code, normalized_levenshtein.similarity(formatted_code, file_code)))
+                        if len(scores) > 0:
+                            scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
+                            if scores[2] > 0.7:
+                                self.codebooks[scores[0]] = scores[1]
+                    elif filename is not None and code is not None and len(filename) > 0 and len(code) > 0:
+                        if filename.endswith('.py'):
+                            if is_valid_syntax(code):
+                                self.codebooks[filename] = self._format_code(code)
+                                if old_filename is not None and old_filename in self.codebooks:
+                                    self.codebooks.pop(old_filename)
+                        else:
+                            self.codebooks[filename] = self._format_code(code)
+                # regex = r"FILENAME\n```.*?\n(.*?)```"
+                # matches = re.finditer(regex, self.generated_content, re.DOTALL)
+                # unmatched_codes = []
+                # for match in matches:
+                #     print('dakjdsaghsdjkas')
+                #     flag = True
+                #     code = match.group(1)
+                #     if "CODE" in code:
+                #         continue
+                #     if "__main__" in code:
+                #         filename = "main.py"
+                #     else:
+                #         filename = extract_filename_from_code(code)
+                #     if filename is not None and code is not None and len(filename) > 0 and len(code) > 0:
+                #         self.codebooks[filename] = self._format_code(code)
+                #     else:
+                #         unmatched_codes.append(self._format_code(code))
+                # normalized_levenshtein = NormalizedLevenshtein()
+                # for code in unmatched_codes:
+                #     scores = []
+                #     for filename, file_code in self.codebooks.items():
+                #         scores.append((filename, code, normalized_levenshtein.similarity(code, file_code)))
+                #     if len(scores) > 0:
+                #         scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
+                #         if scores[2] > 0.7:
+                #             self.codebooks[scores[0]] = scores[1]
             if not flag:
                 file_codes = extract_files(self.generated_content)
                 for filename, filecode in file_codes.items():
-                    self.codebooks[filename] = self._format_code(filecode)
+                    if filename.endswith('.py'):
+                        if is_valid_syntax(filecode):
+                            flag = True
+                            self.codebooks[filename] = self._format_code(filecode)
+                    else:
+                        flag = True
+                        self.codebooks[filename] = self._format_code(filecode)
+            self.has_correct_format = flag
+                
 
 
     def _format_code(self, code):
@@ -212,158 +261,209 @@ class Codes:
                     self.codebooks[filename] = self._format_code(code)
 
 s = """
-
-FILENAME: main.py
-LANGUAGE: Python
-DOCSTRING: This module contains the code for a basic calculator application that performs addition, subtraction, multiplication, and division of two numbers with input validation and error handling. Additionally, it implements a history feature that displays previous calculations, a feature to save and load the history from a file, a feature to copy the result to the clipboard, and a feature to change the color scheme of the calculator.
-CODE:
+main.py
 ```python
 '''
-This module contains the code for a basic calculator application that performs addition, subtraction, multiplication, and division of two numbers with input validation and error handling. Additionally, it implements a history feature that displays previous calculations, a feature to save and load the history from a file, a feature to copy the result to the clipboard, and a feature to change the color scheme of the calculator.
+This file contains the StartScreen class, which represents the start screen of the game.
 '''
-import tkinter as tk
-import tkinter.ttk as ttk
-import tkinter.messagebox as messagebox
-import tkinter.filedialog as filedialog
-import os
-import sys
-try:
-    import clipboard
-except ModuleNotFoundError:
-    messagebox.showerror("Error", "The clipboard module is not installed. Copy to clipboard feature will not work.")
-class Calculator:
-    def __init__(self, master):
-        self.master = master
-        self.master.title("Calculator")
-        self.master.resizable(False, False)
-        self.master.configure(bg="#FFFFFF")
-        # Create input fields for two numbers
-        self.num1_label = ttk.Label(self.master, text="Number 1:")
-        self.num1_label.grid(row=0, column=0, padx=5, pady=5, sticky="W")
-        self.num1_entry = ttk.Entry(self.master, width=20)
-        self.num1_entry.grid(row=0, column=1, padx=5, pady=5, sticky="W")
-        self.num2_label = ttk.Label(self.master, text="Number 2:")
-        self.num2_label.grid(row=1, column=0, padx=5, pady=5, sticky="W")
-        self.num2_entry = ttk.Entry(self.master, width=20)
-        self.num2_entry.grid(row=1, column=1, padx=5, pady=5, sticky="W")
-        # Create buttons for arithmetic operations
-        self.add_button = ttk.Button(self.master, text="+", command=self.add)
-        self.add_button.grid(row=2, column=0, padx=5, pady=5)
-        self.sub_button = ttk.Button(self.master, text="-", command=self.subtract)
-        self.sub_button.grid(row=2, column=1, padx=5, pady=5)
-        self.mul_button = ttk.Button(self.master, text="*", command=self.multiply)
-        self.mul_button.grid(row=3, column=0, padx=5, pady=5)
-        self.div_button = ttk.Button(self.master, text="/", command=self.divide)
-        self.div_button.grid(row=3, column=1, padx=5, pady=5)
-        # Create clear button
-        self.clear_button = ttk.Button(self.master, text="Clear", command=self.clear)
-        self.clear_button.grid(row=4, column=0, padx=5, pady=5)
-        # Create history button
-        self.history_button = ttk.Button(self.master, text="History", command=self.show_history)
-        self.history_button.grid(row=4, column=1, padx=5, pady=5)
-        # Create save button
-        self.save_button = ttk.Button(self.master, text="Save", command=self.save_history)
-        self.save_button.grid(row=5, column=0, padx=5, pady=5)
-        # Create load button
-        self.load_button = ttk.Button(self.master, text="Load", command=self.load_history)
-        self.load_button.grid(row=5, column=1, padx=5, pady=5)
-        # Create copy button
-        self.copy_button = ttk.Button(self.master, text="Copy", command=self.copy_result)
-        self.copy_button.grid(row=6, column=0, padx=5, pady=5)
-        # Create color scheme label
-        self.color_label = ttk.Label(self.master, text="Color Scheme:")
-        self.color_label.grid(row=6, column=1, padx=5, pady=5, sticky="E")
-        # Create color scheme combobox
-        self.color_combobox = ttk.Combobox(self.master, values=["Default", "Dark"], state="readonly")
-        self.color_combobox.current(0)
-        self.color_combobox.grid(row=6, column=2, padx=5, pady=5, sticky="W")
-        self.color_combobox.bind("<<ComboboxSelected>>", self.change_color_scheme)
-        # Initialize history list
-        self.history = []
-    def add(self):
-        try:
-            num1 = float(self.num1_entry.get())
-            num2 = float(self.num2_entry.get())
-            result = num1 + num2
-            self.display_result(result)
-            self.history.append(f"{num1} + {num2} = {result}")
-        except ValueError:
-            messagebox.showerror("Error", "Invalid input. Please enter valid numbers.")
-    def subtract(self):
-        try:
-            num1 = float(self.num1_entry.get())
-            num2 = float(self.num2_entry.get())
-            result = num1 - num2
-            self.display_result(result)
-            self.history.append(f"{num1} - {num2} = {result}")
-        except ValueError:
-            messagebox.showerror("Error", "Invalid input. Please enter valid numbers.")
-    def multiply(self):
-        try:
-            num1 = float(self.num1_entry.get())
-            num2 = float(self.num2_entry.get())
-            result = num1 * num2
-            self.display_result(result)
-            self.history.append(f"{num1} * {num2} = {result}")
-        except ValueError:
-            messagebox.showerror("Error", "Invalid input. Please enter valid numbers.")
-    def divide(self):
-        try:
-            num1 = float(self.num1_entry.get())
-            num2 = float(self.num2_entry.get())
-            if num2 == 0:
-                raise ZeroDivisionError
-            result = num1 / num2
-            self.display_result(result)
-            self.history.append(f"{num1} / {num2} = {result}")
-        except ValueError:
-            messagebox.showerror("Error", "Invalid input. Please enter valid numbers.")
-        except ZeroDivisionError:
-            messagebox.showerror("Error", "Division by zero is not allowed. Please enter a non-zero value for Number 2.")
-    def display_result(self, result):
-        messagebox.showinfo("Result", f"The result is {result}")
-        try:
-            clipboard.copy(result)
-        except NameError:
-            pass
-    def clear(self):
-        self.num1_entry.delete(0, tk.END)
-        self.num2_entry.delete(0, tk.END)
-    def show_history(self):
-        if not self.history:
-            messagebox.showinfo("History", "No history yet.")
-        else:
-            history_str = "\n".join(self.history)
-            messagebox.showinfo("History", history_str)
-    def save_history(self):
-        filename = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
-        if filename:
-            with open(filename, "w") as f:
-                f.write("\n".join(self.history))
-            messagebox.showinfo("Save", "History saved successfully.")
-    def load_history(self):
-        filename = filedialog.askopenfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
-        if filename:
-            with open(filename, "r") as f:
-                self.history = f.read().splitlines()
-            messagebox.showinfo("Load", "History loaded successfully.")
-    def copy_result(self):
-        result = clipboard.paste()
-        if result:
-            self.master.clipboard_clear()
-            self.master.clipboard_append(result)
-            messagebox.showinfo("Copy", "Result copied to clipboard.")
-    def change_color_scheme(self, event):
-        if self.color_combobox.get() == "Default":
-            self.master.configure(bg="#FFFFFF")
-        elif self.color_combobox.get() == "Dark":
-            self.master.configure(bg="#333333")
+from startscreen import StartScreen
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = Calculator(root)
-    root.mainloop()
+    screen = StartScreen(800, 600, 30, (255, 255, 255))
+    screen.draw()
 ```
 
+game.py
+```python
+'''
+This class will manage the game state and logic. It will be responsible for initializing the game objects, generating food, updating the game state, and drawing the game on the GUI.
+'''
+class Game:
+    def __init__(self):
+        pass
+```
+
+gui.py
+```python
+'''
+This file contains the GUI class and its methods.
+'''
+import pygame
+class GUI:
+    '''
+    Manages the graphical user interface for the game.
+    '''
+    def __init__(self, game_window, game):
+        '''
+        Initializes the GUI with the given game window and game.
+        '''
+        self.game_window = game_window
+        self.game = game
+        self.font = pygame.font.SysFont("Arial", 24)
+    def draw(self):
+        '''
+        Draws the game on the GUI.
+        '''
+        # Clear the screen
+        self.game_window.fill((0, 0, 0))
+        # Draw the snake
+        for rect in self.game.snake.body:
+            pygame.draw.rect(self.game_window, self.game.snake.color, rect)
+        # Draw the food
+        self.game.food.draw(self.game_window)
+        # Draw the score
+        score_text = self.font.render("Score: " + str(self.game.score), True, (255, 255, 255))
+        self.game_window.blit(score_text, (10, 10))
+```
+
+snake.py
+```python
+'''
+This class will represent the snake in the game and will be responsible for its movement, growth, collision detection, and self-collision detection.
+'''
+class Snake:
+    def __init__(self):
+        pass
+```
+
+gameboard.py
+```python
+'''
+This class will represent the game board and will be responsible for drawing the game board on the GUI.
+'''
+class GameBoard:
+    def __init__(self):
+        pass
+```
+
+food.py
+```python
+'''
+This class will represent the food in the game and will be responsible for generating new food objects at random locations on the game board.
+'''
+class Food:
+    def __init__(self):
+        pass
+```
+
+scoreboard.py
+```python
+'''
+This class will represent the scoreboard in the game and will be responsible for keeping track of the player
+'''
+class Scoreboard:
+    def __init__(self):
+        pass
+```
+
+startscreen.py
+```python
+'''
+This class will represent the start screen of the game and will be responsible for displaying the game's title and instructions to the user.
+'''
+class StartScreen:
+    def __init__(self):
+        pass
+```
+
+gameoverscreen.py
+```python
+'''
+This file contains the game over screen class and its methods.
+'''
+import pygame
+class GameOverScreen:
+    '''
+    Represents the game over screen in the game.
+    '''
+    def __init__(self, width, height, font_size, color):
+        '''
+        Initializes the game over screen with the given width, height, font size, and color.
+        '''
+        self.width = width
+        self.height = height
+        self.font = pygame.font.SysFont("Arial", font_size)
+        self.color = color
+    def draw(self, surface, score):
+        '''
+        Draws the game over screen on the given surface.
+        '''
+        # Draw the background
+        background = pygame.Surface((self.width, self.height))
+        background.set_alpha(128)
+        background.fill((0, 0, 0))
+        surface.blit(background, (0, 0))
+        # Draw the text
+        text1 = self.font.render("Game Over", True, self.color)
+        text1_rect = text1.get_rect(center=(self.width // 2, self.height // 2 - 20))
+        surface.blit(text1, text1_rect)
+        text2 = self.font.render("Score: " + str(score), True, self.color)
+        text2_rect = text2.get_rect(center=(self.width // 2, self.height // 2 + 20))
+        surface.blit(text2, text2_rect)
+```
+
+
+startscreen.py
+```python
+'''
+This class will represent the start screen of the game and will be responsible for displaying the game's title and instructions to the user.
+'''
+import pygame
+
+class StartScreen:
+    def __init__(self, width, height, font_size, color):
+        self.width = width
+        self.height = height
+        self.font = pygame.font.SysFont("Arial", font_size)
+        self.color = color
+
+    def draw(self, surface):
+        # Draw the background
+        surface.fill(self.color)
+        # Draw the text
+        text = self.font.render("Snake Game", True, (255, 255, 255))
+        text_rect = text.get_rect(center=(self.width // 2, self.height // 2 - 20))
+        surface.blit(text, text_rect)
+        text = self.font.render("Press any key to start", True, (255, 255, 255))
+        text_rect = text.get_rect(center=(self.width // 2, self.height // 2 + 20))
+        surface.blit(text, text_rect)
+```
+
+gameoverscreen.py
+```python
+'''
+This file contains the game over screen class and its methods.
+'''
+import pygame
+
+class GameOverScreen:
+    '''
+    Represents the game over screen
+
+
 """
+
+import ast
+
+def is_valid_syntax(code):
+    try:
+        ast.parse(code)
+        return True
+    except SyntaxError:
+        return False
+code = """
+gameoverscreen.py
+```python
+'''
+This file contains the game over screen class and its methods.
+'''
+import pygame
+
+class GameOverScreen:
+    '''
+    Represents the game over screen
+
+"""
+print(is_valid_syntax(code))
 code = Codes()
-code._update_codes(s)
+# code._update_codes(s)
+# print(code.)
