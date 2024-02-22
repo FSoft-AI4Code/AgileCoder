@@ -6,7 +6,7 @@ import time
 import markdown
 import inspect
 from agilecoder.camel.messages.system_messages import SystemMessage
-# from online_log.app import send_msg
+from online_log.app import send_msg
 
 
 import ast
@@ -46,7 +46,7 @@ def now():
 def log_and_print_online(role, content=None):
     if not content:
         logging.info(role + "\n")
-        # send_msg("System", role)
+        send_msg("System", role)
         print(role + "\n")
     else:
         print(str(role) + ": " + str(content) + "\n")
@@ -66,7 +66,7 @@ def log_and_print_online(role, content=None):
         else:
             role = str(role)
             content = str(content)
-        # send_msg(role, content)
+        send_msg(role, content)
 
 
 def convert_to_markdown_table(records_kv):

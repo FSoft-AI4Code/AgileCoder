@@ -41,11 +41,19 @@
 
 
 ## Installation
+To install the latest version, please clone this repository and then run the command
+
+``
+pip install -e AgileCoder
+``
+
 Our library is now available on Pypi, so it can be easily installed by
 
 ``
 pip install agilecoder
 ``
+
+Note: The current version available on PyPI does not support the demonstration 
 
 We currently supports Azure OpenAI service, so please set following environment variables:
 
@@ -69,4 +77,10 @@ For example,
 
 ``
 agilecoder --task "create a caro game in python"
+``
+## Demo
+To begin showcasing the Flask app, navigate to the directory `agilecoder/online_log` and execute the following command:
+
+``
+python app.py
 ``

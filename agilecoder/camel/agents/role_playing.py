@@ -131,8 +131,9 @@ class RolePlaying:
 
         self.task_prompt = task_prompt
 
-        agilecoder_prompt_template = "AgileCoder is a software company powered by multiple intelligent agents, such as chief executive officer, chief human resources officer, chief product officer, chief technology officer, etc, with a multi-agent organizational structure and the mission of \"changing the digital world through programming\"."
-
+        agilecoder_prompt_template = """
+AgileCoder, a software enterprise, employs Agile Scrum methodology for its software development endeavors. Its operations are fueled by a multiple of intelligent agents, comprising a Product Owner, a Development Team consisting of Programmers, Code Reviewers, and Software Test Engineers. With a multi-agent organizational framework, AgileCoder is dedicated to the mission of "revolutionizing the digital realm through programming."
+""".strip()
         sys_msg_meta_dicts = [dict(agilecoder_prompt=agilecoder_prompt_template, task=task_prompt)] * 2
         if (extend_sys_msg_meta_dicts is None and self.task_type in [TaskType.AI_SOCIETY, TaskType.MISALIGNMENT,
                                                                      TaskType.CHATDEV]):

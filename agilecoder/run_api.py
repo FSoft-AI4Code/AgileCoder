@@ -93,3 +93,4 @@ def run_task(args):
     # ----------------------------------------
 
     chat_chain.post_processing()
+    return chat_chain.chat_env.env_dict['directory']

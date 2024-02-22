@@ -23,6 +23,18 @@ coordSet["Code Reviewer"] = {
     "top": "-185px",
     "left": "500px"
 };
+coordSet["Product Owner"] = {
+    "character": "Product Owner",
+    "imgid": "left",
+    "top": "-185px",
+    "left": "500px"
+};
+coordSet["Development Team"] = {
+    "character": "Development Team",
+    "imgid": "left",
+    "top": "-185px",
+    "left": "500px"
+};
 coordSet["Programmer"] = {
     "character": "Programmer",
     "imgid": "right",
@@ -253,8 +265,8 @@ function extraction(contents) {
     const regex_user = /(.*):(.*)(\[Start Chat\])([.\r\n\s\S\t\d\D]*?)\]([.\r\n\s\S\t\d\D]*)/g;
     const regex_prompt = /(Prompt Engineer):([\S\s]*)/g
 
-    const regex_end = /(AgentTech Ends|ChatDev Ends)/g;
-    const regex_start = /(ChatDev Starts)([\D\s])*(\d*)/g;
+    const regex_end = /(AgentTech Ends|AgileCoder Ends)/g;
+    const regex_start = /(AgileCoder Starts)([\D\s])*(\d*)/g;
 
     const regex_task = /(task_prompt)(.*):(.*)/g;
     const regex_info = /Software Info([\r\n\s\S\t\d\D]*)/g;
@@ -460,6 +472,10 @@ function createPara(d, i) {
             characterimg.src = "static/figures/counselor.png";
         } else if (d.character == "Prompt Engineer") {
             characterimg.src = "static/figures/pe.png";
+        } else if (d.character == "Product Owner") {
+            characterimg.src = "static/figures/product_owner.png";
+        } else if (d.character == "Development Team") {
+            characterimg.src = "static/figures/development_team.png";
         }
 
         characterimg.style.height = "40px";

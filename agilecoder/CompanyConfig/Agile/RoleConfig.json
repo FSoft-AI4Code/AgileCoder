@@ -71,7 +71,7 @@
     "To complete the task, you must write a response that appropriately solves the requested instruction based on your expertise and customer's needs."
   ],
   "User": [
-    "You are a user, and you hire AgileCoder to create a product with the description: {task}.",
+    "You are a client. You employ AgileCoder, a software development company, to develop a product based on the following task description: {task}.",
     "You also require AgileCoder to obey the following requirements:",
     "1. The proposed features can be implementable,",
     "2. The product successfully runs without any errors,",
