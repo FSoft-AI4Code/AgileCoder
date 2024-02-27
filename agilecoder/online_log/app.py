@@ -11,7 +11,7 @@ import requests
 import subprocess
 import os
 import argparse
-from threading import Thread
+import concurrent.futures
 from flask import Flask, send_from_directory, request, jsonify, redirect, render_template, url_for, make_response
 
 
@@ -25,7 +25,7 @@ log.setLevel(logging.ERROR)
 messages = []
 logs = []
 
-
+folder_name = None
 def send_msg(role, text):
     try:
         data = {"role": role, "text": text}
@@ -75,7 +75,9 @@ def get_logs():
 
 @app.route('/process-task', methods = ['POST'])
 def process_task():
+    global messages, logs, folder_name
     if request.method == 'POST':
+        logs, messages = [], []
         # print(request.get_json())
         task = request.get_json().get('task')
         project = request.get_json().get('project')
@@ -94,9 +96,10 @@ def process_task():
         args = parser.parse_args()
         args.task = task
         args.org = project
-        bg_thread = Thread(target= run_task, args = (args, ))
-        bg_thread.daemon = True
-        bg_thread.start()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(run_task, args)
+            return_value = future.result()
+            folder_name = return_value
     #     folder_name = os.path.basename(dir_path)
     #     full_path = os.path.join(dir_path, folder_name + '.log')
     #     with open(full_path) as f:
@@ -107,7 +110,7 @@ def process_task():
     return 'Form data received successfully!'
 @app.route('/download')
 def download():
-    folder_name = request.args.get('folder_name')
+    # folder_name = request.args.get('folder_name')
     all_files = os.listdir(folder_name)
     stream = BytesIO()
     with ZipFile(stream, 'w') as zf:
