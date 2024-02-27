@@ -5,9 +5,23 @@ label {
 }
 
 body {
-    background-color: #23252c;
+    /* background-color: #23252c; */
+    background-color: white;
 }
 
+
+#operation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#operation > div {
+    margin-bottom: 20px; /* Adjust spacing between tabs */
+    width: 80%; /* Adjust the width of the tabs */
+   
+    padding: 10px; /* Add padding to the tabs */
+    box-sizing: border-box; /* Include padding and border in the total width */
+}
 .button {
     padding: 16px 15px;
     background: #e2edf0;
@@ -20,7 +34,29 @@ body {
     border-radius: 20px;
     border: #020202;
 }
+input[type="text"]{
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    color: #333;
+}
+/* Style for the submit button */
+#submitButton {
+  background-color: #007bff; /* Button background color */
+  color: #fff; /* Text color */
+  padding: 10px 20px; /* Padding around the button text */
+  border: none; /* Remove the default button border */
+  border-radius: 5px; /* Rounded corners */
+  font-size: 16px; /* Text font size */
+  cursor: pointer; /* Change cursor on hover */
+}
 
+/* Hover effect for the submit button */
+#submitButton:hover {
+  background-color: #0056b3; /* Button background color on hover */
+}
 .blinking-animation {
     width: 25px;
     height: 25px;

@@ -84,7 +84,7 @@ class Phase(ABC):
         Returns:
 
         """
-        log_and_print_online("===========self.phase_prompt", phase_prompt)
+        # log_and_print_online("===========self.phase_prompt", phase_prompt)
         if placeholders is None:
             placeholders = {}
         assert 1 <= chat_turn_limit <= 100
@@ -137,7 +137,8 @@ class Phase(ABC):
             # TODO: max_tokens_exceeded errors here
             if isinstance(assistant_response.msg, ChatMessage):
                 # we log the second interaction here
-                log_and_print_online(role_play_session.assistant_agent.role_name,
+                if i == 0:
+                    log_and_print_online(role_play_session.assistant_agent.role_name,
                                      conversation_meta + "[" + role_play_session.user_agent.system_message.content + "]\n\n" + assistant_response.msg.content)
                 if role_play_session.assistant_agent.info:
                     seminar_conclusion = assistant_response.msg.content
@@ -148,8 +149,9 @@ class Phase(ABC):
 
             if isinstance(user_response.msg, ChatMessage):
                 # here is the result of the second interaction, which may be used to start the next chat turn
-                log_and_print_online(role_play_session.user_agent.role_name,
-                                     conversation_meta + "[" + role_play_session.assistant_agent.system_message.content + "]\n\n" + user_response.msg.content)
+                # if i == chat_turn_limit - 1:
+                #     log_and_print_online(role_play_session.user_agent.role_name,
+                #                         conversation_meta + "[" + role_play_session.assistant_agent.system_message.content + "]\n\n" + user_response.msg.content)
                 if role_play_session.user_agent.info:
                     seminar_conclusion = user_response.msg.content
                     role_play_session.user_agent.info = False
@@ -1177,7 +1179,7 @@ class TestModification(Phase):
                                })
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        log_and_print_online("TEST MODIFICATION:", self.seminar_conclusion)
+        # log_and_print_online("TEST MODIFICATION:", self.seminar_conclusion)
         if "```".lower() in self.seminar_conclusion.lower():
             chat_env.update_codes(self.seminar_conclusion)
             chat_env.rewrite_codes()

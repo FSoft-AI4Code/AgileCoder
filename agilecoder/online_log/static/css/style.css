@@ -278,5 +278,5 @@ input[type="text"]{
   }
 }
 #loading-bar {
-  visibility: hidden;
+  display: none;
 }

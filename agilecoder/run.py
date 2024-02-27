@@ -23,8 +23,25 @@ sys.path.append(root)
 
 from agilecoder.components.chat_chain import ChatChain
 from dotenv import load_dotenv
-load_dotenv()
+current_dir = os.getcwd()
+env_path = os.path.join(current_dir, '.env')
+load_dotenv(env_path)
 
+class BufferHandler(logging.Handler):
+    def __init__(self, level=logging.NOTSET, format=None, datefmt=None, encoding=None):
+        logging.Handler.__init__(self)
+        self.buffer = []
+
+        if format:
+            formatter = logging.Formatter(format, datefmt)
+            self.setFormatter(formatter)
+        if level:
+            self.setLevel(level)
+        if encoding:
+            self.encoding = encoding
+
+    def emit(self, record):
+        self.buffer.append(self.format(record))
 def get_config(company):
     """
     return configuration json files for ChatChain
@@ -93,7 +110,12 @@ chat_chain = ChatChain(config_path=config_path,
 logging.basicConfig(filename=chat_chain.log_filepath, level=logging.INFO,
                     format='[%(asctime)s %(levelname)s] %(message)s',
                     datefmt='%Y-%d-%m %H:%M:%S', encoding="utf-8")
-
+buffer_handler = BufferHandler(level=logging.INFO,
+                    format='[%(asctime)s %(levelname)s] %(message)s',
+                    datefmt='%Y-%d-%m %H:%M:%S', encoding="utf-8")
+buffer_handler.setLevel(logging.INFO)  # Set the handler level to DEBUG
+# logger.addHandler(buffer_handler)
+logging.root.addHandler(buffer_handler)
 # ----------------------------------------
 #          Pre Processing
 # ----------------------------------------

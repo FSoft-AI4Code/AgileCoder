@@ -80,6 +80,7 @@ function get_new_messages() {
   });
 }
 
+
 function parseSystemMessage(text) {
   var message = $("<div></div>").addClass("message-text").addClass("system-message");
   var firstLine = text.split('\n')[0];

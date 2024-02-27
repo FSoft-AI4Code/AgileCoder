@@ -11,6 +11,7 @@ import requests
 import subprocess
 import os
 import argparse
+from threading import Thread
 from flask import Flask, send_from_directory, request, jsonify, redirect, render_template, url_for, make_response
 
 
@@ -22,19 +23,30 @@ log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
 messages = []
+logs = []
 
 
 def send_msg(role, text):
     try:
         data = {"role": role, "text": text}
         response = requests.post("http://127.0.0.1:8000/send_message", json=data)
-        if response.status_code == 200:
-            print("Message sent successfully!")
-        else:
-            print("Failed to send message.")
+        # if response.status_code == 200:
+        #     print("Message sent successfully!")
+        # else:
+        #     print("Failed to send message.")
     except:
         logging.info("flask app.py did not start for online log")
 
+def send_online_log(log):
+    try:
+        data = {"log": log}
+        response = requests.post("http://127.0.0.1:8000/send_log", json=data)
+        # if response.status_code == 200:
+        #     print("LOGGG sent successfully!")
+        # else:
+        #     print("Failed to send message.")
+    except:
+        logging.info("flask app.py did not start for online log")
 
 @app.route("/")
 def index():
@@ -54,11 +66,19 @@ def replay():
 def get_messages():
     return jsonify(messages)
 
-@app.route('/process-task', methods = ['POST', "GET"])
+
+@app.route("/get_logs")
+def get_logs():
+    return jsonify(logs)
+
+
+
+@app.route('/process-task', methods = ['POST'])
 def process_task():
     if request.method == 'POST':
-        task = request.form['task']
-        project = request.form['project']
+        # print(request.get_json())
+        task = request.get_json().get('task')
+        project = request.get_json().get('project')
 
         parser = argparse.ArgumentParser(description='argparse')
         parser.add_argument('--config', type=str, default="Agile",
@@ -73,15 +93,18 @@ def process_task():
                             help="GPT Model, choose from {'GPT_3_5_TURBO','GPT_4','GPT_4_32K', 'GPT_3_5_AZURE'}")
         args = parser.parse_args()
         args.task = task
-        dir_path = run_task(args)
-        folder_name = os.path.basename(dir_path)
-        full_path = os.path.join(dir_path, folder_name + '.log')
-        with open(full_path) as f:
-            content = f.read().encode()
-        content = base64.b64encode(content).decode('utf-8')
-        return render_template("replay.html", file = content, folder_name = dir_path)
-    else:
-        return redirect(url_for('index'))
+        args.org = project
+        bg_thread = Thread(target= run_task, args = (args, ))
+        bg_thread.daemon = True
+        bg_thread.start()
+    #     folder_name = os.path.basename(dir_path)
+    #     full_path = os.path.join(dir_path, folder_name + '.log')
+    #     with open(full_path) as f:
+    #         content = f.read().encode()
+    #     content = base64.b64encode(content).decode('utf-8')
+    #     return render_template("replay.html", file = content, folder_name = dir_path)
+    # else:
+    return 'Form data received successfully!'
 @app.route('/download')
 def download():
     folder_name = request.args.get('folder_name')
@@ -111,6 +134,14 @@ def send_message():
     messages.append(message)
     return jsonify(message)
 
+@app.route("/send_log", methods=["POST"])
+def send_log():
+    data = request.get_json()
+    log = data.get("log")
+
+    log = {"log": log}
+    logs.append(log)
+    return jsonify(log)
 
 def find_avatar_url(role):
     role = role.replace(" ", "%20")
@@ -122,4 +153,4 @@ def find_avatar_url(role):
 if __name__ == "__main__":
     from run_api import run_task
     print("please visit http://127.0.0.1:8000/ for demo")
-    app.run(debug=False, port=8000)
+    app.run(debug=True, port=8000)

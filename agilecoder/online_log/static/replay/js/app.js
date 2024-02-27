@@ -243,6 +243,42 @@ function watchfileInput(content, _folder_name) {
     }
 }
 
+function get_new_logs(start_idx) {
+
+    $.getJSON("/get_logs", async function (data) {
+        // console.log(data);
+    //   var lastDisplayedMessageIndex = dialogbody.length;
+      for (var i = start_idx; i < data.length; i++) {
+        var contents = data[i].log;
+        if (contents == "<FINISH>"){
+            var form = document.getElementById('taskForm');
+            var loadingBar = document.getElementById('loading-bar');
+    
+            // Enable input elements
+            var inputs = form.querySelectorAll('input');
+            inputs.forEach(function(input) {
+                input.disabled = false;
+            });
+    
+            // Show loading bar
+            loadingBar.style.display = 'block';
+        }
+        // console.log("LOGGGG", contents);
+        dialog = extraction(contents);
+        // console.log(dialog);
+        var filelable = document.getElementById("successupload");
+        filelable.style.display = "block";
+        var info = "Replaying" + "......";
+        filelable.innerHTML = md.render(info);
+        for (let i = 0; i < dialog.length; ++i) {
+            await createPara(dialog[i], i);
+        }
+  
+      }
+      get_new_logs(data.length);
+    });
+    
+  }
 //extract information 
 function extraction(contents) {
     const regex = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+)\] ([.\s\S\n\r\d\D\t]*?)(?=\n\[\d|$)/g;
@@ -252,7 +288,7 @@ function extraction(contents) {
     let match;
     var itemp = 0;
     while ((match = regex.exec(contents))) {
-        console.log(itemp);
+        // console.log(itemp);
         itemp++;
         const timestamp = match[1];
         const text = match[2];
@@ -279,7 +315,7 @@ function extraction(contents) {
 
     for (let i = 0; i < matches.length; ++i) {
         var if_break = false;
-        console.log(i);
+        // console.log(i);
         if (i == 159 || i == 198 || i == 223 || i == 260 || i == 416 || i == 537) {
             //console.log(matches[i]);
         }
@@ -428,7 +464,7 @@ function createPara(d, i) {
     dialogbody.appendChild(singleDialog);
     var paralen;
     if (d.type && d.character) {
-        updateCompanyWorking(d.character);
+        // updateCompanyWorking(d.character);
         var renderedHtml = md.render(d.character);
         const character = document.createElement("div");
         character.style.display = "flex";
@@ -449,7 +485,7 @@ function createPara(d, i) {
         singleDialog.appendChild(character);
 
         const characterimg = document.createElement("img");
-        console.log(d.character);
+        // console.log(d.character);
         if (d.character == "Programmer") {
             characterimg.src = "static/figures/programmer.png";
         } else if (d.character == "Code Reviewer") {

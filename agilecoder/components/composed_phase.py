@@ -307,7 +307,7 @@ class CodeAndFormat(ComposedPhase):
         return chat_env
 
     def break_cycle(self, phase_env) -> bool:
-        print('phase_env', 'has_correct_format' in phase_env, phase_env.get('has_correct_format',  False))
+        # print('phase_env', 'has_correct_format' in phase_env, phase_env.get('has_correct_format',  False))
         if 'has_correct_format' in phase_env and phase_env['has_correct_format']:
             return True
         else:

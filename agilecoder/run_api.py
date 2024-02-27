@@ -8,8 +8,26 @@ root = os.path.dirname(__file__)
 sys.path.append(root)
 
 from agilecoder.components.chat_chain import ChatChain
+from agilecoder.online_log.app import send_online_log
 from dotenv import load_dotenv
 load_dotenv()
+
+
+class BufferHandler(logging.Handler):
+    def __init__(self, level=logging.NOTSET, format=None, datefmt=None, encoding=None):
+        logging.Handler.__init__(self)
+        self.buffer = []
+
+        if format:
+            formatter = logging.Formatter(format, datefmt)
+            self.setFormatter(formatter)
+        if level:
+            self.setLevel(level)
+        if encoding:
+            self.encoding = encoding
+
+    def emit(self, record):
+        self.buffer.append(self.format(record))
 
 def get_config(company):
     """
@@ -69,6 +87,12 @@ def run_task(args):
     logging.basicConfig(filename=chat_chain.log_filepath, level=logging.INFO,
                         format='[%(asctime)s %(levelname)s] %(message)s',
                         datefmt='%Y-%d-%m %H:%M:%S', encoding="utf-8")
+    buffer_handler = BufferHandler(level=logging.INFO,
+                        format='[%(asctime)s %(levelname)s] %(message)s',
+                        datefmt='%Y-%d-%m %H:%M:%S', encoding="utf-8")
+    buffer_handler.setLevel(logging.INFO)  # Set the handler level to DEBUG
+    # logger.addHandler(buffer_handler)
+    logging.root.addHandler(buffer_handler)
 
     # ----------------------------------------
     #          Pre Processing
@@ -93,4 +117,5 @@ def run_task(args):
     # ----------------------------------------
 
     chat_chain.post_processing()
+    send_online_log("<FINISH>")
     return chat_chain.chat_env.env_dict['directory']
