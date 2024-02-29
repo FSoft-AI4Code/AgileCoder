@@ -100,6 +100,7 @@ class ChatEnv:
 
     def exist_bugs(self) -> tuple[bool, str]:
         directory = self.env_dict['directory']
+        print('DIRECTORY:', directory)
 
         success_info = "The software run successfully without errors."
         try:
@@ -116,53 +117,94 @@ class ChatEnv:
                 )
             else:
                 all_files = os.listdir(directory)
-                if 'main.py' in all_files:
-                    command = "cd {}; ls -l; python3 main.py;".format(directory)
-                    process = subprocess.Popen(command,
-                                        shell=True,
-                                        preexec_fn=os.setsid,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE
-                                        )
-                else:
-                    flag = False
-                    for file in all_files:
-                        if not file.endswith('.py'): continue
-                        with open(os.path.join(directory, file)) as f:
-                            code = f.read()
-                        if has_entry_point(code):
-                            command = "cd {}; ls -l; python3 ".format(directory) + file
-                            flag = True
-                            process = subprocess.Popen(command,
-                                            shell=True,
-                                            preexec_fn=os.setsid,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE
-                                            )
-                            break
-                        # if len(process.stderr.read().decode('utf-8')) > 0: break
-                    if not flag:
-                        return False, "Error: the software lacks the entry point to start"
-            time.sleep(3)
-            return_code = process.returncode
-            # Check if the software is still running
-            if process.poll() is None:
-                if "killpg" in dir(os):
-                    os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-                else:
-                    os.kill(process.pid, signal.SIGTERM)
-                    if process.poll() is None:
-                        os.kill(process.pid,signal.CTRL_BREAK_EVENT)
+                testing_commands = self.env_dict['commands']
+                return_flag = False
+                error_contents = ''
+                runnable_files = []
+                is_python = False
+                for file in all_files:
+                    if not file.endswith('.py'): continue
+                    is_python = True
+                    with open(os.path.join(directory, file)) as f:
+                        code = f.read()
+                    if has_entry_point(code):
+                        runnable_files.append(file)
+                if is_python and len(runnable_files) == 0:
+                    return True, "[Error] the software lacks an entry point to start"
+                testing_commands.extend(runnable_files)
 
-            if return_code == 0:
-                return False, success_info
-            else:
-                error_output = process.stderr.read().decode('utf-8')
-                if error_output:
-                    if "Traceback".lower() in error_output.lower():
-                        errs = error_output.replace(directory + "/", "")
-                        return True, errs
+                for testing_command in set(testing_commands):
+                    if 'main.py' in all_files and testing_command == 'main.py':
+                        command = "cd {}; ls -l; python3 main.py;".format(directory)
+                        # process = subprocess.Popen(command,
+                        #                     shell=True,
+                        #                     preexec_fn=os.setsid,
+                        #                     stdout=subprocess.PIPE,
+                        #                     stderr=subprocess.PIPE
+                        #                     )
+                    else:
+                        # flag = False
+                        # for file in all_files:
+                        #     if not file.endswith('.py'): continue
+                        #     with open(os.path.join(directory, file)) as f:
+                        #         code = f.read()
+                        #     if has_entry_point(code):
+                        #         command = "cd {}; ls -l; python3 ".format(directory) + file
+                        #         flag = True
+                        #         process = subprocess.Popen(command,
+                        #                         shell=True,
+                        #                         preexec_fn=os.setsid,
+                        #                         stdout=subprocess.PIPE,
+                        #                         stderr=subprocess.PIPE
+                        #                         )
+                        #         break
+                        command = "cd {}; ls -l; python3 ".format(directory) + testing_command
+                    print('COMMAND:', command)
+                    process = subprocess.Popen(command,
+                                    shell=True,
+                                    preexec_fn=os.setsid,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE
+                                    )
+                            # if len(process.stderr.read().decode('utf-8')) > 0: break
+                        # if not flag:
+                        #     return False, "Error: the software lacks the entry point to start"
+                    time.sleep(3)
+                    return_code = process.returncode
+                    # Check if the software is still running
+                    if process.poll() is None:
+                        if "killpg" in dir(os):
+                            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                        else:
+                            os.kill(process.pid, signal.SIGTERM)
+                            if process.poll() is None:
+                                os.kill(process.pid,signal.CTRL_BREAK_EVENT)
+
+                    # if return_code == 0:
+                    #     return False, success_info
+                    # else:
+                    #     error_output = process.stderr.read().decode('utf-8')
+                    #     if error_output:
+                    #         if "Traceback".lower() in error_output.lower():
+                    #             errs = error_output.replace(directory + "/", "")
+                    #             return True, errs
+                            
+                    #     else:
+                    #         return False, success_info
                     
+                    if return_code != 0:
+                        error_output = process.stderr.read().decode('utf-8')
+                        if error_output:
+                            if "Traceback".lower() in error_output.lower():
+                                errs = error_output.replace(directory + "/", "")
+                                # return True, errs
+                                error_contents += """\nError Traceback for Running {testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
+                                return_flag = True
+                            
+                        # else:
+                        #     return False, success_info
+                if return_flag:
+                    return return_flag, error_contents
                 else:
                     return False, success_info
         except subprocess.CalledProcessError as e:

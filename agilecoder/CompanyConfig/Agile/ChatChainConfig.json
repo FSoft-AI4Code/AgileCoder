@@ -111,6 +111,12 @@
           "cycleNum": 3,
           "Composition": [
             {
+              "phase": "TestingPlan",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
+            {
               "phase": "TestErrorSummary",
               "phaseType": "SimplePhase",
               "max_turn_step": 1,
@@ -205,6 +211,12 @@
           "phaseType": "ComposedPhase",
           "cycleNum": 5,
           "Composition": [
+            {
+              "phase": "TestingPlan",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
             {
               "phase": "TestErrorSummary",
               "phaseType": "SimplePhase",

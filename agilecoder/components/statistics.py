@@ -4,7 +4,7 @@ import numpy as np
 
 
 def get_info(dir, log_filepath):
-    print("dir:", dir)
+    # print("dir:", dir)
 
     version_updates = -1
     num_code_files = -1

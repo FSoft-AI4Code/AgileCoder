@@ -137,8 +137,8 @@ class Phase(ABC):
             # TODO: max_tokens_exceeded errors here
             if isinstance(assistant_response.msg, ChatMessage):
                 # we log the second interaction here
-                if i == 0:
-                    log_and_print_online(role_play_session.assistant_agent.role_name,
+                # if i == 0:
+                log_and_print_online(role_play_session.assistant_agent.role_name,
                                      conversation_meta + "[" + role_play_session.user_agent.system_message.content + "]\n\n" + assistant_response.msg.content)
                 if role_play_session.assistant_agent.info:
                     seminar_conclusion = assistant_response.msg.content
@@ -150,8 +150,8 @@ class Phase(ABC):
             if isinstance(user_response.msg, ChatMessage):
                 # here is the result of the second interaction, which may be used to start the next chat turn
                 # if i == chat_turn_limit - 1:
-                #     log_and_print_online(role_play_session.user_agent.role_name,
-                #                         conversation_meta + "[" + role_play_session.assistant_agent.system_message.content + "]\n\n" + user_response.msg.content)
+                log_and_print_online(role_play_session.user_agent.role_name,
+                                    conversation_meta + "[" + role_play_session.assistant_agent.system_message.content + "]\n\n" + user_response.msg.content)
                 if role_play_session.user_agent.info:
                     seminar_conclusion = user_response.msg.content
                     role_play_session.user_agent.info = False
@@ -960,6 +960,27 @@ class CodeReviewHuman(Phase):
             log_and_print_online("**[Software Info]**:\n\n {}".format(get_info(chat_env.env_dict['directory'],self.log_filepath)))
         return chat_env
 
+class TestingPlan(Phase):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_phase_env(self, chat_env):
+        # print(
+            # f"You can participate in the development of the software {chat_env.env_dict['task_prompt']}. Please input your feedback. (\"End\" to quit the involvement.)")
+        self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
+                               "modality": chat_env.env_dict['modality'],
+                               "language": chat_env.env_dict['language'],
+                               "codes": chat_env.get_codes(),
+                                "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
+                               'current_programming_task': chat_env.env_dict['current-programming-task'],
+                               })
+
+    def update_chat_env(self, chat_env) -> ChatEnv:
+        if len(self.seminar_conclusion) > 0:
+            commands = re.findall(r"python (.*?\.py)", self.seminar_conclusion)
+            chat_env.env_dict['commands'] = commands
+            # print('commands', commands)
+        return chat_env
 
 class TestErrorSummary(Phase):
     def __init__(self, **kwargs):

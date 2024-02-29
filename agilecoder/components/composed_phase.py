@@ -291,7 +291,7 @@ class Test(ComposedPhase):
         return chat_env
 
     def break_cycle(self, phase_env) -> bool:
-        if not phase_env['exist_bugs_flag']:
+        if not phase_env.get('exist_bugs_flag', True):
             log_and_print_online(f"**[Test Info]**\n\nAI User (Software Test Engineer):\nTest Pass!\n")
             return True
         else:

@@ -137,6 +137,13 @@ def send_message():
     messages.append(message)
     return jsonify(message)
 
+@app.route('/refresh-detected')
+def refresh_detected():
+    # folder_name = request.args.get('folder_name')
+    global messages, logs
+    messages, logs = [], []
+    return "delete cache"
+
 @app.route("/send_log", methods=["POST"])
 def send_log():
     data = request.get_json()

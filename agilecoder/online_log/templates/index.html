@@ -151,6 +151,15 @@
         });
         
     </script>
+    <script>
+        if (performance.navigation.type === 1) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "/refresh-detected", true);
+                xhr.send();
+            
+        };
+        </script>
+        
 </body>
 
 </html>
