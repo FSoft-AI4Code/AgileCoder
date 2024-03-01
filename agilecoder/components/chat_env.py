@@ -42,7 +42,7 @@ def has_entry_point(code):
       
         # Check for standalone code (no functions or classes)
         for node in ast.iter_child_nodes(tree):
-            if not isinstance(node, (ast.Module, ast.FunctionDef, ast.ClassDef)):
+            if not isinstance(node, (ast.Expr, ast.Import, ast.ImportFrom, ast.Module, ast.FunctionDef, ast.ClassDef)):
                 return True
 
         return False
@@ -134,6 +134,11 @@ class ChatEnv:
                 testing_commands.extend(runnable_files)
 
                 for testing_command in set(testing_commands):
+                    if testing_command not in runnable_files:
+                        errs = "[Error] the software lacks an entry point to start"
+                        error_contents += """\nError Traceback for Running {testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
+                        return_flag = True
+                        continue
                     if 'main.py' in all_files and testing_command == 'main.py':
                         command = "cd {}; ls -l; python3 main.py;".format(directory)
                         # process = subprocess.Popen(command,

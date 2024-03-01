@@ -928,11 +928,23 @@ class CodeReviewModification(Phase):
                                "comments": chat_env.env_dict['review_comments']})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        if "```".lower() in self.seminar_conclusion.lower():
-            chat_env.update_codes(self.seminar_conclusion)
+      
+        has_correct_format = chat_env.update_codes(self.seminar_conclusion)
+        # chat_env.rewrite_codes()
+        # log_and_print_online("**[Software Info]**:\n\n {}".format(get_info(chat_env.env_dict['directory'],self.log_filepath)))
+        if has_correct_format:
             chat_env.rewrite_codes()
             log_and_print_online("**[Software Info]**:\n\n {}".format(get_info(chat_env.env_dict['directory'],self.log_filepath)))
-        self.phase_env['modification_conclusion'] = self.seminar_conclusion
+            self.phase_env.update({
+                'has_correct_format': True
+            })
+            self.phase_env['modification_conclusion'] = self.seminar_conclusion
+        else:
+            self.phase_env.update({
+                'has_correct_format': False
+            })
+            chat_env.env_dict['raw_code_conclusion'] = self.seminar_conclusion
+
         return chat_env
 
 
@@ -1201,10 +1213,21 @@ class TestModification(Phase):
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         # log_and_print_online("TEST MODIFICATION:", self.seminar_conclusion)
-        if "```".lower() in self.seminar_conclusion.lower():
-            chat_env.update_codes(self.seminar_conclusion)
+       
+        has_correct_format = chat_env.update_codes(self.seminar_conclusion)
+        # chat_env.rewrite_codes()
+        # log_and_print_online("**[Software Info]**:\n\n {}".format(get_info(chat_env.env_dict['directory'],self.log_filepath)))
+        if has_correct_format:
             chat_env.rewrite_codes()
             log_and_print_online("**[Software Info]**:\n\n {}".format(get_info(chat_env.env_dict['directory'],self.log_filepath)))
+            self.phase_env.update({
+                'has_correct_format': True
+            })
+        else:
+            self.phase_env.update({
+                'has_correct_format': False
+            })
+            chat_env.env_dict['raw_code_conclusion'] = self.seminar_conclusion
         return chat_env
 class EnvironmentDoc(Phase):
     def __init__(self, **kwargs):

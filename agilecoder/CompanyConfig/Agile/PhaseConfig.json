@@ -513,7 +513,7 @@
       "$CODE",
       "```",
       "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the error summary.",
-      "Now, use the format exemplified above and modify the problematic codes based on the error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). If no bugs are reported, please return only one line like \"<INFO> Finished\"."
+      "Now, use the format exemplified above and modify the problematic codes based on the error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including $FILENAME, $LANGUAGE, $DOCSTRING and $CODE; incomplete \"TODO\" codes are strictly prohibited). If no bugs are reported, please return only one line like \"<INFO> Finished\"."
     ]
   },
   "EnvironmentDoc": {

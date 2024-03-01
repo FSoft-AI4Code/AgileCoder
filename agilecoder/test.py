@@ -451,16 +451,8 @@ def is_valid_syntax(code):
     except SyntaxError:
         return False
 code = """
-gameoverscreen.py
-```python
-'''
-This file contains the game over screen class and its methods.
-'''
-import pygame
 
-class GameOverScreen:
-    '''
-    Represents the game over screen
+main.py
 
 """
 print(is_valid_syntax(code))
