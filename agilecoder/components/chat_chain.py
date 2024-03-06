@@ -288,7 +288,7 @@ class ChatChain:
             revised_task_prompt: revised prompt from the prompt engineer agent
 
         """
-        self_task_improve_prompt = """I will give you a short description of a software design requirement, 
+        self_task_improve_promptgit  = """I will give you a short description of a software design requirement, 
 please rewrite it into a detailed prompt that can make large language model know how to make this software better based this prompt,
 the prompt should ensure LLMs build a software that can be run correctly, which is the most import part you need to consider.
 remember that the revised prompt should not contain more than 200 words, 

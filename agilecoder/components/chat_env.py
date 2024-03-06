@@ -196,18 +196,22 @@ class ChatEnv:
                             
                     #     else:
                     #         return False, success_info
-                    
-                    if return_code != 0:
-                        error_output = process.stderr.read().decode('utf-8')
-                        if error_output:
+                    error_output = process.stderr.read().decode('utf-8')
+                    if error_output:
+                        if return_code != 0:
                             if "Traceback".lower() in error_output.lower():
                                 errs = error_output.replace(directory + "/", "")
                                 # return True, errs
                                 error_contents += """\nError Traceback for Running {testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
                                 return_flag = True
-                            
-                        # else:
-                        #     return False, success_info
+                                
+                            # else:
+                            #     return False, success_info
+                        else:
+                            if 'error' in error_output.lower():
+                                return_flag = True
+                                error_contents += """\nError Traceback for Running {testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
+
                 if return_flag:
                     return return_flag, error_contents
                 else:
