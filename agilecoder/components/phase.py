@@ -137,8 +137,8 @@ class Phase(ABC):
             # TODO: max_tokens_exceeded errors here
             if isinstance(assistant_response.msg, ChatMessage):
                 # we log the second interaction here
-                # if i == 0:
-                log_and_print_online(role_play_session.assistant_agent.role_name,
+                if i == 0:
+                    log_and_print_online(role_play_session.assistant_agent.role_name,
                                      conversation_meta + "[" + role_play_session.user_agent.system_message.content + "]\n\n" + assistant_response.msg.content)
                 if role_play_session.assistant_agent.info:
                     seminar_conclusion = assistant_response.msg.content
@@ -149,8 +149,8 @@ class Phase(ABC):
 
             if isinstance(user_response.msg, ChatMessage):
                 # here is the result of the second interaction, which may be used to start the next chat turn
-                # if i == chat_turn_limit - 1:
-                log_and_print_online(role_play_session.user_agent.role_name,
+                if i == chat_turn_limit - 1:
+                    log_and_print_online(role_play_session.user_agent.role_name,
                                     conversation_meta + "[" + role_play_session.assistant_agent.system_message.content + "]\n\n" + user_response.msg.content)
                 if role_play_session.user_agent.info:
                     seminar_conclusion = user_response.msg.content

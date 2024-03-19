@@ -24,6 +24,7 @@ log.setLevel(logging.ERROR)
 
 messages = []
 logs = []
+num_logs = 0
 
 folder_name = None
 def send_msg(role, text):
@@ -48,19 +49,19 @@ def send_online_log(log):
     except:
         logging.info("flask app.py did not start for online log")
 
-@app.route("/")
-def index():
-    return render_template('index.html')
+# @app.route("/")
+# def index():
+#     return render_template('index.html')
     # return send_from_directory("static", "index.html")
 
 
-@app.route("/chain_visualizer")
-def chain_visualizer():
-    return render_template("chain_visualizer.html")
+# @app.route("/chain_visualizer")
+# def chain_visualizer():
+#     return render_template("chain_visualizer.html")
 
-@app.route("/replay")
-def replay():
-    return render_template("replay.html", file = None, folder_name = None)
+# @app.route("/replay")
+# def replay():
+#     return render_template("replay.html", file = None, folder_name = None)
 
 @app.route("/get_messages")
 def get_messages():
@@ -80,7 +81,7 @@ def process_task():
         logs, messages = [], []
         # print(request.get_json())
         task = request.get_json().get('task')
-        project = request.get_json().get('project')
+        # project = request.get_json().get('project')
 
         parser = argparse.ArgumentParser(description='argparse')
         parser.add_argument('--config', type=str, default="Agile",
@@ -95,7 +96,6 @@ def process_task():
                             help="GPT Model, choose from {'GPT_3_5_TURBO','GPT_4','GPT_4_32K', 'GPT_3_5_AZURE'}")
         args = parser.parse_args()
         args.task = task
-        args.org = project
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(run_task, args)
             return_value = future.result()
@@ -140,16 +140,18 @@ def send_message():
 @app.route('/refresh-detected')
 def refresh_detected():
     # folder_name = request.args.get('folder_name')
-    global messages, logs
+    global messages, logs, num_logs
     messages, logs = [], []
+    num_logs = 0
     return "delete cache"
 
 @app.route("/send_log", methods=["POST"])
 def send_log():
+    global num_logs
     data = request.get_json()
     log = data.get("log")
-
-    log = {"log": log}
+    num_logs += 1
+    log = {"log": log, 'id': num_logs}
     logs.append(log)
     return jsonify(log)
 
