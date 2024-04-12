@@ -124,6 +124,12 @@
           "cycleNum": 3,
           "Composition": [
             {
+              "phase": "WritingTestSuite",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
+            {
               "phase": "TestingPlan",
               "phaseType": "SimplePhase",
               "max_turn_step": 1,
@@ -243,6 +249,12 @@
           "phaseType": "ComposedPhase",
           "cycleNum": 5,
           "Composition": [
+            {
+              "phase": "WritingTestSuite",
+              "phaseType": "SimplePhase",
+              "max_turn_step": 1,
+              "need_reflect": "False"
+            },
             {
               "phase": "TestingPlan",
               "phaseType": "SimplePhase",

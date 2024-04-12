@@ -14,4 +14,5 @@ def main():
     parser.add_argument('--model', type=str, default="GPT_3_5_AZURE",
                         help="GPT Model, choose from {'GPT_3_5_TURBO','GPT_4','GPT_4_32K', 'GPT_3_5_AZURE'}")
     args = parser.parse_args()
+    print('------------------------------')
     run_task(args)                                           

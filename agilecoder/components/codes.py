@@ -114,7 +114,7 @@ class Codes:
                             self.codebooks[filename] = self._format_code(code)
                     
             if not flag:
-                regex = r"(.+?\.\w+)\n```.*?\n(.*?)```"
+                regex = r"(.+?\.\w+)\n```\w+\n(.*?)```"
                 matches = re.finditer(regex, self.generated_content, re.DOTALL)
                 flag = False
                 for match in matches:
@@ -173,7 +173,9 @@ class Codes:
         new_codes = Codes(generated_content)
         differ = difflib.Differ()
         flag = False
+        total_new_length = 0
         for key in new_codes.codebooks.keys():
+            total_new_length += len(new_codes.codebooks[key])
             if key not in self.codebooks.keys() or self.codebooks[key] != new_codes.codebooks[key]:
                 update_codes_content = "**[Update Codes]**\n\n"
                 update_codes_content += "{} updated.\n".format(key)
@@ -193,7 +195,7 @@ class Codes:
                 log_and_print_online(update_codes_content)
                 self.codebooks[key] = new_codes.codebooks[key]
             flag = True
-        return flag
+        return flag and (total_new_length / len(generated_content) > 0.6)
         # return hasattr(new_codes, 'has_correct_format') and new_codes.has_correct_format
 
     def _rewrite_codes(self, git_management) -> None:
