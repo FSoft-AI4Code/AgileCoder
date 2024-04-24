@@ -60,7 +60,7 @@ class TaskSpecifyAgent(ChatAgent):
         else:
             self.task_specify_prompt = task_specify_prompt
 
-        model_config = model_config or ChatGPTConfig(temperature=1.0)
+        model_config = model_config or ChatGPTConfig(temperature=0.1)
 
         system_message = SystemMessage(
             role_name="Task Specifier",

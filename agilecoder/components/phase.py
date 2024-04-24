@@ -487,10 +487,10 @@ class SprintBacklogCreating(Phase):
             chat_env.env_dict['current-sprint-acceptance-criteria'] = list_of_sprint_acceptance_criteria
             chat_env.env_dict['current-sprint-goals'] = sprint_goals
 
-            chat_env.env_dict['all-sprint-backlog'].append(list_of_sprint_backlog)
-            chat_env.env_dict['all-sprint-acceptance-criteria'].append(list_of_sprint_acceptance_criteria)
-            chat_env.env_dict['all-sprint-goals'].append(sprint_goals)
-            chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
+            # chat_env.env_dict['all-sprint-backlog'].append(list_of_sprint_backlog)
+            # chat_env.env_dict['all-sprint-acceptance-criteria'].append(list_of_sprint_acceptance_criteria)
+            # chat_env.env_dict['all-sprint-goals'].append(sprint_goals)
+            # chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
         print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
         print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
         return chat_env
@@ -694,7 +694,7 @@ class WritingTestSuite(Phase):
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         print('WritingTestSuite', self.seminar_conclusion)
-        chat_env.update_codes(self.seminar_conclusion)
+        chat_env.update_codes(self.seminar_conclusion, is_testing = True)
         if len(chat_env.codes.codebooks.keys()) == 0:
             raise ValueError("No Valid Codes.")
         chat_env.rewrite_codes()
@@ -958,39 +958,26 @@ class SprintBacklogModification(Phase):
                                "sprint_backlog_comments": chat_env.env_dict['sprint_backlog_comments']})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        sprint_goal = ''
-        list_of_sprint_backlog_items = []
-        if len(self.seminar_conclusion) > 0 and 'Sprint Backlog:' in self.seminar_conclusion:
-            coms = self.seminar_conclusion.split('Sprint Backlog:')
-            sprint_goal = coms[0].split('Sprint Goals:')[1].strip()
-            sprint_backlog_items = coms[1].strip().splitlines()
-            for item in sprint_backlog_items:
-                flag = check_if_string_starts_with_number(item)
-                if flag > 0:
-                    if flag == 1 and '. ' in item:
-                        list_of_sprint_backlog_items.append(item.split('.')[1].strip())
-                    else:
-                        list_of_sprint_backlog_items.append(item.strip())
-                # else: break
-        if 'all-sprints' not in chat_env.env_dict:
-            chat_env.env_dict['all-sprints'] = []
-        if 'all-sprint-goals' not in chat_env.env_dict:
-            chat_env.env_dict['all-sprint-goals'] = []
-        chat_env.env_dict['all-sprints'].append(list_of_sprint_backlog_items)
-        chat_env.env_dict['all-sprint-goals'].append(sprint_goal)
-        chat_env.env_dict['current-sprint-backlog'] = list_of_sprint_backlog_items
-        chat_env.env_dict['current-sprint-goals'] = sprint_goal
-        current_tasks = []
-        
-        task_id = 1
-        for task in list_of_sprint_backlog_items:
-            if len(task.strip()) == 0: continue
-            if task.strip().startswith('-'):
-                current_tasks.append(task)
-            else:
-                current_tasks.append(str(task_id) + '. ' + task)
-                task_id += 1
-        chat_env.env_dict['current-programming-task'] = '\n'.join(current_tasks)
+        if len(self.seminar_conclusion) > 0:
+            sprint_goals = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint Goals").strip()
+            sprint_backlog = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint Backlog").strip()
+            sprint_acceptance_criteria = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint Acceptance Criteria").strip()
+            list_of_sprint_backlog = sprint_backlog.splitlines()
+            list_of_sprint_acceptance_criteria = sprint_acceptance_criteria.splitlines()
+
+            chat_env.env_dict['current-programming-task'] = sprint_backlog
+            chat_env.env_dict['current-acceptance-criteria'] = sprint_acceptance_criteria
+
+            chat_env.env_dict['current-sprint-backlog'] = list_of_sprint_backlog
+            chat_env.env_dict['current-sprint-acceptance-criteria'] = list_of_sprint_acceptance_criteria
+            chat_env.env_dict['current-sprint-goals'] = sprint_goals
+
+            chat_env.env_dict['all-sprint-backlog'].append(list_of_sprint_backlog)
+            chat_env.env_dict['all-sprint-acceptance-criteria'].append(list_of_sprint_acceptance_criteria)
+            chat_env.env_dict['all-sprint-goals'].append(sprint_goals)
+            chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
+        print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
+        print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
         return chat_env
 class CodeReviewComment(Phase):
     def __init__(self, **kwargs):
@@ -1270,7 +1257,7 @@ class TestModification(Phase):
         if 'ModuleNotFoundError' in test_reports:
             for match in re.finditer(r"No module named '(\S+)'", test_reports, re.DOTALL):
                 module = match.group(1)
-            modules = list(map(lambda x: '- ' + x.split('.')[0], glob.glob(chat_env.env_dict['directory'] + '/.*py')))
+            modules = list(map(lambda x: '- ' + os.path.basename(x).split('.')[0], glob.glob(chat_env.env_dict['directory'] + '/*.py')))
             modules = '\n'.join(modules)
             self.phase_prompt = '\n'.join([
                 "Our developed source codes, corresponding test reports and available modules are listed below: ",
@@ -1282,7 +1269,7 @@ class TestModification(Phase):
                 "Error Summary of Test Reports:",
                 "\"{error_summary}\"",
                 "Available Modules:",
-                "\"{modules}\""
+                "\"{modules}\"\n"
                 "Note that each file must strictly follow a markdown code block format, where the following tokens must be replaced such that \"FILENAME\" is the lowercase file name including the file extension, \"LANGUAGE\" in the programming language, \"DOCSTRING\" is a string literal specified in source code that is used to document a specific segment of code, and \"CODE\" is the original code:",
                 "FILENAME",
                 "```LANGUAGE",

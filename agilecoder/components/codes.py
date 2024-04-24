@@ -41,18 +41,27 @@ def extract_files(code_string):
         files[current_file] = current_code
 
     return files
+
+def extract_class_names(source_code):
+    pattern = r'class\s+([A-Za-z_]\w*)'
+    class_names = re.findall(pattern, source_code)
+    return class_names
+
+
 class Codes:
-    def __init__(self, generated_content=""):
+    def __init__(self, generated_content="", is_testing = False):
         self.directory: str = None
         self.version: float = 1.0
         self.generated_content: str = generated_content
         self.codebooks = {}
+        self.testing_filenames = set()
+        self.is_testing = is_testing
 
         def extract_filename_from_line(lines):
             file_name = ""
             for candidate in re.finditer(r"(\w+\.\w+)", lines, re.DOTALL):
                 file_name = candidate.group()
-                file_name = file_name.lower()
+                file_name = file_name#.lower()
             return file_name
 
         def extract_filename_from_code(code):
@@ -78,7 +87,7 @@ class Codes:
                 code = match.group(1)
                 if "CODE" in code:
                     continue
-                if "__main__" in code or 'main.py' in code:
+                if not self.is_testing and ("__main__" in code or 'main.py' in code):
                     filename = "main.py"
                 else:
                     filename = extract_filename_from_code(code)
@@ -125,7 +134,7 @@ class Codes:
                     group1 = match.group(1)
                     filename = extract_filename_from_line(group1)
                     old_filename = None
-                    if "__main__" in code or 'main.py' in code:
+                    if not self.is_testing and ("__main__" in code or 'main.py' in code):
                         new_filename = "main.py"
                         if new_filename != filename:
                             old_filename = filename
@@ -169,14 +178,16 @@ class Codes:
         code = "\n".join([line for line in code.split("\n") if len(line.strip()) > 0])
         return code
 
-    def _update_codes(self, generated_content):
-        new_codes = Codes(generated_content)
+    def _update_codes(self, generated_content, is_testing):
+        new_codes = Codes(generated_content, is_testing)
         differ = difflib.Differ()
         flag = False
         total_new_length = 0
         for key in new_codes.codebooks.keys():
             total_new_length += len(new_codes.codebooks[key])
             if key not in self.codebooks.keys() or self.codebooks[key] != new_codes.codebooks[key]:
+                if is_testing:
+                    self.testing_filenames.update([key])
                 update_codes_content = "**[Update Codes]**\n\n"
                 update_codes_content += "{} updated.\n".format(key)
                 old_codes_content = self.codebooks[key] if key in self.codebooks.keys() else "# None"
@@ -221,9 +232,10 @@ class Codes:
 
         log_and_print_online(rewrite_codes_content)
 
-    def _get_codes(self) -> str:
+    def _get_codes(self, ignore_test_code) -> str:
         content = ""
         for filename in self.codebooks.keys():
+            if ignore_test_code and filename in self.testing_filenames: continue
             content += "{}\n```{}\n{}\n```\n\n".format(filename,
                                                        "python" if filename.endswith(".py") else filename.split(".")[
                                                            -1], self.codebooks[filename])

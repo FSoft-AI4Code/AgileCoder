@@ -132,9 +132,9 @@ class ChatEnv:
                 if is_python and len(runnable_files) == 0:
                     return True, "[Error] the software lacks an entry point to start"
                 testing_commands.extend(runnable_files)
-
+                testing_commands.extend(['-m unittest'])
                 for testing_command in set(testing_commands):
-                    if testing_command not in runnable_files:
+                    if testing_command != '-m unittest' and testing_command not in runnable_files:
                         errs = "[Error] the software lacks an entry point to start"
                         error_contents += """\nError Traceback for Running {testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
                         return_flag = True
@@ -232,14 +232,14 @@ class ChatEnv:
     def print_employees(self):
         self.roster._print_employees()
 
-    def update_codes(self, generated_content):
-       return self.codes._update_codes(generated_content)
+    def update_codes(self, generated_content, is_testing = False):
+       return self.codes._update_codes(generated_content, is_testing)
 
     def rewrite_codes(self) -> None:
         self.codes._rewrite_codes(self.config.git_management)
 
-    def get_codes(self) -> str:
-        return self.codes._get_codes()
+    def get_codes(self, ignore_test_code = True) -> str:
+        return self.codes._get_codes(ignore_test_code)
 
     def _load_from_hardware(self, directory) -> None:
         self.codes._load_from_hardware(directory)
