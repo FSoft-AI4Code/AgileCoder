@@ -98,7 +98,7 @@ class ChatEnv:
                 os.mkdir(self.env_dict['directory'])
         os.makedirs(os.path.join(self.env_dict['directory'], 'assets'), exist_ok = True)
 
-    def exist_bugs(self) -> tuple[bool, str]:
+    def exist_bugs(self, chat_env) -> tuple[bool, str]:
         directory = self.env_dict['directory']
         print('DIRECTORY:', directory)
 
@@ -117,9 +117,6 @@ class ChatEnv:
                 )
             else:
                 all_files = os.listdir(directory)
-                testing_commands = self.env_dict['commands']
-                return_flag = False
-                error_contents = ''
                 runnable_files = []
                 is_python = False
                 for file in all_files:
@@ -129,11 +126,23 @@ class ChatEnv:
                         code = f.read()
                     if has_entry_point(code):
                         runnable_files.append(file)
-                if is_python and len(runnable_files) == 0:
-                    return True, "[Error] the software lacks an entry point to start"
-                testing_commands.extend(runnable_files)
-                testing_commands.extend(['-m unittest'])
-                for testing_command in set(testing_commands):
+                return_flag = False
+                if 'testing_commands' not in self.env_dict:
+                    
+                    testing_commands = self.env_dict['commands']
+                    error_contents = ''
+                    
+                    if is_python and len(runnable_files) == 0:
+                        return True, "[Error] the software lacks an entry point to start"
+                    testing_commands.extend(runnable_files)
+                    # testing_commands.extend(['-m unittest'])
+                    
+                    testing_commands = list(set(testing_commands))
+                else:
+                    testing_commands = self.env_dict['testing_commands']
+                    error_contents = ''
+                current_idx = 0
+                for testing_command in testing_commands:
                     if testing_command != '-m unittest' and testing_command not in runnable_files:
                         errs = "[Error] the software lacks an entry point to start"
                         error_contents += """\nError Traceback for Running {testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
@@ -211,10 +220,14 @@ class ChatEnv:
                             if 'error' in error_output.lower():
                                 return_flag = True
                                 error_contents += """\nError Traceback for Running {testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
-
+                    current_idx += 1
+                    if return_flag:
+                        chat_env.env_dict['testing_commands'] = testing_commands[current_idx:]
+                        break
                 if return_flag:
                     return return_flag, error_contents
                 else:
+                    chat_env.env_dict['testing_commands'] = []
                     return False, success_info
         except subprocess.CalledProcessError as e:
             return True, f"Error: {e}"
@@ -237,9 +250,11 @@ class ChatEnv:
 
     def rewrite_codes(self) -> None:
         self.codes._rewrite_codes(self.config.git_management)
+    def get_high_overlap_code(self):
+        return self.codes._get_high_overlap_code()
 
-    def get_codes(self, ignore_test_code = True) -> str:
-        return self.codes._get_codes(ignore_test_code)
+    def get_codes(self, ignore_test_code = True, simplify_code = False) -> str:
+        return self.codes._get_codes(ignore_test_code, simplify_code)
 
     def _load_from_hardware(self, directory) -> None:
         self.codes._load_from_hardware(directory)

@@ -268,6 +268,12 @@
       "'''",
       "$CODE",
       "```",
+      "Example of the format:",
+      "a.py",
+      "```python",
+      "def f():",
+      "    pass",
+      "```",
       "You will start with the \"main\" file, then go to the ones that are imported by that file, and so on.",
       "Please note that the code should be fully functional. Ensure to implement all functions. No placeholders (such as 'pass' in Python)."
     ]
@@ -298,6 +304,38 @@
       "$CODE",
       "```",
       "Please note that each test case should be fully executable individually. Ensure to implement all functions so that the sprint acceptance criteria is satisfied perfectly. No placeholders (such as 'pass' in Python)."
+    ]
+  },
+  "SolutionDesign": {
+    "assistant_role_name": "Development Team",
+    "user_role_name": "Product Owner",
+    "phase_prompt": [
+      "According to the new user's task and our software designs listed below: ",
+      "User's task: \"{task}\".",
+      "Modality: \"{modality}\".",
+      "Programming Language: \"{language}\"",
+      "Sprint goals:\n\"{current_sprint_goals}\"",
+      "Sprint backlog:\n\"{current_programming_task}\"",
+      "Sprint acceptance criteria:\n\"{current_acceptance_criteria}\"",
+      "To satisfy the sprint goals, we have decided to complete the sprint backlog through a executable software with multiple files implemented via {language}. As the {assistant_role}, to satisfy the user's demands and the sprint goals, you should accomplish the sprint backlog and sprint goals by designing solution architecture and method interfaces. {gui}",
+      "Think step by step and reason yourself to the right decisions to make sure we get it right.",
+      "You will first lay out the names of the core classes, functions, methods that will be necessary, as well as a quick comment on their purpose.",
+      "Then you will output the content of each file including complete code. Each file must strictly follow a markdown code block format, where the following tokens must be replaced such that $FILENAME is the lowercase file name including the file extension, $LANGUAGE in the programming language, $DOCSTRING is a string literal specified in source code that is used to document a specific segment of code, and $CODE is the original code:",
+      "$FILENAME",
+      "```$LANGUAGE",
+      "'''",
+      "$DOCSTRING",
+      "'''",
+      "$CODE",
+      "```",
+      "Example of the format:",
+      "a.py",
+      "```python",
+      "def f():",
+      "    pass",
+      "```",
+      "You will start with the \"main\" file, then go to the ones that are imported by that file, and so on.",
+      "Please note that the code should be fully functional. Ensure to implement all functions. No placeholders (such as 'pass' in Python)."
     ]
   },
   "CodeFormatting": {
@@ -353,6 +391,12 @@
       "$DOCSTRING",
       "'''",
       "$CODE",
+      "```",
+      "Example of the format:",
+      "a.py",
+      "```python",
+      "def f():",
+      "    pass",
       "```",
       "You will start with the \"main\" file, then go to the ones that are imported by that file, and so on.",
       "Please note that the code should be fully functional. Ensure to implement all functions. No placeholders (such as 'pass' in Python)."

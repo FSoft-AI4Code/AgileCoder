@@ -136,27 +136,34 @@
               "need_reflect": "False"
             },
             {
-              "phase": "TestErrorSummary",
-              "phaseType": "SimplePhase",
-              "max_turn_step": 1,
-              "need_reflect": "False"
-            },
-            {
-              "phase": "CodeAndFormat",
+              "phase": "BugFixing",
               "phaseType": "ComposedPhase",
-              "cycleNum": 1,
+              "cycleNum": -1,
               "Composition": [
                 {
-                  "phase": "TestModification",
+                  "phase": "TestErrorSummary",
                   "phaseType": "SimplePhase",
                   "max_turn_step": 1,
                   "need_reflect": "False"
                 },
                 {
-                  "phase": "CodeFormatting",
-                  "phaseType": "SimplePhase",
-                  "max_turn_step": 1,
-                  "need_reflect": "False"
+                  "phase": "CodeAndFormat",
+                  "phaseType": "ComposedPhase",
+                  "cycleNum": 1,
+                  "Composition": [
+                    {
+                      "phase": "TestModification",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    },
+                    {
+                      "phase": "CodeFormatting",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    }
+                  ]
                 }
               ]
             }
@@ -262,27 +269,34 @@
               "need_reflect": "False"
             },
             {
-              "phase": "TestErrorSummary",
-              "phaseType": "SimplePhase",
-              "max_turn_step": 1,
-              "need_reflect": "False"
-            },
-            {
-              "phase": "CodeAndFormat",
+              "phase": "BugFixing",
               "phaseType": "ComposedPhase",
-              "cycleNum": 1,
+              "cycleNum": -1,
               "Composition": [
                 {
-                  "phase": "TestModification",
+                  "phase": "TestErrorSummary",
                   "phaseType": "SimplePhase",
                   "max_turn_step": 1,
                   "need_reflect": "False"
                 },
                 {
-                  "phase": "CodeFormatting",
-                  "phaseType": "SimplePhase",
-                  "max_turn_step": 1,
-                  "need_reflect": "False"
+                  "phase": "CodeAndFormat",
+                  "phaseType": "ComposedPhase",
+                  "cycleNum": 1,
+                  "Composition": [
+                    {
+                      "phase": "TestModification",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    },
+                    {
+                      "phase": "CodeFormatting",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    }
+                  ]
                 }
               ]
             }

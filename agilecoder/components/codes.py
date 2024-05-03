@@ -1,6 +1,7 @@
 import os
 import re
 from strsimpy.normalized_levenshtein import NormalizedLevenshtein
+from nltk.translate.bleu_score import sentence_bleu
 from agilecoder.components.utils import log_and_print_online
 import difflib
 import ast
@@ -46,6 +47,26 @@ def extract_class_names(source_code):
     pattern = r'class\s+([A-Za-z_]\w*)'
     class_names = re.findall(pattern, source_code)
     return class_names
+
+def simplify_code(code):
+    codelines = code.splitlines()
+    outputs = []
+    flag = False
+    for line in codelines:
+        if line.strip().startswith('def'):
+            flag = True
+            is_docstring = 0
+
+        if flag and line.strip() in ['"""', "'''"]:
+            is_docstring += 1
+                # if not is_docstring:
+                #     flag = False
+        if flag and is_docstring == 2: 
+            outputs.append(line)
+            is_docstring += 1
+        if flag and is_docstring > 2: continue
+        outputs.append(line)
+    return '\n'.join(outputs)
 
 
 class Codes:
@@ -177,6 +198,23 @@ class Codes:
     def _format_code(self, code):
         code = "\n".join([line for line in code.split("\n") if len(line.strip()) > 0])
         return code
+    
+    def _get_high_overlap_code(self):
+        filename_pairs = set()
+        results = {}
+        for filename, filecode in self.codebooks.items():
+            for filename1, filecode1 in self.codebooks.items():
+                if filename == filename1: continue
+                p = filename, filename1
+                p1 = filename1, filename
+                if p not in filename_pairs and p1 not in filename_pairs:
+                    filename_pairs.add(p)
+                else: continue
+                s = sentence_bleu([filecode.split()], filecode1.split())
+                if s > 0.7:
+                    results[p] = s
+        return results
+                
 
     def _update_codes(self, generated_content, is_testing):
         new_codes = Codes(generated_content, is_testing)
@@ -232,13 +270,16 @@ class Codes:
 
         log_and_print_online(rewrite_codes_content)
 
-    def _get_codes(self, ignore_test_code) -> str:
+    def _get_codes(self, ignore_test_code, _simplify_code = False) -> str:
         content = ""
         for filename in self.codebooks.keys():
             if ignore_test_code and filename in self.testing_filenames: continue
+            code = self.codebooks[filename]
+            if _simplify_code:
+                code = simplify_code(code)
             content += "{}\n```{}\n{}\n```\n\n".format(filename,
                                                        "python" if filename.endswith(".py") else filename.split(".")[
-                                                           -1], self.codebooks[filename])
+                                                           -1], code)
         return content
 
     def _load_from_hardware(self, directory) -> None:

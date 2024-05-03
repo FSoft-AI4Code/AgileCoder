@@ -690,7 +690,7 @@ class WritingTestSuite(Phase):
                                "current_sprint_backlog": chat_env.env_dict['current-sprint-backlog'],
                                'current_programming_task': chat_env.env_dict['current-programming-task'],
                                'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
-                               "codes": chat_env.get_codes()})
+                               "codes": chat_env.get_codes(simplify_code = True)})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         print('WritingTestSuite', self.seminar_conclusion)
@@ -727,7 +727,7 @@ class InheritCoding(Phase):
                                "modality": chat_env.env_dict['modality'],
                                "ideas": chat_env.env_dict['ideas'],
                                "language": chat_env.env_dict['language'],
-                                "codes": chat_env.get_codes(),
+                                "codes": chat_env.get_codes(simplify_code = True),
                                "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
                                "current_sprint_backlog": chat_env.env_dict['current-sprint-backlog'],
                                'current_programming_task': chat_env.env_dict['current-programming-task'],
@@ -828,14 +828,12 @@ class SprintReview(Phase):
              "modality": chat_env.env_dict['modality'],
              "ideas": chat_env.env_dict['ideas'],
              "language": chat_env.env_dict['language'],
-             "codes": chat_env.get_codes(),
+             "codes": chat_env.get_codes(simplify_code = True),
               "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
              'current_programming_task': chat_env.env_dict['current-programming-task'],
              'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
              "test_reports": chat_env.env_dict['test_reports'],
             "error_summary": chat_env.env_dict['error_summary'],
-            "codes": chat_env.get_codes(),
-             
              "images": ", ".join(chat_env.incorporated_images)})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
@@ -1008,7 +1006,16 @@ class CodeReviewComment(Phase):
              "images": ", ".join(chat_env.incorporated_images)})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        chat_env.env_dict['review_comments'] = self.seminar_conclusion
+        results = chat_env.get_high_overlap_code()
+        content = "\nThere are high overlap among files: "
+        for f1, f2 in results:
+            content += f"({f1}, {f2}), "
+        content += "\nThus, considering removing redundant code."
+        if len(results) > 0:
+            chat_env.env_dict['review_comments'] = self.seminar_conclusion + content
+        else:
+            chat_env.env_dict['review_comments'] = self.seminar_conclusion
+
         return chat_env
 
 
@@ -1082,7 +1089,7 @@ class TestingPlan(Phase):
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
-                               "codes": chat_env.get_codes(),
+                               "codes": chat_env.get_codes(simplify_code = True),
                                 "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
                                'current_programming_task': chat_env.env_dict['current-programming-task'],
                                'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
@@ -1101,12 +1108,12 @@ class TestErrorSummary(Phase):
         self.errors = {}
     def update_phase_env(self, chat_env):
         chat_env.generate_images_from_codes()
-        (exist_bugs_flag, test_reports) = chat_env.exist_bugs()
+        (exist_bugs_flag, test_reports) = chat_env.exist_bugs(chat_env)
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "ideas": chat_env.env_dict['ideas'],
                                "language": chat_env.env_dict['language'],
-                               "codes": chat_env.get_codes(),
+                               "codes": chat_env.get_codes(simplify_code = True),
                                "test_reports": test_reports,
                                "exist_bugs_flag": exist_bugs_flag})
         log_and_print_online("**[Test Reports]**:\n\n{}".format(test_reports))
@@ -1339,7 +1346,7 @@ class EnvironmentDoc(Phase):
                                "modality": chat_env.env_dict['modality'],
                                "ideas": chat_env.env_dict['ideas'],
                                "language": chat_env.env_dict['language'],
-                               "codes": chat_env.get_codes()})
+                               "codes": chat_env.get_codes(simplify_code = True)})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         chat_env._update_requirements(self.seminar_conclusion)
@@ -1349,6 +1356,23 @@ class EnvironmentDoc(Phase):
 
 
 class Manual(Phase):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_phase_env(self, chat_env):
+        self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
+                               "modality": chat_env.env_dict['modality'],
+                               "ideas": chat_env.env_dict['ideas'],
+                               "language": chat_env.env_dict['language'],
+                               "codes": chat_env.get_codes(simplify_code = True),
+                               "requirements": chat_env.get_requirements()})
+
+    def update_chat_env(self, chat_env) -> ChatEnv:
+        chat_env._update_manuals(self.seminar_conclusion)
+        chat_env.rewrite_manuals()
+        return chat_env
+
+class SolutionDesign(Phase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
