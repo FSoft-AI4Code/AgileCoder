@@ -109,7 +109,8 @@ class Codes:
                 if "CODE" in code:
                     continue
                 if not self.is_testing and ("__main__" in code or 'main.py' in code):
-                    filename = "main.py"
+                    # filename = "main.py"
+                    pass
                 else:
                     filename = extract_filename_from_code(code)
                 if filename is not None and filename != '.py' and code is not None and len(filename) > 0 and len(code) > 0:
@@ -156,10 +157,11 @@ class Codes:
                     filename = extract_filename_from_line(group1)
                     old_filename = None
                     if not self.is_testing and ("__main__" in code or 'main.py' in code):
-                        new_filename = "main.py"
-                        if new_filename != filename:
-                            old_filename = filename
-                            filename = new_filename
+                        # new_filename = "main.py"
+                        # if new_filename != filename:
+                        #     old_filename = filename
+                        #     filename = new_filename
+                        pass
                     if filename == "":  # post-processing
                         filename = extract_filename_from_code(code)
                     # assert filename != ""
