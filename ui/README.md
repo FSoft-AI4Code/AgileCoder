@@ -15,15 +15,15 @@ Before you begin, ensure you have Docker installed on your machine. If not, you 
 ```bash
     cd ui
     pip install -r requirements.txt
-    docker-compose up --build : to run the UI
 ```
 ### 3 **Navigate to the AgileCoder directory:**     
 ```bash
     cd src/AgileCoder
     pip install -e .
 ```
-### 4 **Finaly cd to the UI diretory and run backend:**
+### 4 **Finaly cd to the UI diretory and run backend and frontend:**
 ```bash
     python agilecoder_ui.py
+    docker-compose up --build
 ```
 
