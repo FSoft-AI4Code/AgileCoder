@@ -1,0 +1,282 @@
+.container {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 2500px;
+    height: 700px;
+    border: 1px solid black;
+    overflow-y: scroll;
+    background-color: white;
+    position: relative;
+}
+
+.message-container {
+  position: relative;
+  display: flex;
+  margin: 20px;
+  max-width: 95%;
+  word-wrap: break-word;
+  padding-top: 0px; /* Add space for the button */
+}
+
+
+.message-text {
+    background-color: #D2D4D3;
+    border-radius: 10px;
+    padding: 8px;
+    margin-left: 40px;
+    font-size: 10px;
+    width: 100%;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    position: absolute;
+    top: 0px;
+    left: -30px;
+    margin-left: 20px;
+    background-color: green;
+    background-size: cover;
+}
+
+.role {
+    font-size: 12px;
+    font-weight: bold;
+    position: absolute;
+    bottom: 0;
+    top: -30px;
+    margin-top: 10px;
+    margin-left: 40px;
+}
+
+.code-block pre {
+    margin: 0;
+}
+
+.dark {
+    color: #000000;
+}
+
+.line-numbers .line-numbers-rows {
+    border-right-color: #44475a;
+    display: block; /* Add this to ensure line numbers are displayed */
+}
+
+.code-block-header {
+    background-color: #5b5656;
+    color: #ffffff;
+    padding: 5px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+
+.code-block {
+    background-color: #000000 !important;
+    border-radius: 4px;
+    margin-top: 10px;
+    position: relative;
+    overflow: hidden;
+    color: #000000; /* Add text color for syntax highlighting */
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: left;
+  white-space: pre-line;
+}
+
+.expand-button {
+  position: absolute;
+  top: 3px;
+  right: 65px;
+  border-radius: 4px;
+  background-color: #95A1A1;
+  color: #f8f8f2;
+  border: none;
+  padding: 5px;
+  cursor: pointer;
+  font-size: 8px;
+  width: 50px;
+  height: 20px;
+  line-height: 10px;
+  font-weight: bold;
+}
+
+.expand-button:hover {
+  background-color: #6B9297; 
+}
+
+.copy-button {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    background-color: #A9A9A7;
+    color: #f8f8f2;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 55px;
+    height: 20px;
+    line-height: 10px;
+    font-size: 8px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.copy-button:hover {
+  background-color: #866753; 
+}
+input[type="text"]{
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    color: #333;
+}
+/* Style for the submit button */
+#submitButton {
+  background-color: #007bff; /* Button background color */
+  color: #fff; /* Text color */
+  padding: 10px 20px; /* Padding around the button text */
+  border: none; /* Remove the default button border */
+  border-radius: 5px; /* Rounded corners */
+  font-size: 16px; /* Text font size */
+  cursor: pointer; /* Change cursor on hover */
+}
+
+/* Hover effect for the submit button */
+#submitButton:hover {
+  background-color: #0056b3; /* Button background color on hover */
+}
+/* Style for the loading bar */
+
+.pure-material-progress-circular {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 50%;
+  padding: 0.25em;
+  width: 3em;
+  height: 3em;
+  color: rgb(var(--pure-material-primary-rgb, 33, 150, 243));
+  background-color: transparent;
+  font-size: 16px;
+  overflow: hidden;
+}
+
+.pure-material-progress-circular::-webkit-progress-bar {
+  background-color: transparent;
+}
+
+/* Indeterminate */
+.pure-material-progress-circular:indeterminate {
+  -webkit-mask-image: linear-gradient(transparent 50%, black 50%), linear-gradient(to right, transparent 50%, black 50%);
+  mask-image: linear-gradient(transparent 50%, black 50%), linear-gradient(to right, transparent 50%, black 50%);
+  animation: pure-material-progress-circular 6s infinite cubic-bezier(0.3, 0.6, 1, 1);
+}
+
+:-ms-lang(x), .pure-material-progress-circular:indeterminate {
+  animation: none;
+}
+
+.pure-material-progress-circular:indeterminate::before,
+.pure-material-progress-circular:indeterminate::-webkit-progress-value {
+  content: "";
+  display: block;
+  box-sizing: border-box;
+  margin-bottom: 0.25em;
+  border: solid 0.25em transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  width: 100% !important;
+  height: 100%;
+  background-color: transparent;
+  animation: pure-material-progress-circular-pseudo 0.75s infinite linear alternate;
+}
+
+.pure-material-progress-circular:indeterminate::-moz-progress-bar {
+  box-sizing: border-box;
+  border: solid 0.25em transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  animation: pure-material-progress-circular-pseudo 0.75s infinite linear alternate;
+}
+
+.pure-material-progress-circular:indeterminate::-ms-fill {
+  animation-name: -ms-ring;
+}
+
+@keyframes pure-material-progress-circular {
+  0% {
+      transform: rotate(0deg);
+  }
+  12.5% {
+      transform: rotate(180deg);
+      animation-timing-function: linear;
+  }
+  25% {
+      transform: rotate(630deg);
+  }
+  37.5% {
+      transform: rotate(810deg);
+      animation-timing-function: linear;
+  }
+  50% {
+      transform: rotate(1260deg);
+  }
+  62.5% {
+      transform: rotate(1440deg);
+      animation-timing-function: linear;
+  }
+  75% {
+      transform: rotate(1890deg);
+  }
+  87.5% {
+      transform: rotate(2070deg);
+      animation-timing-function: linear;
+  }
+  100% {
+      transform: rotate(2520deg);
+  }
+}
+
+@keyframes pure-material-progress-circular-pseudo {
+  0% {
+      transform: rotate(-30deg);
+  }
+  29.4% {
+      border-left-color: transparent;
+  }
+  29.41% {
+      border-left-color: currentColor;
+  }
+  64.7% {
+      border-bottom-color: transparent;
+  }
+  64.71% {
+      border-bottom-color: currentColor;
+  }
+  100% {
+      border-left-color: currentColor;
+      border-bottom-color: currentColor;
+      transform: rotate(225deg);
+  }
+}
+#loading-bar {
+  display: none;
+}

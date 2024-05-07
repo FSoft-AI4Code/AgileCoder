@@ -1,0 +1,9 @@
+*.pyc
+.DS_Store
+.idea
+.vscode
+__pycache__/
+WareHouse/
+build/
+dist/
+agilecoder.egg-info/

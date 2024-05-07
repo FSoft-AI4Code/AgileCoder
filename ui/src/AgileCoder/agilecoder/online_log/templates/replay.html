@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>
+<link rel="stylesheet" href="static/replay/css/use.css">
+<link rel="stylesheet" href="static/replay/css/github-markdown-dark.css">
+
+<head>
+    <title>AgileCoder</title>
+    <link rel="icon" type="image/png" href="static/figures/ceo.png">
+</head>
+
+<body style="display: flex;flex: auto; ">
+
+    <div id="operation">
+        <div id="title" style="display: block;position: relative;height: 100px;">
+            <img src="static/figures/agilecoder.svg" style="width: 364px;height: 128px; position: relative;top:40px;left:75px;">
+            <p style="color:aliceblue; font-size: larger;font-weight: bolder;position: relative;top:20px;left:40px;text-shadow: 0px 0px 0px rgb(252, 252, 252);">
+               A Multi-Agents Software Development Framework based on Agile Methodology</p>
+        </div>
+        <div id="imgShow">
+            <img src="static/figures/company.png" alt="chatdev-company" id="chatdev-company">
+            <img src="static/figures/right.png" id="right" class="blinking-animation" style="display: none;position: relative; width: 40px;height: 40px;top: -360px;left: 420px">
+            <img src="static/figures/left.png" id="left" class="blinking-animation" style="display: none;width: 40px;height: 40px;position: relative; top: -465px;left: 125px">
+        </div>
+        <div style="position: relative;top:200px;display: flex;">
+            <!-- <div> <input type="text" id="fileInput" value = "{{ file }} " onchange="watchfileInput(this.value)">
+                <button id="filebutton" class="button">File Upload</button>
+            </div> -->
+            <div><button id="download" class="button">Download</button></div>
+            <div><button id="replay" class="button">Replay</button></div>
+        </div>
+        <div class="markdown-body"><label for="filebutton" id="successupload">
+            </label>
+        </div>
+    </div>
+    <div id="show" style="display: grid;">
+        
+        <div id="humanRequest" style="position: relative; overflow: auto;">
+            <p id="Requesttext" style=" color:aliceblue; display: block;font-weight: 900; max-height: 18px; max-width: 800px;">Task: </p>
+        </div>
+        <div id="dialogBody" style="top:20px;display: flex;flex-direction: column;">
+        </div>
+        <div id="speedcontrol">
+            <input type="range" id="speed" name="speed" min="0" max="100" onchange="speedchange()">
+            <label for="speed">Replaying Speed</label>
+        </div>
+        <div id="dialogStatistic" style="display: flex;flex-direction: column;">
+            <div style="display: flex;width: 2800px;flex-direction: row;height: 60px;">
+
+                <div class="info">
+                    <label for="version_updates" style="position: relative;">🔨version_updates</label>
+                    <p id="version_updates"></p>
+                </div>
+                <div class="info">
+                    <label for="num_code_files" style="position: relative;">📃num_code_files</label>
+                    <p id="num_code_files"></p>
+                </div>
+
+                <div class="info">
+                    <label for="num_png_files" style="position: relative;"> 🏞num_png_files</label>
+                    <p id="num_png_files"></p>
+                </div>
+                <div class="info">
+                    <label for="num_doc_files" style="position: relative;">📚num_doc_files</label>
+                    <p id="num_doc_files"></p>
+                </div>
+                <div class="info">
+                    <label for="code_lines" style="position: relative;">📃code_lines</label>
+                    <p id="code_lines"></p>
+                </div>
+                <div class="info">
+                    <label for="env_lines" style="position: relative;">📋env_lines</label>
+                    <p id="env_lines"></p>
+                </div>
+                <div class="info">
+                    <label for="manual_lines" style="position: relative;">📒manual_lines</label>
+                    <p id="manual_lines"></p>
+                </div>
+                <div class="info">
+                    <label for="num_utterances" style="position: relative;">🗣num_utterances</label>
+                    <p id="num_utterances"></p>
+                </div>
+
+                <div class="info">
+                    <label for="num_self_reflections" style="position: relative;">🤔num_self_reflections</label>
+                    <p id="num_self_reflections"></p>
+                </div>
+                <div class="info">
+                    <label for="num_prompt_tokens" style="position: relative;">❓num_prompt_tokens</label>
+                    <p id="num_prompt_tokens"></p>
+                </div>
+                <div class="info">
+                    <label for="num_completion_tokens" style="position: relative;">❗num_completion_tokens</label>
+                    <p id="num_completion_tokens"></p>
+                </div>
+                <div class="info">
+                    <label for="num_total_tokens" style="position: relative;">⁉️num_total_tokens</label>
+                    <p id="num_total_tokens"></p>
+                </div>
+                <div class="info">
+                    <label for="cost" style="position: relative;">💰cost</label>
+                    <p id="cost"></p>
+                </div>
+                <div class="info">
+                    <label for="duration" style="position: relative;">🕑duration</label>
+                    <p id="duration"></p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    <script src="static/replay/js/app.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>-->
+    <script>
+        var base64Data = "{{ file }}";
+        var folder_name = "{{ folder_name }}"
+        // Decode base64 to UTF-8 bytes
+        var utf8Bytes = atob(base64Data);
+
+        // Convert UTF-8 bytes to a JavaScript string
+        // var utf8String = new TextDecoder('utf-8').decode(new Uint8Array(utf8Bytes));
+        // var text = new TextDecoder('utf-8').decode(content);
+        watchfileInput(utf8Bytes, folder_name);
+        replayDialog(0);
+       
+    </script>
+</body>
+
+</html>

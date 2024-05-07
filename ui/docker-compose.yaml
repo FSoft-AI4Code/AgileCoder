@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+
+  agilecoder-frontend-app:
+    build:
+      context: .
+      dockerfile: app.dockerfile
+      args:
+        - VITE_API_BASE_URL=http://127.0.0.1:1337
+    expose:
+      - 3000
+    ports:
+      - 3000:3000
+    networks:
+      - agilecoder-subnetwork
+
+
+networks:
+  agilecoder-subnetwork:
