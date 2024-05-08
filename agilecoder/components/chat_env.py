@@ -206,20 +206,19 @@ class ChatEnv:
                     #     else:
                     #         return False, success_info
                     error_output = process.stderr.read().decode('utf-8')
-                    if error_output:
-                        if return_code != 0:
+                    if return_code != 0:
+                        if error_output:
                             if "Traceback".lower() in error_output.lower():
                                 errs = error_output.replace(directory + "/", "")
                                 # return True, errs
-                                error_contents += """\nError Traceback for Running {testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
+                                error_contents += """\nError Traceback for Running `{testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
                                 return_flag = True
                                 
                             # else:
                             #     return False, success_info
-                        else:
-                            if 'error' in error_output.lower():
-                                return_flag = True
-                                error_contents += """\nError Traceback for Running {testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
+                        # else:
+                        #     return_flag = True
+                        #     error_contents += """\nError Traceback for Running `{testing_command}`":\n{errs}""".format(testing_command = testing_command, errs = errs)
                     current_idx += 1
                     if return_flag:
                         chat_env.env_dict['testing_commands'] = testing_commands[current_idx:]

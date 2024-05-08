@@ -110,7 +110,7 @@ class Codes:
                     continue
                 if not self.is_testing and ("__main__" in code or 'main.py' in code):
                     # filename = "main.py"
-                    pass
+                    filename = None
                 else:
                     filename = extract_filename_from_code(code)
                 if filename is not None and filename != '.py' and code is not None and len(filename) > 0 and len(code) > 0:
