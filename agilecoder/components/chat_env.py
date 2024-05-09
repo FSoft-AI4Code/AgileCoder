@@ -257,6 +257,10 @@ class ChatEnv:
 
     def _load_from_hardware(self, directory) -> None:
         self.codes._load_from_hardware(directory)
+    
+    def get_total_changed_lines(self):
+        if hasattr(self.codes, 'total_changed_lines'): return self.codes.total_changed_lines
+
 
     def _update_requirements(self, generated_content):
         self.requirements._update_docs(generated_content)

@@ -87,32 +87,103 @@
           ]
         },
         {
-          "phase": "CodeReview",
+          "phase": "CodeReviewChain",
           "phaseType": "ComposedPhase",
-          "cycleNum": 3,
+          "cycleNum": 2,
           "Composition": [
             {
-              "phase": "CodeReviewComment",
-              "phaseType": "SimplePhase",
-              "max_turn_step": 1,
-              "need_reflect": "False"
-            },
-            {
-              "phase": "CodeAndFormat",
+              "phase": "CodeReview",
               "phaseType": "ComposedPhase",
               "cycleNum": 1,
               "Composition": [
                 {
-                  "phase": "CodeReviewModification",
+                  "phase": "CodeReviewComment1",
                   "phaseType": "SimplePhase",
                   "max_turn_step": 1,
                   "need_reflect": "False"
                 },
                 {
-                  "phase": "CodeFormatting",
+                  "phase": "CodeAndFormat",
+                  "phaseType": "ComposedPhase",
+                  "cycleNum": 1,
+                  "Composition": [
+                    {
+                      "phase": "CodeReview1Modification",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    },
+                    {
+                      "phase": "CodeFormatting",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "phase": "CodeReview",
+              "phaseType": "ComposedPhase",
+              "cycleNum": 1,
+              "Composition": [
+                {
+                  "phase": "CodeReviewComment2",
                   "phaseType": "SimplePhase",
                   "max_turn_step": 1,
                   "need_reflect": "False"
+                },
+                {
+                  "phase": "CodeAndFormat",
+                  "phaseType": "ComposedPhase",
+                  "cycleNum": 1,
+                  "Composition": [
+                    {
+                      "phase": "CodeReview2Modification",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    },
+                    {
+                      "phase": "CodeFormatting",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "phase": "CodeReview",
+              "phaseType": "ComposedPhase",
+              "cycleNum": 1,
+              "Composition": [
+                {
+                  "phase": "CodeReviewComment3",
+                  "phaseType": "SimplePhase",
+                  "max_turn_step": 1,
+                  "need_reflect": "False"
+                },
+                {
+                  "phase": "CodeAndFormat",
+                  "phaseType": "ComposedPhase",
+                  "cycleNum": 1,
+                  "Composition": [
+                    {
+                      "phase": "CodeReview3Modification",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    },
+                    {
+                      "phase": "CodeFormatting",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    }
+                  ]
                 }
               ]
             }
@@ -233,21 +304,105 @@
           ]
         },
         {
-          "phase": "CodeReview",
+          "phase": "CodeReviewChain",
           "phaseType": "ComposedPhase",
-          "cycleNum": 3,
+          "cycleNum": 2,
           "Composition": [
             {
-              "phase": "CodeReviewComment",
-              "phaseType": "SimplePhase",
-              "max_turn_step": 1,
-              "need_reflect": "False"
+              "phase": "CodeReview",
+              "phaseType": "ComposedPhase",
+              "cycleNum": 1,
+              "Composition": [
+                {
+                  "phase": "CodeReviewComment1",
+                  "phaseType": "SimplePhase",
+                  "max_turn_step": 1,
+                  "need_reflect": "False"
+                },
+                {
+                  "phase": "CodeAndFormat",
+                  "phaseType": "ComposedPhase",
+                  "cycleNum": 1,
+                  "Composition": [
+                    {
+                      "phase": "CodeReview1Modification",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    },
+                    {
+                      "phase": "CodeFormatting",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    }
+                  ]
+                }
+              ]
             },
             {
-              "phase": "CodeReviewModification",
-              "phaseType": "SimplePhase",
-              "max_turn_step": 1,
-              "need_reflect": "False"
+              "phase": "CodeReview",
+              "phaseType": "ComposedPhase",
+              "cycleNum": 1,
+              "Composition": [
+                {
+                  "phase": "CodeReviewComment2",
+                  "phaseType": "SimplePhase",
+                  "max_turn_step": 1,
+                  "need_reflect": "False"
+                },
+                {
+                  "phase": "CodeAndFormat",
+                  "phaseType": "ComposedPhase",
+                  "cycleNum": 1,
+                  "Composition": [
+                    {
+                      "phase": "CodeReview2Modification",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    },
+                    {
+                      "phase": "CodeFormatting",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "phase": "CodeReview",
+              "phaseType": "ComposedPhase",
+              "cycleNum": 1,
+              "Composition": [
+                {
+                  "phase": "CodeReviewComment3",
+                  "phaseType": "SimplePhase",
+                  "max_turn_step": 1,
+                  "need_reflect": "False"
+                },
+                {
+                  "phase": "CodeAndFormat",
+                  "phaseType": "ComposedPhase",
+                  "cycleNum": 1,
+                  "Composition": [
+                    {
+                      "phase": "CodeReview3Modification",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    },
+                    {
+                      "phase": "CodeFormatting",
+                      "phaseType": "SimplePhase",
+                      "max_turn_step": 1,
+                      "need_reflect": "False"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },

@@ -103,29 +103,58 @@ class Codes:
             matches = re.finditer(regex, self.generated_content, re.DOTALL)
             unmatched_codes = []
             flag = False
+            normalized_levenshtein = NormalizedLevenshtein()
+            # for match in matches:
+            #     flag = True
+            #     code = match.group(1)
+            #     if "CODE" in code:
+            #         continue
+            #     if not self.is_testing and ("__main__" in code or 'main.py' in code):
+            #         # filename = "main.py"
+            #         filename = None
+            #     else:
+            #         filename = extract_filename_from_code(code)
+            #     if filename is not None and filename != '.py' and code is not None and len(filename) > 0 and len(code) > 0:
+            #         self.codebooks[filename] = self._format_code(code)
+            #     else:
+            #         unmatched_codes.append(self._format_code(code))
             for match in matches:
                 flag = True
                 code = match.group(1)
                 if "CODE" in code:
                     continue
-                if not self.is_testing and ("__main__" in code or 'main.py' in code):
-                    # filename = "main.py"
-                    filename = None
-                else:
-                    filename = extract_filename_from_code(code)
-                if filename is not None and filename != '.py' and code is not None and len(filename) > 0 and len(code) > 0:
-                    self.codebooks[filename] = self._format_code(code)
-                else:
-                    unmatched_codes.append(self._format_code(code))
-            normalized_levenshtein = NormalizedLevenshtein()
-            for code in unmatched_codes:
+                # if not self.is_testing and ("__main__" in code or 'main.py' in code):
+                #     # filename = "main.py"
+                #     filename = None
+                # else:
+                #     filename = extract_filename_from_code(code)
+                # if filename is not None and filename != '.py' and code is not None and len(filename) > 0 and len(code) > 0:
+                #     self.codebooks[filename] = self._format_code(code)
+                # else:
+                #     unmatched_codes.append(self._format_code(code))
+                formatted_code = self._format_code(code)
                 scores = []
                 for filename, file_code in self.codebooks.items():
-                    scores.append((filename, code, normalized_levenshtein.similarity(code, file_code)))
+                    scores.append((filename, formatted_code, normalized_levenshtein.similarity(formatted_code, file_code)))
+                has_duplicated = False
                 if len(scores) > 0:
                     scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
                     if scores[2] > 0.7:
                         self.codebooks[scores[0]] = scores[1]
+                        has_duplicated = True
+                if not has_duplicated:
+                    filename = extract_filename_from_code(code)
+                    if filename is not None and filename != '.py' and formatted_code is not None and len(filename) > 0 and len(formatted_code) > 0:
+                        self.codebooks[filename] = formatted_code
+            # normalized_levenshtein = NormalizedLevenshtein()
+            # for code in unmatched_codes:
+            #     scores = []
+            #     for filename, file_code in self.codebooks.items():
+            #         scores.append((filename, code, normalized_levenshtein.similarity(code, file_code)))
+            #     if len(scores) > 0:
+            #         scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
+            #         if scores[2] > 0.7:
+            #             self.codebooks[scores[0]] = scores[1]
             
             if not flag:
                 regex = r"FILENAME: ([a-z_0-9]+\.\w+)\n```.*?\n(.*?)```"
@@ -185,15 +214,17 @@ class Codes:
                             self.codebooks[filename] = self._format_code(code)
 
             if not flag:
-                file_codes = extract_files(self.generated_content)
-                for filename, filecode in file_codes.items():
-                    if filename.endswith('.py'):
-                        if is_valid_syntax(filecode):
+                try:
+                    file_codes = extract_files(self.generated_content)
+                    for filename, filecode in file_codes.items():
+                        if filename.endswith('.py'):
+                            if is_valid_syntax(filecode):
+                                flag = True
+                                self.codebooks[filename] = self._format_code(filecode)
+                        else:
                             flag = True
                             self.codebooks[filename] = self._format_code(filecode)
-                    else:
-                        flag = True
-                        self.codebooks[filename] = self._format_code(filecode)
+                except: pass
             
             self.has_correct_format = flag
                 
@@ -220,9 +251,10 @@ class Codes:
 
     def _update_codes(self, generated_content, is_testing):
         new_codes = Codes(generated_content, is_testing)
-        differ = difflib.Differ()
+        # differ = difflib.Differ()
         flag = False
         total_new_length = 0
+        total_changed_lines = ''
         for key in new_codes.codebooks.keys():
             total_new_length += len(new_codes.codebooks[key])
             if key not in self.codebooks.keys() or self.codebooks[key] != new_codes.codebooks[key]:
@@ -230,6 +262,7 @@ class Codes:
                     self.testing_filenames.update([key])
                 update_codes_content = "**[Update Codes]**\n\n"
                 update_codes_content += "{} updated.\n".format(key)
+                total_changed_lines +=  "File: {} updated.\n".format(key)
                 old_codes_content = self.codebooks[key] if key in self.codebooks.keys() else "# None"
                 new_codes_content = new_codes.codebooks[key]
 
@@ -242,11 +275,13 @@ class Codes:
 '''
 
 '''\n""" + unified_diff + "\n```"
+                total_changed_lines +=  "```\n" + unified_diff + "\n```\n"
 
                 log_and_print_online(update_codes_content)
                 self.codebooks[key] = new_codes.codebooks[key]
             flag = True
-        return flag and (total_new_length / len(generated_content) > 0.6)
+        self.total_changed_lines = total_changed_lines
+        return flag and (total_new_length / len(generated_content) > 0.7)
         # return hasattr(new_codes, 'has_correct_format') and new_codes.has_correct_format
 
     def _rewrite_codes(self, git_management) -> None:

@@ -983,9 +983,10 @@ class CodeReviewComment(Phase):
 
     def update_phase_env(self, chat_env):
         
-        codes = chat_env.get_codes()
+        codes = chat_env.get_total_changed_lines()
         # print('codescodes:', codes)
         if '.png' in codes:
+            chat_env.generate_images_from_codes()
             directory = chat_env.env_dict['directory']
             # print('directorydirectorydirectory:', directory)
             assets_paths = glob.glob(f'{directory}/*.png') + glob.glob(f'{directory}/*/*.png')
@@ -1018,6 +1019,15 @@ class CodeReviewComment(Phase):
 
         return chat_env
 
+class CodeReviewComment1(CodeReviewComment):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+class CodeReviewComment2(CodeReviewComment):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+class CodeReviewComment3(CodeReviewComment):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 class CodeReviewModification(Phase):
     def __init__(self, **kwargs):
@@ -1053,8 +1063,15 @@ class CodeReviewModification(Phase):
             chat_env.env_dict['raw_code_conclusion'] = self.seminar_conclusion
 
         return chat_env
-
-
+class CodeReview1Modification(CodeReviewModification):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+class CodeReview2Modification(CodeReviewModification):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+class CodeReview3Modification(CodeReviewModification):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 class CodeReviewHuman(Phase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -1097,7 +1114,7 @@ class TestingPlan(Phase):
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         if len(self.seminar_conclusion) > 0:
-            commands = re.findall(r"python (.*?\.py)", self.seminar_conclusion)
+            commands = re.findall(r"python (\w+\.py)", self.seminar_conclusion)
             chat_env.env_dict['commands'] = commands
             # print('commands', commands)
         return chat_env
@@ -1107,7 +1124,7 @@ class TestErrorSummary(Phase):
         super().__init__(**kwargs)
         self.errors = {}
     def update_phase_env(self, chat_env):
-        chat_env.generate_images_from_codes()
+        # chat_env.generate_images_from_codes()
         (exist_bugs_flag, test_reports) = chat_env.exist_bugs(chat_env)
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
