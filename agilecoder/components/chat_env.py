@@ -14,7 +14,7 @@ from agilecoder.components.codes import Codes
 from agilecoder.components.documents import Documents
 from agilecoder.components.roster import Roster
 from agilecoder.components.utils import log_and_print_online
-
+from agilecoder.camel.dependency import build_dependency_graph, get_test_order
 
 class ChatEnvConfig:
     def __init__(self, clear_structure,
@@ -54,6 +54,7 @@ class ChatEnv:
         self.config = chat_env_config
         self.roster: Roster = Roster()
         self.codes: Codes = Codes()
+        self.dependency_graph = None
         self.proposed_images: Dict[str, str] = {}
         self.incorporated_images: Dict[str, str] = {}
         self.requirements: Documents = Documents()
@@ -130,6 +131,9 @@ class ChatEnv:
                 if 'testing_commands' not in self.env_dict:
                     
                     testing_commands = self.env_dict['commands']
+                    _testing_commands = list(filter(lambda x: 'test_' in x, get_test_order(chat_env.dependency_graph)))
+                    additional_commands = list(set(testing_commands) - set(_testing_commands))
+                    testing_commands = _testing_commands + additional_commands
                     error_contents = ''
                     
                     if is_python and len(runnable_files) == 0:
@@ -249,11 +253,13 @@ class ChatEnv:
 
     def rewrite_codes(self) -> None:
         self.codes._rewrite_codes(self.config.git_management)
+        self.dependency_graph = build_dependency_graph(self.env_dict['directory'])
+        print('self.dependency_graph', self.dependency_graph)
     def get_high_overlap_code(self):
         return self.codes._get_high_overlap_code()
 
-    def get_codes(self, ignore_test_code = True, simplify_code = False) -> str:
-        return self.codes._get_codes(ignore_test_code, simplify_code)
+    def get_codes(self, ignore_test_code = True, simplify_code = False, only_test_code = False) -> str:
+        return self.codes._get_codes(ignore_test_code, simplify_code, only_test_code)
 
     def _load_from_hardware(self, directory) -> None:
         self.codes._load_from_hardware(directory)

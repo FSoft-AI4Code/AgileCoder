@@ -18,6 +18,7 @@ import agilecoder.camel.messages
 import agilecoder.camel.prompts
 import agilecoder.camel.typing
 import agilecoder.camel.utils
+import agilecoder.camel.dependency
 
 __version__ = '0.1.0'
 

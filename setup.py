@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 setup(name='agilecoder',
-version='0.1.4',
+version='0.1.5',
 description='AgileCoder',
 url='https://github.com/FSoft-AI4Code/AgileCoder',
 author='FSoft-AI4Code',
@@ -17,7 +17,8 @@ install_requires=[
         "tiktoken",
         "markdown",
         "colorama",
-        "strsimpy==0.2.1",
+        "nltk",
+        "tenacity",
         "python-dotenv"
       ],
 packages=find_packages(),

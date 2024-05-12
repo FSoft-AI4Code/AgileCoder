@@ -40,7 +40,7 @@
       "We have decided to complete the task through a executable software with multiple files implemented via {language}. As the {assistant_role}, to satisfy the user's demands, you must write the Product Backlog and the corresponding Acceptance Criteria.",
       "Think step by step and reason yourself to the right decisions to make sure we get it right.",
       "You must also prioritize product backlog items with the important items appearing at the first.",
-      "Your answer must adhere to the following format:",
+      "Your answer must follow the following format:",
       "Product Backlog:",
       "PRODUCT_BACKLOG",
       "Acceptance Criteria:",
@@ -80,7 +80,7 @@
       "Comments on Product backlog and Acceptance Criteria:",
       "\"{product_backlog_comments}\"",
       "We have decided to complete the task through a executable software with multiple files implemented via {language}.",
-      "As the {assistant_role}, to satisfy the user's demand and make the software executive and robust, you should modify the product backlog and acceptance criteria according to the comments. Then, output the full and complete product backlog and acceptance criteria with all based on the comments. Your answer must adhere to the following format:",
+      "As the {assistant_role}, to satisfy the user's demand and make the software executive and robust, you should modify the product backlog and acceptance criteria according to the comments. Then, output the full and complete product backlog and acceptance criteria with all based on the comments. Your answer must follow the following format and you are not allowed to change the required format:",
       "Product Backlog:",
       "PRODUCT_BACKLOG",
       "Acceptance Criteria:",
@@ -124,7 +124,7 @@
       "Comments on sprint goals, sprint backlog and sprint acceptance criteria:",
       "\"{sprint_backlog_comments}\"",
       "We have decided to complete the task through a executable software with multiple files implemented via {language}.",
-      "As the {assistant_role}, to satisfy the user's demand and make the software executive and robust, and ensure that the sprint goals and sprint backlog are feasible and can be accomplished, you should modify corresponding sprint backlog according to the comments. Then, output the full and complete sprint backlog with all based on the comments. Return the output strictly following the required format:",
+      "As the {assistant_role}, to satisfy the user's demand and make the software executive and robust, and ensure that the sprint goals and sprint backlog are feasible and can be accomplished, you should modify corresponding sprint backlog according to the comments. Then, output the full and complete sprint backlog with all based on the comments. Return the output strictly following the required format and you are not allowed to change the required format:",
       "Sprint Goals:",
       "SPRINT_GOALS",
       "Sprint Backlog:",
@@ -132,7 +132,8 @@
       "Sprint Acceptance Criteria:",
       "SPRINT_ACCEPTANCE_CRITERIA",
       "where SPRINT_GOALS are the goals of the sprint, SPRINT_BACKLOG is the sprint backlog, and SPRINT_ACCEPTANCE_CRITERIA is the sprint acceptance criteria for the sprint backlog.",
-      "Please note that SPRINT_GOALS, SPRINT_BACKLOG, and SPRINT_ACCEPTANCE_CRITERIA are pseudo tokens, and your answer is prohibited from including these tokens."
+      "Note that SPRINT_GOALS, SPRINT_BACKLOG, and SPRINT_ACCEPTANCE_CRITERIA are pseudo tokens, and your answer is prohibited from including these tokens.",
+      "Importantly, note that the product backlog is divided into multiple sprints and each sprint should contain enough workload."
     ]
   },
   "SprintBacklogCreating": {
@@ -147,7 +148,7 @@
       "Acceptance Criteria:\n\"{plain_acceptance_criteria}\"",
       "We have decided to complete the task through multiple sprints by creating a executable software with multiple files implemented via {language}. As the {assistant_role}, to satisfy the user's demands, you must define the FIRST sprint, including the sprint backlog, the goals of this sprint and sprint acceptance criteria from the product backlog and acceptance criteria.",
       "Think step by step and reason yourself to the right decisions to make sure we get it right.",
-      "Your answer strictly obeys the following format:",
+      "Your answer strictly obeys the following format and you are not allowed to change the required format:",
       "Sprint Goals:",
       "SPRINT_GOALS",
       "Sprint Backlog:",
@@ -537,7 +538,7 @@
       "\t2) all methods should be implemented;",
       "\t3) all methods need to have the necessary comments;",
       "\t4) prohibitively put code in a try-exception in the main.py;",
-      "\t5) ensure that no classes or methods are duplicated;",
+      "\t5) ensure that no code is duplicated and the answer is not allowed to repeat code;",
       "\t6) no potential bugs;",
       "\t7) Make sure the used assets like images must exist and be referred properly;",
       "Now, you should check the above regulations one by one and review the changed codes in detail, propose one comment with the highest priority about the codes, and give me instructions in text on how to fix and does not include modified code.Tell me your comment with the highest priority and corresponding suggestions on revision. If the codes are perfect and you have no comment on them, return only one line like \"<INFO> Finished\"."
@@ -558,7 +559,8 @@
       "As the {assistant_role}, to make the software directly operable without further coding, AgileCoder have formulated the following regulations:",
       "\t1) The entire project conforms to the tasks proposed by the user;",
       "\t2) To satisfy the sprint goals, the code implements all the tasks in the sprint backlog;",
-      "\t3) most importantly, do not only check the errors in the code, but also the logic of code. Make sure that user can interact with generated software without losing any feature in the requirement;",
+      "\t3) ensure that no code is duplicated and the answer is not allowed to repeat code;",
+      "\t4) most importantly, do not only check the errors in the code, but also the logic of code. Make sure that user can interact with generated software without losing any feature in the requirement;",
       "Now, you should check the above regulations one by one and review the changed codes in detail, propose one comment with the highest priority about the codes, and give me instructions in text on how to fix and does not include modified code. Tell me your comment with the highest priority and corresponding suggestions on revision. If the codes are perfect and you have no comment on them, return only one line like \"<INFO> Finished\"."
     ]
   },
@@ -577,7 +579,8 @@
       "As the {assistant_role}, to make the software directly operable without further coding, AgileCoder have formulated the following regulations:",
       "\t1) no potential bugs;",
       "\t2) the code fulfills all criteria in the sprint acceptance criteria;",
-      "\t3) most importantly, do not only check the errors in the code, but also the logic of code. Make sure that user can interact with generated software without creating any new bugs;",
+      "\t3) ensure that no code is duplicated and the answer is not allowed to repeat code;",
+      "\t4) most importantly, do not only check the errors in the code, but also the logic of code. Make sure that user can interact with generated software without creating any new bugs;",
       "Now, you should check the above regulations one by one and review the changed codes in detail, propose one comment with the highest priority about the codes, and give me instructions in text on how to fix and does not include modified code. Tell me your comment with the highest priority and corresponding suggestions on revision. If the codes are perfect and you have no comment on them, return only one line like \"<INFO> Finished\"."
     ]
   },

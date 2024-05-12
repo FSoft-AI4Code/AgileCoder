@@ -148,9 +148,19 @@ class ComposedPhase(ABC):
                         
                         if self.break_cycle(self.phases[phase].phase_env):
                             return chat_env
-                        chat_env = self.phases[phase].execute(chat_env,
-                                                            self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
-                                                            need_reflect)
+                        
+                        if phase in ['ProductBacklogModification', 'SprintBacklogModification', 'SprintReview']:
+                            while True:
+                                try:
+                                    chat_env = self.phases[phase].execute(chat_env,
+                                                                        self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
+                                                                        need_reflect)
+                                    break
+                                except: pass
+                        else:
+                            chat_env = self.phases[phase].execute(chat_env,
+                                                                        self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
+                                                                        need_reflect)
                         # print('@' * 20)
                         # print('self.phases[phase].phase_env', self.phases[phase].phase_env)
                         if self.break_cycle(self.phases[phase].phase_env):

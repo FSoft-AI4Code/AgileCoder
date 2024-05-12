@@ -1106,7 +1106,7 @@ class TestingPlan(Phase):
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
-                               "codes": chat_env.get_codes(simplify_code = True),
+                               "codes": chat_env.get_codes(only_test_code = True),
                                 "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
                                'current_programming_task': chat_env.env_dict['current-programming-task'],
                                'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
@@ -1186,7 +1186,9 @@ def extract_file_names(traceback_str):
     
     # Extract file names from the matches
     for match in matches:
-        file_names.append(match.group(1))
+        file_name = match.group(1)
+        if file_name in file_names: continue
+        file_names.append(file_name)
     
     return file_names
 def extract_code_and_filename(file_content):
@@ -1278,6 +1280,7 @@ class TestModification(Phase):
         module = ''
         modules = ''
         file_names = extract_file_names(test_reports)
+        # print('file_names', file_names)
         if 'ModuleNotFoundError' in test_reports:
             for match in re.finditer(r"No module named '(\S+)'", test_reports, re.DOTALL):
                 module = match.group(1)
@@ -1309,11 +1312,23 @@ class TestModification(Phase):
         elif 'AttributeError' in test_reports:
             error_line = test_reports.split('AttributeError')[1]
             class_name = re.search(r"'(\w+)'", error_line).group(1)
-            for filename, code in chat_env.codes.codebooks.items():
-                if class_name.lower() in filename:
-                    file_names.append(filename)
+            graph = chat_env.dependency_graph
+            # print('graph', graph)
+            if len(file_names):
+                relevant_files = graph.get(file_names[-1], [])
+                for file in relevant_files:
+                    if 'class ' + class_name in chat_env.codes.codebooks[file]:
+                        file_names.append(file)
+        else:
+            graph = chat_env.dependency_graph
+            if len(file_names):
+                relevant_files = graph.get(file_names[-1], [])
+                file_names.extend(relevant_files)
+            # for filename, code in chat_env.codes.codebooks.items():
+            #     if class_name.lower() in filename:
+            #         file_names.append(filename)
 
-        if len(file_names) > 1:
+        if len(file_names):
             all_relevant_code = []
             code_sections = extract_code_and_filename(chat_env.get_codes())
             for file_name, code in code_sections:
@@ -1321,7 +1336,10 @@ class TestModification(Phase):
                     all_relevant_code.extend([file_name, code, '\n'])
             all_relevant_code = '\n'.join(all_relevant_code)
         else:
-            all_relevant_code = chat_env.get_codes()
+            if test_reports == 'The software run successfully without errors.':
+                all_relevant_code = test_reports
+            else:
+                all_relevant_code = chat_env.get_codes()
         
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],

@@ -1,6 +1,6 @@
 import os
 import re
-from strsimpy.normalized_levenshtein import NormalizedLevenshtein
+# from strsimpy.normalized_levenshtein import NormalizedLevenshtein
 from nltk.translate.bleu_score import sentence_bleu
 from agilecoder.components.utils import log_and_print_online
 import difflib
@@ -103,7 +103,7 @@ class Codes:
             matches = re.finditer(regex, self.generated_content, re.DOTALL)
             unmatched_codes = []
             flag = False
-            normalized_levenshtein = NormalizedLevenshtein()
+            # normalized_levenshtein = NormalizedLevenshtein()
             # for match in matches:
             #     flag = True
             #     code = match.group(1)
@@ -135,11 +135,11 @@ class Codes:
                 formatted_code = self._format_code(code)
                 scores = []
                 for filename, file_code in self.codebooks.items():
-                    scores.append((filename, formatted_code, normalized_levenshtein.similarity(formatted_code, file_code)))
+                    scores.append((filename, formatted_code, sentence_bleu([formatted_code.split()], file_code.split())))
                 has_duplicated = False
                 if len(scores) > 0:
                     scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
-                    if scores[2] > 0.7:
+                    if scores[2] > 0.6:
                         self.codebooks[scores[0]] = scores[1]
                         has_duplicated = True
                 if not has_duplicated:
@@ -196,13 +196,13 @@ class Codes:
                     # assert filename != ""
                     if filename == '.py':
                         scores = []
-                        normalized_levenshtein = NormalizedLevenshtein()
+                        # normalized_levenshtein = NormalizedLevenshtein()
                         formatted_code = self._format_code(code)
                         for _filename, file_code in self.codebooks.items():
-                            scores.append((_filename, formatted_code, normalized_levenshtein.similarity(formatted_code, file_code)))
+                            scores.append((_filename, formatted_code, sentence_bleu([formatted_code.split()], file_code.split())))
                         if len(scores) > 0:
                             scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
-                            if scores[2] > 0.7:
+                            if scores[2] > 0.6:
                                 self.codebooks[scores[0]] = scores[1]
                     elif filename is not None and code is not None and len(filename) > 0 and len(code) > 0:
                         if filename.endswith('.py'):
@@ -244,7 +244,7 @@ class Codes:
                     filename_pairs.add(p)
                 else: continue
                 s = sentence_bleu([filecode.split()], filecode1.split())
-                if s > 0.7:
+                if s > 0.6:
                     results[p] = s
         return results
                 
@@ -257,9 +257,19 @@ class Codes:
         total_changed_lines = ''
         for key in new_codes.codebooks.keys():
             total_new_length += len(new_codes.codebooks[key])
+            corres_key = None
+            if key not in self.codebooks.keys():
+                scores = []
+                for filename, file_code in self.codebooks.items():
+                    scores.append((filename, sentence_bleu([new_codes.codebooks[key].split()], file_code.split())))
+                if len(scores):
+                    scores = sorted(scores, key = lambda x: x[1], reverse = True)[0]
+                    if scores[1] > 0.6:
+                        corres_key = scores[0]
             if key not in self.codebooks.keys() or self.codebooks[key] != new_codes.codebooks[key]:
                 if is_testing:
                     self.testing_filenames.update([key])
+
                 update_codes_content = "**[Update Codes]**\n\n"
                 update_codes_content += "{} updated.\n".format(key)
                 total_changed_lines +=  "File: {} updated.\n".format(key)
@@ -278,7 +288,8 @@ class Codes:
                 total_changed_lines +=  "```\n" + unified_diff + "\n```\n"
 
                 log_and_print_online(update_codes_content)
-                self.codebooks[key] = new_codes.codebooks[key]
+            
+                self.codebooks[corres_key or key] = new_codes.codebooks[key]
             flag = True
         self.total_changed_lines = total_changed_lines
         return flag and (total_new_length / len(generated_content) > 0.7)
@@ -307,10 +318,12 @@ class Codes:
 
         log_and_print_online(rewrite_codes_content)
 
-    def _get_codes(self, ignore_test_code, _simplify_code = False) -> str:
+    def _get_codes(self, ignore_test_code, _simplify_code = False, only_test_code = False) -> str:
         content = ""
+        print('self.testing_filenames', self.testing_filenames)
         for filename in self.codebooks.keys():
-            if ignore_test_code and filename in self.testing_filenames: continue
+            if only_test_code and filename not in self.testing_filenames: continue
+            elif ignore_test_code and filename in self.testing_filenames: continue
             code = self.codebooks[filename]
             if _simplify_code:
                 code = simplify_code(code)
