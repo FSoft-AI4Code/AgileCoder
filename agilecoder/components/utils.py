@@ -109,3 +109,37 @@ def log_arguments(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+def extract_product_requirements(input, is_product = True):
+    lines = input.splitlines()
+    if is_product:
+        keyword1 = 'product backlog'
+        keyword2 = 'acceptance criteria'
+    else:
+        keyword1 = 'sprint backlog'
+        keyword2 = 'sprint acceptance criteria'
+    backlog, acceptance_criteria = [], []
+    backlog_flag, criteria_flag = False, False
+    for line in lines:
+        _line = line.replace("_", ' ').lower()
+        if keyword1 in _line:
+            backlog_flag = True
+            criteria_flag = False
+            continue
+        if keyword2 in _line:
+            backlog_flag = False
+            criteria_flag = True
+            continue
+        if backlog_flag:
+            backlog.append(line)
+        if criteria_flag:
+            acceptance_criteria.append(line)
+        if len(backlog) and len(acceptance_criteria) and len(_line.strip()) == 0: break
+    return backlog, acceptance_criteria
+
+def get_non_leaf_and_intermediate_files(adj_list):
+    all_deps = []
+    for node, deps in adj_list.items():
+        if node.startswith('test_') or node.endswith('_test'): continue
+        all_deps.extend(deps)
+    return [node for node in adj_list if node not in all_deps and not (node.startswith('test_') or node.endswith('_test'))]

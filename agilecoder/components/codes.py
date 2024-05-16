@@ -2,6 +2,7 @@ import os
 import re
 # from strsimpy.normalized_levenshtein import NormalizedLevenshtein
 from nltk.translate.bleu_score import sentence_bleu
+from codebleu import calc_codebleu
 from agilecoder.components.utils import log_and_print_online
 import difflib
 import ast
@@ -67,7 +68,21 @@ def simplify_code(code):
         if flag and is_docstring > 2: continue
         outputs.append(line)
     return '\n'.join(outputs)
+def has_entry_point(code):
+    try:
+        tree = ast.parse(code)
 
+        # Check for if __name__ == "__main__": condition
+      
+        # Check for standalone code (no functions or classes)
+        for node in ast.iter_child_nodes(tree):
+            if not isinstance(node, (ast.Expr, ast.Import, ast.ImportFrom, ast.Module, ast.FunctionDef, ast.ClassDef)):
+                return True
+
+        return False
+
+    except SyntaxError:
+        return False
 
 class Codes:
     def __init__(self, generated_content="", is_testing = False):
@@ -135,7 +150,10 @@ class Codes:
                 formatted_code = self._format_code(code)
                 scores = []
                 for filename, file_code in self.codebooks.items():
-                    scores.append((filename, formatted_code, sentence_bleu([formatted_code.split()], file_code.split())))
+                    if filename.endswith('.py'):
+                        scores.append((filename, formatted_code, calc_codebleu([formatted_code], [file_code], lang = 'python')['codebleu']))
+                    else:
+                        scores.append((filename, formatted_code, sentence_bleu([formatted_code.split()], file_code.split())))
                 has_duplicated = False
                 if len(scores) > 0:
                     scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
@@ -199,7 +217,10 @@ class Codes:
                         # normalized_levenshtein = NormalizedLevenshtein()
                         formatted_code = self._format_code(code)
                         for _filename, file_code in self.codebooks.items():
-                            scores.append((_filename, formatted_code, sentence_bleu([formatted_code.split()], file_code.split())))
+                            if _filename.endswith('.py'):
+                                scores.append((_filename, formatted_code, calc_codebleu([formatted_code], [file_code], lang = 'python')['codebleu']))
+                            else:
+                                scores.append((_filename, formatted_code, sentence_bleu([formatted_code.split()], file_code.split())))
                         if len(scores) > 0:
                             scores = sorted(scores, key = lambda x: x[2], reverse = True)[0]
                             if scores[2] > 0.6:
@@ -243,7 +264,10 @@ class Codes:
                 if p not in filename_pairs and p1 not in filename_pairs:
                     filename_pairs.add(p)
                 else: continue
-                s = sentence_bleu([filecode.split()], filecode1.split())
+                if filename.endswith('.py'):
+                    s = calc_codebleu([filecode], [filecode1], lang = 'python')['codebleu']
+                else:
+                    s = sentence_bleu([filecode.split()], filecode1.split())
                 if s > 0.6:
                     results[p] = s
         return results
@@ -255,13 +279,17 @@ class Codes:
         flag = False
         total_new_length = 0
         total_changed_lines = ''
+        changed_files = []
         for key in new_codes.codebooks.keys():
             total_new_length += len(new_codes.codebooks[key])
             corres_key = None
             if key not in self.codebooks.keys():
                 scores = []
                 for filename, file_code in self.codebooks.items():
-                    scores.append((filename, sentence_bleu([new_codes.codebooks[key].split()], file_code.split())))
+                    if filename.endswith('.py'):
+                        scores.append((filename, calc_codebleu([new_codes.codebooks[key]], [file_code], lang = 'python')['codebleu']))
+                    else:
+                        scores.append((filename, sentence_bleu([new_codes.codebooks[key].split()], file_code.split())))
                 if len(scores):
                     scores = sorted(scores, key = lambda x: x[1], reverse = True)[0]
                     if scores[1] > 0.6:
@@ -290,11 +318,18 @@ class Codes:
                 log_and_print_online(update_codes_content)
             
                 self.codebooks[corres_key or key] = new_codes.codebooks[key]
+                changed_files.append(corres_key or key)
+
             flag = True
         self.total_changed_lines = total_changed_lines
+        self.changed_files = changed_files
+        print('changed_files', changed_files)
         return flag and (total_new_length / len(generated_content) > 0.7)
         # return hasattr(new_codes, 'has_correct_format') and new_codes.has_correct_format
 
+    def _get_changed_files(self):
+        if hasattr(self, 'changed_files'): return self.changed_files
+        return []
     def _rewrite_codes(self, git_management) -> None:
         directory = self.directory
         rewrite_codes_content = "**[Rewrite Codes]**\n\n"
@@ -318,12 +353,33 @@ class Codes:
 
         log_and_print_online(rewrite_codes_content)
 
-    def _get_codes(self, ignore_test_code, _simplify_code = False, only_test_code = False) -> str:
+    def _get_codes(self, ignore_test_code, get_entry_point = False, _simplify_code = False, only_test_code = False) -> str:
         content = ""
         print('self.testing_filenames', self.testing_filenames)
         for filename in self.codebooks.keys():
-            if only_test_code and filename not in self.testing_filenames: continue
+            if get_entry_point:
+                if has_entry_point(self.codebooks[filename]):
+                    code = self.codebooks[filename]
+                    if _simplify_code:
+                        code = simplify_code(code)
+                    content += "{}\n```{}\n{}\n```\n\n".format(filename,
+                                                            "python" if filename.endswith(".py") else filename.split(".")[
+                                                                -1], code)
+                continue
+            elif only_test_code and filename not in self.testing_filenames: continue
             elif ignore_test_code and filename in self.testing_filenames: continue
+            code = self.codebooks[filename]
+            if _simplify_code:
+                code = simplify_code(code)
+            content += "{}\n```{}\n{}\n```\n\n".format(filename,
+                                                       "python" if filename.endswith(".py") else filename.split(".")[
+                                                           -1], code)
+        return content
+
+    def _get_changed_codes(self, changed_files, _simplify_code = False) -> str:
+        content = ""
+        for filename in self.codebooks.keys():
+            if filename not in changed_files: continue
             code = self.codebooks[filename]
             if _simplify_code:
                 code = simplify_code(code)

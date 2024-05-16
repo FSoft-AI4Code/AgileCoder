@@ -19,7 +19,8 @@ install_requires=[
         "colorama",
         "nltk",
         "tenacity",
-        "python-dotenv"
+        "python-dotenv",
+        "codebleu"
       ],
 packages=find_packages(),
 zip_safe=False)

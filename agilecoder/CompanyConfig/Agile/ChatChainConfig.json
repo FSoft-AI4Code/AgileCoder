@@ -89,7 +89,7 @@
         {
           "phase": "CodeReviewChain",
           "phaseType": "ComposedPhase",
-          "cycleNum": 2,
+          "cycleNum": 1,
           "Composition": [
             {
               "phase": "CodeReview",
@@ -306,7 +306,7 @@
         {
           "phase": "CodeReviewChain",
           "phaseType": "ComposedPhase",
-          "cycleNum": 2,
+          "cycleNum": 1,
           "Composition": [
             {
               "phase": "CodeReview",

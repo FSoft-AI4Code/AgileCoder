@@ -2,7 +2,7 @@ import importlib
 import os
 from abc import ABC, abstractmethod
 from collections import defaultdict
-
+import copy
 from agilecoder.camel.typing import ModelType
 from agilecoder.components.chat_env import ChatEnv
 from agilecoder.components.utils import log_and_print_online
@@ -149,12 +149,14 @@ class ComposedPhase(ABC):
                         if self.break_cycle(self.phases[phase].phase_env):
                             return chat_env
                         
-                        if phase in ['ProductBacklogModification', 'SprintBacklogModification', 'SprintReview']:
+                        if phase in ['ProductBacklogModification', 'SprintBacklogModification', 'SprintReview', 'NextSprintBacklogCreating']:
                             while True:
                                 try:
-                                    chat_env = self.phases[phase].execute(chat_env,
+                                    _chat_env = copy.deepcopy(chat_env)
+                                    _chat_env = self.phases[phase].execute(_chat_env,
                                                                         self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
                                                                         need_reflect)
+                                    chat_env = _chat_env
                                     break
                                 except: pass
                         else:
@@ -202,8 +204,9 @@ class ProductBacklogUpdate(ComposedPhase):
     def update_chat_env(self, chat_env):
         return chat_env
 
-    def break_cycle(self, chat_env) -> bool:
-        return False
+    def break_cycle(self, phase_env) -> bool:
+        return 'Finished.' == phase_env.get('product_backlog_comments', '')
+        
 
 class SprintCompletion(ComposedPhase):
     def __init__(self, **kwargs):
@@ -280,7 +283,7 @@ class CodeReview(ComposedPhase):
         return chat_env
 
     def break_cycle(self, phase_env) -> bool:
-        if "<INFO> Finished".lower() in phase_env['modification_conclusion'].lower():
+        if "Finished".lower() in phase_env['modification_conclusion'].lower():
             return True
         else:
             return False
@@ -296,10 +299,7 @@ class SprintBacklogUpdate(ComposedPhase):
         return chat_env
 
     def break_cycle(self, phase_env) -> bool:
-        if "<INFO> Finished".lower() in phase_env['modification_conclusion'].lower():
-            return True
-        else:
-            return False
+        return "Finished." == phase_env.get('sprint_backlog_comments', '')
 
 
 class Test(ComposedPhase):
@@ -335,6 +335,79 @@ class CodeAndFormat(ComposedPhase):
         else:
             log_and_print_online(f"**[CodeAndFormat Info]**: cannot parse the output!\n")
             return False
+    def execute(self, chat_env) -> ChatEnv:
+        """
+        similar to Phase.execute, but add control for breaking the loop
+        1. receive information from environment(ComposedPhase): update the phase environment from global environment
+        2. for each SimplePhase in ComposedPhase
+            a) receive information from environment(SimplePhase)
+            b) check loop break
+            c) execute the chatting
+            d) change the environment(SimplePhase)
+            e) check loop break
+        3. change the environment(ComposedPhase): update the global environment using the conclusion
+
+        Args:
+            chat_env: global chat chain environment
+
+        Returns:
+
+        """
+        self.update_phase_env(chat_env)
+        for cycle_index in range(self.cycle_num):
+            for phase_item in self.composition:
+                if phase_item["phaseType"] == "SimplePhase":  # right now we do not support nested composition
+                    phase = phase_item['phase']
+                    max_turn_step = phase_item['max_turn_step']
+                    need_reflect = check_bool(phase_item['need_reflect'])
+                    log_and_print_online(
+                        f"**[Execute Detail]**\n\nexecute SimplePhase:[{phase}] in ComposedPhase:[{self.phase_name}], cycle {cycle_index}")
+                    if phase in self.phases:
+                        self.phases[phase].phase_env = self.phase_env
+                        self.phases[phase].update_phase_env(chat_env)
+                        
+                        if self.break_cycle(self.phases[phase].phase_env):
+                            return chat_env
+                        
+                        counter = 0
+                        while not self.break_cycle(self.phases[phase].phase_env) and counter < 3:
+                            log_and_print_online('TEST FORMAT COUNTER: ' + str(counter))
+                            _chat_env = copy.deepcopy(chat_env)
+                            _chat_env = self.phases[phase].execute(_chat_env,
+                                                                    self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
+                                                                    need_reflect)
+                            counter += 1
+                        chat_env = _chat_env
+                        # print('@' * 20)
+                        # print('self.phases[phase].phase_env', self.phases[phase].phase_env)
+                        if self.break_cycle(self.phases[phase].phase_env):
+                            return chat_env
+                        # chat_env = self.phases[phase].update_chat_env(chat_env)
+                        if chat_env.env_dict.get('end-sprint', False):
+                            return chat_env
+                    else:
+                        print(f"Phase '{phase}' is not yet implemented. \
+                                Please write its config in phaseConfig.json \
+                                and implement it in components.phase")
+                elif phase_item['phaseType'] == 'ComposedPhase':
+                    phase = phase_item['phase']
+                    cycle_num = phase_item['cycleNum']
+                    composition = phase_item['Composition']
+                    compose_phase_class = getattr(self.compose_phase_module, phase)
+                    compose_phase_instance = compose_phase_class(phase_name=phase,
+                                                         cycle_num=cycle_num,
+                                                         composition=composition,
+                                                         config_phase=self.config_phase,
+                                                         config_role=self.config_role,
+                                                         model_type=self.model_type,
+                                                         log_filepath=self.log_filepath)
+                    chat_env = compose_phase_instance.execute(chat_env)
+                else:
+                    raise NotImplementedError
+                
+
+        chat_env = self.update_chat_env(chat_env)
+        return chat_env
 class BugFixing(ComposedPhase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -368,6 +441,7 @@ class BugFixing(ComposedPhase):
         self.update_phase_env(chat_env)
         while len(chat_env.env_dict.get('testing_commands', [None])):
             for phase_item in self.composition:
+                print("BUGFIXING:", phase_item)
                 if phase_item["phaseType"] == "SimplePhase":  # right now we do not support nested composition
                     phase = phase_item['phase']
                     max_turn_step = phase_item['max_turn_step']
@@ -383,6 +457,8 @@ class BugFixing(ComposedPhase):
                         chat_env = self.phases[phase].execute(chat_env,
                                                             self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
                                                             need_reflect)
+                        if chat_env.env_dict['test_reports'] == 'The software run successfully without errors.':
+                            break
                         # print('@' * 20)
                         # print('self.phases[phase].phase_env', self.phases[phase].phase_env)
                         if self.break_cycle(self.phases[phase].phase_env):

@@ -131,17 +131,20 @@ class ChatEnv:
                 if 'testing_commands' not in self.env_dict:
                     
                     testing_commands = self.env_dict['commands']
-                    _testing_commands = list(filter(lambda x: 'test_' in x, get_test_order(chat_env.dependency_graph)))
+                    _testing_commands = list(filter(lambda x: ('test_' in x) or ('_test' in x), get_test_order(chat_env.dependency_graph)))
                     additional_commands = list(set(testing_commands) - set(_testing_commands))
                     testing_commands = _testing_commands + additional_commands
                     error_contents = ''
                     
                     if is_python and len(runnable_files) == 0:
                         return True, "[Error] the software lacks an entry point to start"
-                    testing_commands.extend(runnable_files)
+                    # testing_commands.extend(runnable_files)
+                    for file in runnable_files:
+                        if file not in testing_commands:
+                            testing_commands.append(file)
                     # testing_commands.extend(['-m unittest'])
                     
-                    testing_commands = list(set(testing_commands))
+                    # testing_commands = list(set(testing_commands))
                 else:
                     testing_commands = self.env_dict['testing_commands']
                     error_contents = ''
@@ -149,9 +152,9 @@ class ChatEnv:
                 for testing_command in testing_commands:
                     if testing_command != '-m unittest' and testing_command not in runnable_files:
                         errs = "[Error] the software lacks an entry point to start"
-                        error_contents += """\nError Traceback for Running {testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
+                        error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                         return_flag = True
-                        continue
+                        break
                     if 'main.py' in all_files and testing_command == 'main.py':
                         command = "cd {}; ls -l; python3 main.py;".format(directory)
                         # process = subprocess.Popen(command,
@@ -210,12 +213,13 @@ class ChatEnv:
                     #     else:
                     #         return False, success_info
                     error_output = process.stderr.read().decode('utf-8')
+                    print('error_output', "Traceback".lower() in error_output.lower(), ':return_code:', return_code)
                     if return_code != 0:
                         if error_output:
                             if "Traceback".lower() in error_output.lower():
                                 errs = error_output.replace(directory + "/", "")
                                 # return True, errs
-                                error_contents += """\nError Traceback for Running `{testing_command}:\n{errs}""".format(testing_command = testing_command, errs = errs)
+                                error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                                 return_flag = True
                                 
                             # else:
@@ -223,10 +227,11 @@ class ChatEnv:
                         # else:
                         #     return_flag = True
                         #     error_contents += """\nError Traceback for Running `{testing_command}`":\n{errs}""".format(testing_command = testing_command, errs = errs)
+                    print('return_flag:', return_flag)
                     current_idx += 1
                     if return_flag:
                         chat_env.env_dict['testing_commands'] = testing_commands[current_idx:]
-                        break
+                        return return_flag, error_contents
                 if return_flag:
                     return return_flag, error_contents
                 else:
@@ -258,16 +263,18 @@ class ChatEnv:
     def get_high_overlap_code(self):
         return self.codes._get_high_overlap_code()
 
-    def get_codes(self, ignore_test_code = True, simplify_code = False, only_test_code = False) -> str:
-        return self.codes._get_codes(ignore_test_code, simplify_code, only_test_code)
+    def get_codes(self, ignore_test_code = True, get_entry_point = False, simplify_code = False, only_test_code = False) -> str:
+        return self.codes._get_codes(ignore_test_code, get_entry_point, simplify_code, only_test_code)
 
     def _load_from_hardware(self, directory) -> None:
         self.codes._load_from_hardware(directory)
     
     def get_total_changed_lines(self):
         if hasattr(self.codes, 'total_changed_lines'): return self.codes.total_changed_lines
-
-
+    def get_changed_codes(self, changed_files, _simplify_code = False) -> str:
+        return self.codes._get_changed_codes(changed_files, _simplify_code = _simplify_code)
+    def get_changed_files(self):
+        return self.codes._get_changed_files()
     def _update_requirements(self, generated_content):
         self.requirements._update_docs(generated_content)
 
