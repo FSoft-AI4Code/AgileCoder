@@ -92,7 +92,7 @@ class Codes:
         self.codebooks = {}
         self.testing_filenames = set()
         self.is_testing = is_testing
-
+        self.all_changed_files = set()
         def extract_filename_from_line(lines):
             file_name = ""
             for candidate in re.finditer(r"(\w+\.\w+)", lines, re.DOTALL):
@@ -151,7 +151,8 @@ class Codes:
                 scores = []
                 for filename, file_code in self.codebooks.items():
                     if filename.endswith('.py'):
-                        scores.append((filename, formatted_code, calc_codebleu([formatted_code], [file_code], lang = 'python')['codebleu']))
+                        _score = max(sentence_bleu([formatted_code.split()], file_code.split()), calc_codebleu([formatted_code], [file_code], lang = 'python')['codebleu'])
+                        scores.append((filename, formatted_code, _score))
                     else:
                         scores.append((filename, formatted_code, sentence_bleu([formatted_code.split()], file_code.split())))
                 has_duplicated = False
@@ -162,6 +163,10 @@ class Codes:
                         has_duplicated = True
                 if not has_duplicated:
                     filename = extract_filename_from_code(code)
+                    for _filename in self.codebooks:
+                        if _filename.lower().replace('_', '')  == filename:
+                            filename = _filename
+                            break
                     if filename is not None and filename != '.py' and formatted_code is not None and len(filename) > 0 and len(formatted_code) > 0:
                         self.codebooks[filename] = formatted_code
             # normalized_levenshtein = NormalizedLevenshtein()
@@ -218,7 +223,8 @@ class Codes:
                         formatted_code = self._format_code(code)
                         for _filename, file_code in self.codebooks.items():
                             if _filename.endswith('.py'):
-                                scores.append((_filename, formatted_code, calc_codebleu([formatted_code], [file_code], lang = 'python')['codebleu']))
+                                _score = max(sentence_bleu([formatted_code.split()], file_code.split()), calc_codebleu([formatted_code], [file_code], lang = 'python')['codebleu'])
+                                scores.append((_filename, formatted_code, _score))
                             else:
                                 scores.append((_filename, formatted_code, sentence_bleu([formatted_code.split()], file_code.split())))
                         if len(scores) > 0:
@@ -265,7 +271,7 @@ class Codes:
                     filename_pairs.add(p)
                 else: continue
                 if filename.endswith('.py'):
-                    s = calc_codebleu([filecode], [filecode1], lang = 'python')['codebleu']
+                    s = max(calc_codebleu([filecode], [filecode1], lang = 'python')['codebleu'], sentence_bleu([filecode.split()], filecode1.split()))
                 else:
                     s = sentence_bleu([filecode.split()], filecode1.split())
                 if s > 0.6:
@@ -287,7 +293,8 @@ class Codes:
                 scores = []
                 for filename, file_code in self.codebooks.items():
                     if filename.endswith('.py'):
-                        scores.append((filename, calc_codebleu([new_codes.codebooks[key]], [file_code], lang = 'python')['codebleu']))
+                        _score = max(sentence_bleu([new_codes.codebooks[key].split()], file_code.split()), calc_codebleu([new_codes.codebooks[key]], [file_code], lang = 'python')['codebleu'])
+                        scores.append((filename, _score))
                     else:
                         scores.append((filename, sentence_bleu([new_codes.codebooks[key].split()], file_code.split())))
                 if len(scores):
@@ -323,6 +330,8 @@ class Codes:
             flag = True
         self.total_changed_lines = total_changed_lines
         self.changed_files = changed_files
+        self.all_changed_files.update(self.changed_files)
+
         print('changed_files', changed_files)
         return flag and (total_new_length / len(generated_content) > 0.7)
         # return hasattr(new_codes, 'has_correct_format') and new_codes.has_correct_format

@@ -271,13 +271,13 @@
           "cycleNum": 1,
           "Composition": [
             {
-              "phase": "SprintBacklogReview",
+              "phase": "NextSprintBacklogReview",
               "phaseType": "SimplePhase",
               "max_turn_step": 1,
               "need_reflect": "False"
             },
             {
-              "phase": "SprintBacklogModification",
+              "phase": "NextSprintBacklogModification",
               "phaseType": "SimplePhase",
               "max_turn_step": 1,
               "need_reflect": "False"

@@ -2,6 +2,7 @@ import html
 import logging
 import re
 import time
+from collections import defaultdict
 
 import markdown
 import inspect
@@ -135,7 +136,7 @@ def extract_product_requirements(input, is_product = True):
         if criteria_flag:
             acceptance_criteria.append(line)
         if len(backlog) and len(acceptance_criteria) and len(_line.strip()) == 0: break
-    return backlog, acceptance_criteria
+    return '\n'.join(backlog), '\n'.join(acceptance_criteria)
 
 def get_non_leaf_and_intermediate_files(adj_list):
     all_deps = []
@@ -143,3 +144,49 @@ def get_non_leaf_and_intermediate_files(adj_list):
         if node.startswith('test_') or node.endswith('_test'): continue
         all_deps.extend(deps)
     return [node for node in adj_list if node not in all_deps and not (node.startswith('test_') or node.endswith('_test'))]
+
+def extract_first_error_traceback(traceback_output):
+    # Split the traceback output into lines
+    traceback_lines = traceback_output.splitlines()
+    
+    # Iterate through the lines to find the first failed test case traceback
+    first_error_traceback = []
+    found_failure = False
+    for line in traceback_lines:
+        # print('LINE', line)
+        if line.startswith("FAIL:") or line.startswith("ERROR:"):
+            found_failure = len(first_error_traceback) == 0
+            # print('line', line)
+            if found_failure:
+                first_error_traceback.append(line)
+        elif found_failure:
+            # Append subsequent lines until the next test case starts
+            if line.startswith("Ran "):
+                break
+            # print('line1', line)
+            first_error_traceback.append(line)
+    
+    # Join the lines to form the complete traceback
+    return '\n'.join(first_error_traceback)
+
+def _build_reverse_adjacency_list(adj_list):
+    reverse_adj_list = defaultdict(list)
+    for child, parents in adj_list.items():
+        for parent in parents:
+            reverse_adj_list[parent].append(child)
+    return reverse_adj_list
+
+def find_ancestors(adj_list, start_nodes):
+    reverse_adj_list = _build_reverse_adjacency_list(adj_list)
+    ancestors = set()
+    for start_node in start_nodes:
+        stack = [start_node]
+        
+        while stack:
+            node = stack.pop()
+            if node in ancestors:
+                continue
+            ancestors.add(node)
+            stack.extend(reverse_adj_list[node])
+    
+    return ancestors

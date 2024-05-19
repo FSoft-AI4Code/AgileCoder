@@ -150,7 +150,7 @@ class ComposedPhase(ABC):
                             return chat_env
                         
                         if phase in ['ProductBacklogModification', 'SprintBacklogModification', 'SprintReview', 'NextSprintBacklogCreating']:
-                            while True:
+                            for i in range(3):
                                 try:
                                     _chat_env = copy.deepcopy(chat_env)
                                     _chat_env = self.phases[phase].execute(_chat_env,
@@ -158,7 +158,8 @@ class ComposedPhase(ABC):
                                                                         need_reflect)
                                     chat_env = _chat_env
                                     break
-                                except: pass
+                                except: 
+                                    pass
                         else:
                             chat_env = self.phases[phase].execute(chat_env,
                                                                         self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
@@ -269,7 +270,7 @@ class CodeReviewChain(ComposedPhase):
     def update_chat_env(self, chat_env):
         return chat_env
 
-    def break_cycle(self, chat_env) -> bool:
+    def break_cycle(self, phase_env) -> bool:
         return False
 
 class CodeReview(ComposedPhase):
@@ -283,10 +284,8 @@ class CodeReview(ComposedPhase):
         return chat_env
 
     def break_cycle(self, phase_env) -> bool:
-        if "Finished".lower() in phase_env['modification_conclusion'].lower():
-            return True
-        else:
-            return False
+        if phase_env.get('has_no_comment', False): return True
+        return False
 
 class SprintBacklogUpdate(ComposedPhase):
     def __init__(self, **kwargs):
@@ -441,6 +440,7 @@ class BugFixing(ComposedPhase):
         self.update_phase_env(chat_env)
         while len(chat_env.env_dict.get('testing_commands', [None])):
             for phase_item in self.composition:
+                log_and_print_online("BUGFIXING:" + str(phase_item))
                 print("BUGFIXING:", phase_item)
                 if phase_item["phaseType"] == "SimplePhase":  # right now we do not support nested composition
                     phase = phase_item['phase']
@@ -450,19 +450,18 @@ class BugFixing(ComposedPhase):
                         f"**[Execute Detail]**\n\nexecute SimplePhase:[{phase}] in ComposedPhase:[{self.phase_name}]")
                     if phase in self.phases:
                         self.phases[phase].phase_env = self.phase_env
-                        self.phases[phase].update_phase_env(chat_env)
-                        
-                        if self.break_cycle(self.phases[phase].phase_env):
-                            return chat_env
+                        if phase_item['phase'] != 'TestErrorSummary':
+                            self.phases[phase].update_phase_env(chat_env)
+                     
                         chat_env = self.phases[phase].execute(chat_env,
                                                             self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
                                                             need_reflect)
+                        log_and_print_online("chat_env.env_dict['test_reports']: " + chat_env.env_dict['test_reports'])
                         if chat_env.env_dict['test_reports'] == 'The software run successfully without errors.':
                             break
                         # print('@' * 20)
                         # print('self.phases[phase].phase_env', self.phases[phase].phase_env)
-                        if self.break_cycle(self.phases[phase].phase_env):
-                            return chat_env
+                       
                         # chat_env = self.phases[phase].update_chat_env(chat_env)
                         if chat_env.env_dict.get('end-sprint', False):
                             return chat_env

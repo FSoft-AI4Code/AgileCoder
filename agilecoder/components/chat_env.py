@@ -13,7 +13,7 @@ import requests
 from agilecoder.components.codes import Codes
 from agilecoder.components.documents import Documents
 from agilecoder.components.roster import Roster
-from agilecoder.components.utils import log_and_print_online
+from agilecoder.components.utils import log_and_print_online, extract_first_error_traceback
 from agilecoder.camel.dependency import build_dependency_graph, get_test_order
 
 class ChatEnvConfig:
@@ -117,26 +117,29 @@ class ChatEnv:
                     creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
                 )
             else:
-                all_files = os.listdir(directory)
                 runnable_files = []
                 is_python = False
-                for file in all_files:
+                program_files = []
+                for file, code in self.codes.codebooks.items():
+                    # print('FILE:', file, code)
                     if not file.endswith('.py'): continue
                     is_python = True
-                    with open(os.path.join(directory, file)) as f:
-                        code = f.read()
                     if has_entry_point(code):
                         runnable_files.append(file)
+                        if not (('test_' in file) or ('_test' in file)):
+                            program_files.append(file)
                 return_flag = False
                 if 'testing_commands' not in self.env_dict:
                     
                     testing_commands = self.env_dict['commands']
                     _testing_commands = list(filter(lambda x: ('test_' in x) or ('_test' in x), get_test_order(chat_env.dependency_graph)))
                     additional_commands = list(set(testing_commands) - set(_testing_commands))
-                    testing_commands = _testing_commands + additional_commands
+                    # print('additional_commands', additional_commands)
+                    # additional_commands = list(filter(lambda x: x in runnable_files, additional_commands))
+                    testing_commands = _testing_commands + additional_commands + program_files
                     error_contents = ''
                     
-                    if is_python and len(runnable_files) == 0:
+                    if is_python and len(program_files) == 0:
                         return True, "[Error] the software lacks an entry point to start"
                     # testing_commands.extend(runnable_files)
                     for file in runnable_files:
@@ -151,34 +154,16 @@ class ChatEnv:
                 current_idx = 0
                 for testing_command in testing_commands:
                     if testing_command != '-m unittest' and testing_command not in runnable_files:
-                        errs = "[Error] the software lacks an entry point to start"
+                        if testing_command.startswith('test_') or testing_command.endswith('_test'):
+                            errs = "[Error] the testing script lacks an entry point to start. Please modify accordingly to run test cases."
+                        else:
+                            errs = "[Error] the software lacks an entry point to start"
                         error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                         return_flag = True
                         break
-                    if 'main.py' in all_files and testing_command == 'main.py':
+                    if 'main.py' in self.codes.codebooks and testing_command == 'main.py':
                         command = "cd {}; ls -l; python3 main.py;".format(directory)
-                        # process = subprocess.Popen(command,
-                        #                     shell=True,
-                        #                     preexec_fn=os.setsid,
-                        #                     stdout=subprocess.PIPE,
-                        #                     stderr=subprocess.PIPE
-                        #                     )
                     else:
-                        # flag = False
-                        # for file in all_files:
-                        #     if not file.endswith('.py'): continue
-                        #     with open(os.path.join(directory, file)) as f:
-                        #         code = f.read()
-                        #     if has_entry_point(code):
-                        #         command = "cd {}; ls -l; python3 ".format(directory) + file
-                        #         flag = True
-                        #         process = subprocess.Popen(command,
-                        #                         shell=True,
-                        #                         preexec_fn=os.setsid,
-                        #                         stdout=subprocess.PIPE,
-                        #                         stderr=subprocess.PIPE
-                        #                         )
-                        #         break
                         command = "cd {}; ls -l; python3 ".format(directory) + testing_command
                     print('COMMAND:', command)
                     process = subprocess.Popen(command,
@@ -218,6 +203,14 @@ class ChatEnv:
                         if error_output:
                             if "Traceback".lower() in error_output.lower():
                                 errs = error_output.replace(directory + "/", "")
+                                # all_file_names = re.findall(r'File "(.*?)"', errs)
+                                # if len(all_file_names) > len(set(all_file_names)):
+                                #     errs = extract_first_error_traceback(errs)
+                                if errs.count('--------------------------') > 1:
+                                    new_errs = extract_first_error_traceback(errs)
+                                    if len(new_errs):
+                                        errs = new_errs
+                                
                                 # return True, errs
                                 error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                                 return_flag = True
@@ -275,6 +268,10 @@ class ChatEnv:
         return self.codes._get_changed_codes(changed_files, _simplify_code = _simplify_code)
     def get_changed_files(self):
         return self.codes._get_changed_files()
+    def get_all_changed_files(self):
+        return self.codes.all_changed_files
+    def reset_all_changed_files(self):
+        self.codes.all_changed_files = set()
     def _update_requirements(self, generated_content):
         self.requirements._update_docs(generated_content)
 

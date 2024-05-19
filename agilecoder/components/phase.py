@@ -7,7 +7,7 @@ from agilecoder.camel.messages import ChatMessage
 from agilecoder.camel.typing import TaskType, ModelType
 from agilecoder.components.chat_env import ChatEnv
 from agilecoder.components.statistics import get_info
-from agilecoder.components.utils import log_and_print_online, log_arguments, get_classes_in_folder, extract_product_requirements, get_non_leaf_and_intermediate_files
+from agilecoder.components.utils import log_and_print_online, log_arguments, get_classes_in_folder, extract_product_requirements, get_non_leaf_and_intermediate_files, find_ancestors
 import glob
 
 
@@ -616,6 +616,7 @@ class NextSprintBacklogCreating(Phase):
             chat_env.env_dict['all-sprint-acceptance-criteria'].append(list_of_sprint_acceptance_criteria)
             # chat_env.env_dict['all-sprint-goals'].append(sprint_goals)
             chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
+            chat_env.reset_all_changed_files()
         print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
         return chat_env
@@ -715,7 +716,10 @@ class WritingTestSuite(Phase):
         gui = "" if not chat_env.config.gui_design \
             else "The software should be equipped with graphical user interface (GUI) so that user can visually and graphically use it; so you must choose a GUI framework (e.g., in Python, you can implement GUI via tkinter, Pygame, Flexx, PyGUI, etc,)."
                 # print('chat_env', self.seminar_conclusion)
-        
+        if chat_env.env_dict.get('num-sprints', 0) > 1:
+            codes =  chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()),  True) 
+        else:
+            codes = chat_env.get_codes(simplify_code = True)
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "ideas": chat_env.env_dict['ideas'],
@@ -724,7 +728,7 @@ class WritingTestSuite(Phase):
                                "current_sprint_backlog": chat_env.env_dict['current-sprint-backlog'],
                                'current_programming_task': chat_env.env_dict['current-programming-task'],
                                'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
-                               "codes": chat_env.get_codes(simplify_code = True)})
+                               "codes": codes})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         print('WritingTestSuite', self.seminar_conclusion)
@@ -742,11 +746,21 @@ class CodeFormatting(Phase):
         self.phase_env.update({"codes": chat_env.env_dict['raw_code_conclusion']})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        chat_env.update_codes(self.seminar_conclusion)
-        if len(chat_env.codes.codebooks.keys()) == 0:
-            raise ValueError("No Valid Codes.")
-        chat_env.rewrite_codes()
-        log_and_print_online("**[Software Info]**:\n\n {}".format(get_info(chat_env.env_dict['directory'],self.log_filepath)))
+        has_correct_format = chat_env.update_codes(self.seminar_conclusion)
+        if has_correct_format:
+            chat_env.rewrite_codes()
+            log_and_print_online("**[Software Info]**:\n\n {}".format(get_info(chat_env.env_dict['directory'],self.log_filepath)))
+            self.phase_env.update({
+                'has_correct_format': True
+            })
+        else:
+            self.phase_env.update({
+                'has_correct_format': False
+            })
+        # if len(chat_env.codes.codebooks.keys()) == 0:
+        #     raise ValueError("No Valid Codes.")
+        # chat_env.rewrite_codes()
+        # log_and_print_online("**[Software Info]**:\n\n {}".format(get_info(chat_env.env_dict['directory'],self.log_filepath)))
         return chat_env
 class InheritCoding(Phase):
     def __init__(self, **kwargs):
@@ -927,6 +941,30 @@ class SprintBacklogReview(Phase):
     def update_chat_env(self, chat_env) -> ChatEnv:
         chat_env.env_dict['sprint_backlog_comments'] = self.seminar_conclusion.strip()
         return chat_env
+    
+class NextSprintBacklogReview(Phase):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_phase_env(self, chat_env):
+        plain_product_backlog = '\n'.join(chat_env.env_dict['product-backlog'])
+        plain_acceptance_criteria = '\n'.join(chat_env.env_dict['acceptance-criteria'])
+        all_done_tasks = '\n'.join(chat_env.env_dict['done-works'])
+        all_undone_tasks = '\n'.join(chat_env.env_dict['undone-works'])
+        self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
+                               "modality": chat_env.env_dict['modality'],
+                               "language": chat_env.env_dict['language'],
+                               'plain_product_backlog': plain_product_backlog,
+                               'plain_acceptance_criteria': plain_acceptance_criteria,
+                                # "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
+                               'current_programming_task': chat_env.env_dict['current-programming-task'],
+                               'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
+                               'all_done_tasks': all_done_tasks,
+                               'all_undone_tasks': all_undone_tasks})
+
+    def update_chat_env(self, chat_env) -> ChatEnv:
+        chat_env.env_dict['sprint_backlog_comments'] = self.seminar_conclusion.strip()
+        return chat_env
 
 class ProductBacklogModification(Phase):
     def __init__(self, **kwargs):
@@ -1032,6 +1070,61 @@ class SprintBacklogModification(Phase):
         print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
         return chat_env
+class NextSprintBacklogModification(Phase):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_phase_env(self, chat_env):
+        plain_product_backlog = '\n'.join(chat_env.env_dict['product-backlog'])
+        plain_acceptance_criteria = '\n'.join(chat_env.env_dict['acceptance-criteria'])
+        all_done_tasks = '\n'.join(chat_env.env_dict['done-works'])
+        all_undone_tasks = '\n'.join(chat_env.env_dict['undone-works'])
+        self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
+                               "modality": chat_env.env_dict['modality'],
+                               "language": chat_env.env_dict['language'],
+                               'plain_product_backlog': plain_product_backlog,
+                               "product_backlog_comments": chat_env.env_dict['product_backlog_comments'],
+                            #    "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
+                               'current_programming_task': chat_env.env_dict['current-programming-task'],
+                               'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
+                               "sprint_backlog_comments": chat_env.env_dict['sprint_backlog_comments'],
+                               'all_done_tasks': all_done_tasks,
+                                'all_undone_tasks': all_undone_tasks})
+
+    def update_chat_env(self, chat_env) -> ChatEnv:
+        if len(self.seminar_conclusion) > 0:
+            # sprint_goals = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint Goals").strip()
+            if self.seminar_conclusion.strip() in ["DONE", "DONE."]:
+                chat_env.env_dict['end-sprint'] = True
+                return chat_env
+            try:
+                sprint_backlog = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint backlog").strip()
+                sprint_acceptance_criteria = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint acceptance criteria").strip()
+            except:
+                try:
+                    sprint_backlog = extract_sprint_trunk_text(self.seminar_conclusion, "SPRINT_BACKLOG").strip()
+                    sprint_acceptance_criteria = extract_sprint_trunk_text(self.seminar_conclusion, "SPRINT_ACCEPTANCE_CRITERIA").strip()
+                except: 
+                    try:
+                        sprint_backlog, sprint_acceptance_criteria = extract_product_requirements(self.seminar_conclusion, False)
+                    except: pass
+            list_of_sprint_backlog = sprint_backlog.splitlines()
+            list_of_sprint_acceptance_criteria = sprint_acceptance_criteria.splitlines()
+
+            chat_env.env_dict['current-programming-task'] = sprint_backlog
+            chat_env.env_dict['current-acceptance-criteria'] = sprint_acceptance_criteria
+
+            chat_env.env_dict['current-sprint-backlog'] = list_of_sprint_backlog
+            chat_env.env_dict['current-sprint-acceptance-criteria'] = list_of_sprint_acceptance_criteria
+            # chat_env.env_dict['current-sprint-goals'] = sprint_goals
+
+            chat_env.env_dict['all-sprint-backlog'].append(list_of_sprint_backlog)
+            chat_env.env_dict['all-sprint-acceptance-criteria'].append(list_of_sprint_acceptance_criteria)
+            # chat_env.env_dict['all-sprint-goals'].append(sprint_goals)
+            chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
+        print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
+        # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
+        return chat_env
 class CodeReviewComment(Phase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -1044,7 +1137,7 @@ class CodeReviewComment(Phase):
             codes1 = chat_env.get_codes()
         else:
             codes1 = chat_env.get_changed_codes(changed_files)
-        if len(codes) / len(codes1) > 1.5: codes = codes1
+        if len(codes) / len(codes1) > 1.3: codes = codes1
         # print('codescodes:', codes)
         if '.png' in codes:
             chat_env.generate_images_from_codes()
@@ -1068,6 +1161,11 @@ class CodeReviewComment(Phase):
              "images": ", ".join(chat_env.incorporated_images)})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
+        if self.seminar_conclusion.strip() == "Finished.":
+            self.phase_env.update({
+                'has_no_comment': True
+            })
+            return chat_env
         results = chat_env.get_high_overlap_code()
         content = "\nThere are high overlap among files: "
         for f1, f2 in results:
@@ -1169,10 +1267,14 @@ class TestingPlan(Phase):
     def update_phase_env(self, chat_env):
         # print(
             # f"You can participate in the development of the software {chat_env.env_dict['task_prompt']}. Please input your feedback. (\"End\" to quit the involvement.)")
+        if chat_env.env_dict.get('num-sprints', 0) > 1:
+            codes = chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()), True)
+        else:
+            codes = chat_env.get_codes(simplify_code = True, ignore_test_code = False, get_entry_point = True)
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
-                               "codes": chat_env.get_codes(simplify_code = True, ignore_test_code = False, get_entry_point = True),
+                               "codes": codes,
                                 # "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
                                'current_programming_task': chat_env.env_dict['current-programming-task'],
                                'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
@@ -1192,7 +1294,8 @@ class TestErrorSummary(Phase):
     def update_phase_env(self, chat_env):
         # chat_env.generate_images_from_codes()
         (exist_bugs_flag, test_reports) = chat_env.exist_bugs(chat_env)
-        # print("======test_reports", test_reports)
+        print("======test_reports", test_reports)
+        log_and_print_online("======test_reports: " + test_reports)
         file_names = extract_file_names(test_reports)
         if 'AttributeError' in test_reports:
             error_line = test_reports.split('AttributeError')[-1]
@@ -1215,7 +1318,7 @@ class TestErrorSummary(Phase):
 
         if len(file_names):
             all_relevant_code = []
-            code_sections = extract_code_and_filename(chat_env.get_codes())
+            code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
             for file_name, code in code_sections:
                 if file_name in file_names:
                     all_relevant_code.extend([file_name, code, '\n'])
@@ -1223,7 +1326,7 @@ class TestErrorSummary(Phase):
         else:
             if test_reports == 'The software run successfully without errors.':
                 file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                all_relevant_code = chat_env.get_codes()
+                all_relevant_code = chat_env.get_changed_codes(file_names)
             else:
                 all_relevant_code = chat_env.get_codes()
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
@@ -1422,9 +1525,11 @@ class TestModification(Phase):
                         file_names.append(file)
         else:
             graph = chat_env.dependency_graph
-            if len(file_names):
-                relevant_files = graph.get(file_names[-1], [])
-                file_names.extend(relevant_files)
+            if ('[Error] the software lacks an entry point to start' not in test_reports) or ('[Error] the testing script lacks an entry point to start.' in test_reports):
+                if len(file_names):
+                    relevant_files = graph.get(file_names[-1], [])
+                    file_names.extend(relevant_files)
+            
             # for filename, code in chat_env.codes.codebooks.items():
             #     if class_name.lower() in filename:
             #         file_names.append(filename)
@@ -1440,7 +1545,7 @@ class TestModification(Phase):
             if test_reports == 'The software run successfully without errors.':
                 file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                 all_relevant_code = chat_env.get_changed_codes(file_names)
-            elif 'the software lacks an entry point to start' in test_reports:
+            elif test_reports == '[Error] the software lacks an entry point to start':
                 file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                 all_relevant_code = chat_env.get_changed_codes(file_names)
             else:
