@@ -7,7 +7,7 @@ from agilecoder.camel.messages import ChatMessage
 from agilecoder.camel.typing import TaskType, ModelType
 from agilecoder.components.chat_env import ChatEnv
 from agilecoder.components.statistics import get_info
-from agilecoder.components.utils import log_and_print_online, log_arguments, get_classes_in_folder, extract_product_requirements, get_non_leaf_and_intermediate_files, find_ancestors
+from agilecoder.components.utils import log_and_print_online, log_arguments, get_classes_in_folder, extract_product_requirements, get_non_leaf_and_intermediate_files, find_ancestors, extract_function_from_class
 import glob
 
 
@@ -355,15 +355,16 @@ def check_if_string_starts_with_number(text):
     elif text.strip().startswith('-'):
         return 2
     return 0
-def extract_trunk_text(text, keyword):
-    pattern = re.compile(r'{}:(.+?)(?=\bProduct backlog:|\bAcceptance criteria:|\Z)'.format(keyword), re.DOTALL)
+def extract_trunk_text(text, keyword, is_lower = True):
+    if is_lower:
+        pattern = re.compile(r'{}:(.+?)(?=\bProduct backlog:|\bAcceptance criteria:|\Z)'.format(keyword), re.DOTALL)
+    else:
+        pattern = re.compile(r'{}(.+?)(?=\bPRODUCT_BACKLOG|\bACCEPTANCE_CRITERIA|\Z)'.format(keyword), re.DOTALL)
     match = re.search(pattern, text)
     if match:
         return match.group(1).strip()
-    pattern = re.compile(r'{}\n(.+?)(?=\bPRODUCT_BACKLOG|\bACCEPTANCE_CRITERIA|\Z)'.format(keyword), re.DOTALL)
-    match = re.search(pattern, text)
-    if match:
-        return match.group(1).strip()
+    
+    
 class ProductBacklogCreating(Phase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -416,8 +417,8 @@ class ProductBacklogCreating(Phase):
                 acceptance_criteria = extract_trunk_text(self.seminar_conclusion, "Acceptance criteria")
             except:
                 try:
-                    product_backlog = extract_trunk_text(self.seminar_conclusion, "PRODUCT_BACKLOG")
-                    acceptance_criteria = extract_trunk_text(self.seminar_conclusion, "ACCEPTANCE_CRITERIA")
+                    product_backlog = extract_trunk_text(self.seminar_conclusion, "PRODUCT_BACKLOG", False).replace(':', '').strip()
+                    acceptance_criteria = extract_trunk_text(self.seminar_conclusion, "ACCEPTANCE_CRITERIA", False).replace(':', '').strip()
                 except:
                     try:
                         product_backlog, acceptance_criteria = extract_product_requirements(self.seminar_conclusion)
@@ -425,15 +426,15 @@ class ProductBacklogCreating(Phase):
             chat_env.env_dict['product-backlog'] = product_backlog.strip().splitlines()
             chat_env.env_dict['acceptance-criteria'] = acceptance_criteria.strip().splitlines()
         return chat_env
-def extract_sprint_trunk_text(text, keyword):
-    pattern = re.compile(r'{}:(.+?)(?=\bSprint Goals:|\bSprint backlog:|\bSprint acceptance criteria:|\Z)'.format(keyword), re.DOTALL)
+def extract_sprint_trunk_text(text, keyword, is_lower = True):
+    if is_lower:
+        pattern = re.compile(r'{}:(.+?)(?=\bSprint Goals:|\bSprint backlog:|\bSprint acceptance criteria:|\Z)'.format(keyword), re.DOTALL)
+    else:
+        pattern = re.compile(r'{}(.+?)(?=\bSPRINT_BACKLOG|\bSPRINT_ACCEPTANCE_CRITERIA|\Z)'.format(keyword), re.DOTALL)
     match = re.search(pattern, text)
     if match:
         return match.group(1).strip()
-    pattern = re.compile(r'{}\n(.+?)(?=\bSPRINT_BACKLOG|\bSPRINT_ACCEPTANCE_CRITERIA|\Z)'.format(keyword), re.DOTALL)
-    match = re.search(pattern, text)
-    if match:
-        return match.group(1).strip()
+    
     
 class SprintBacklogCreating(Phase):
     def __init__(self, **kwargs):
@@ -496,8 +497,8 @@ class SprintBacklogCreating(Phase):
                 sprint_acceptance_criteria = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint acceptance criteria").strip()
             except:
                 try:
-                    sprint_backlog = extract_sprint_trunk_text(self.seminar_conclusion, "SPRINT_BACKLOG").strip()
-                    sprint_acceptance_criteria = extract_sprint_trunk_text(self.seminar_conclusion, "SPRINT_ACCEPTANCE_CRITERIA").strip()
+                    sprint_backlog = extract_sprint_trunk_text(self.seminar_conclusion, "SPRINT_BACKLOG", False).replace(':', '').strip()
+                    sprint_acceptance_criteria = extract_sprint_trunk_text(self.seminar_conclusion, "SPRINT_ACCEPTANCE_CRITERIA", False).replace(':', '').strip()
                 except: 
                     try:
                         sprint_backlog, sprint_acceptance_criteria = extract_product_requirements(self.seminar_conclusion, False)
@@ -596,8 +597,8 @@ class NextSprintBacklogCreating(Phase):
                 sprint_acceptance_criteria = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint acceptance criteria").strip()
             except:
                 try:
-                    sprint_backlog = extract_sprint_trunk_text(self.seminar_conclusion, "SPRINT_BACKLOG").strip()
-                    sprint_acceptance_criteria = extract_sprint_trunk_text(self.seminar_conclusion, "SPRINT_ACCEPTANCE_CRITERIA").strip()
+                    sprint_backlog = extract_sprint_trunk_text(self.seminar_conclusion, "SPRINT_BACKLOG", False).replace(':', '').strip()
+                    sprint_acceptance_criteria = extract_sprint_trunk_text(self.seminar_conclusion, "SPRINT_ACCEPTANCE_CRITERIA", False).replace(':', '').strip()
                 except: 
                     try:
                         sprint_backlog, sprint_acceptance_criteria = extract_product_requirements(self.seminar_conclusion, False)
@@ -720,6 +721,8 @@ class WritingTestSuite(Phase):
             codes =  chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()),  True) 
         else:
             codes = chat_env.get_codes(simplify_code = True)
+        print('ALL CHANGED FILES:',chat_env.get_all_changed_files())
+        log_and_print_online('ALL CHANGED FILES: ' + str(chat_env.get_all_changed_files()))
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "ideas": chat_env.env_dict['ideas'],
@@ -1012,8 +1015,8 @@ class ProductBacklogModification(Phase):
                 acceptance_criteria = extract_trunk_text(self.seminar_conclusion, "Acceptance criteria")
             except:
                 try:
-                    product_backlog = extract_trunk_text(self.seminar_conclusion, "PRODUCT_BACKLOG")
-                    acceptance_criteria = extract_trunk_text(self.seminar_conclusion, "ACCEPTANCE_CRITERIA")
+                    product_backlog = extract_trunk_text(self.seminar_conclusion, "PRODUCT_BACKLOG", False).replace(':', '').strip()
+                    acceptance_criteria = extract_trunk_text(self.seminar_conclusion, "ACCEPTANCE_CRITERIA", False).replace(':', '').strip()
                 except:
                     try:
                         product_backlog, acceptance_criteria = extract_product_requirements(self.seminar_conclusion)
@@ -1395,6 +1398,21 @@ def extract_file_names(traceback_str):
         file_names.append(file_name)
     
     return file_names
+
+def extract_file_names_and_lines(traceback_str):
+    results = []
+    
+    # Define a regular expression pattern to match file names in tracebacks
+    file_name_pattern = r'File "(.*?)", line (\d+), in (\w+)'
+    
+    # Use re.finditer to find all matches in the traceback string
+    matches = re.finditer(file_name_pattern, traceback_str)
+    
+    # Extract file names from the matches
+    for match in matches:
+        results.append((match.group(1), match.group(2), match.group(3)))
+    
+    return results
 def extract_code_and_filename(file_content):
     # Define a regular expression pattern to match code sections
     code_pattern = r'([\w.]+)\n```(.*?)```'
@@ -1484,7 +1502,15 @@ class TestModification(Phase):
         module = ''
         modules = ''
         file_names = extract_file_names(test_reports)
+        filenames_lines = extract_file_names_and_lines(test_reports)
+        context = ''
+        for _item in filenames_lines:
+            _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
+            context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
+                                                            "python" if _item[0].endswith(".py") else _item[0].split(".")[
+                                                                -1], _content)
         # print('file_names', file_names)
+        log_and_print_online('BUGGY CONTEXT: ' + context)
         if 'ModuleNotFoundError' in test_reports:
             for match in re.finditer(r"No module named '(\S+)'", test_reports, re.DOTALL):
                 module = match.group(1)

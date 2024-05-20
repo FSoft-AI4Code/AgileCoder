@@ -301,6 +301,10 @@ class Codes:
                     scores = sorted(scores, key = lambda x: x[1], reverse = True)[0]
                     if scores[1] > 0.6:
                         corres_key = scores[0]
+                if corres_key is None:
+                    for filename in self.codebooks:
+                        if filename.lower().replace('_', '') ==  key:
+                            corres_key = filename
             if key not in self.codebooks.keys() or self.codebooks[key] != new_codes.codebooks[key]:
                 if is_testing:
                     self.testing_filenames.update([key])

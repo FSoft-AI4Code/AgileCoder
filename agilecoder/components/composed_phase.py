@@ -488,4 +488,85 @@ class BugFixing(ComposedPhase):
 
         chat_env = self.update_chat_env(chat_env)
         return chat_env
-    
+
+class WritingFullTestSuite(ComposedPhase):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_phase_env(self, chat_env):
+        self.phase_env = dict()
+
+    def update_chat_env(self, chat_env):
+        return chat_env
+
+    def break_cycle(self, phase_env) -> bool:
+        return False
+    def execute(self, chat_env) -> ChatEnv:
+        """
+        similar to Phase.execute, but add control for breaking the loop
+        1. receive information from environment(ComposedPhase): update the phase environment from global environment
+        2. for each SimplePhase in ComposedPhase
+            a) receive information from environment(SimplePhase)
+            b) check loop break
+            c) execute the chatting
+            d) change the environment(SimplePhase)
+            e) check loop break
+        3. change the environment(ComposedPhase): update the global environment using the conclusion
+
+        Args:
+            chat_env: global chat chain environment
+
+        Returns:
+
+        """
+        self.update_phase_env(chat_env)
+        while len(chat_env.env_dict.get('testing_commands', [None])):
+            for phase_item in self.composition:
+                log_and_print_online("BUGFIXING:" + str(phase_item))
+                print("BUGFIXING:", phase_item)
+                if phase_item["phaseType"] == "SimplePhase":  # right now we do not support nested composition
+                    phase = phase_item['phase']
+                    max_turn_step = phase_item['max_turn_step']
+                    need_reflect = check_bool(phase_item['need_reflect'])
+                    log_and_print_online(
+                        f"**[Execute Detail]**\n\nexecute SimplePhase:[{phase}] in ComposedPhase:[{self.phase_name}]")
+                    if phase in self.phases:
+                        self.phases[phase].phase_env = self.phase_env
+                        if phase_item['phase'] != 'TestErrorSummary':
+                            self.phases[phase].update_phase_env(chat_env)
+                     
+                        chat_env = self.phases[phase].execute(chat_env,
+                                                            self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
+                                                            need_reflect)
+                        log_and_print_online("chat_env.env_dict['test_reports']: " + chat_env.env_dict['test_reports'])
+                        if chat_env.env_dict['test_reports'] == 'The software run successfully without errors.':
+                            break
+                        # print('@' * 20)
+                        # print('self.phases[phase].phase_env', self.phases[phase].phase_env)
+                       
+                        # chat_env = self.phases[phase].update_chat_env(chat_env)
+                        if chat_env.env_dict.get('end-sprint', False):
+                            return chat_env
+                    else:
+                        print(f"Phase '{phase}' is not yet implemented. \
+                                Please write its config in phaseConfig.json \
+                                and implement it in components.phase")
+                elif phase_item['phaseType'] == 'ComposedPhase':
+                    phase = phase_item['phase']
+                    cycle_num = phase_item['cycleNum']
+                    composition = phase_item['Composition']
+                    compose_phase_class = getattr(self.compose_phase_module, phase)
+                    compose_phase_instance = compose_phase_class(phase_name=phase,
+                                                         cycle_num=cycle_num,
+                                                         composition=composition,
+                                                         config_phase=self.config_phase,
+                                                         config_role=self.config_role,
+                                                         model_type=self.model_type,
+                                                         log_filepath=self.log_filepath)
+                    chat_env = compose_phase_instance.execute(chat_env)
+                else:
+                    raise NotImplementedError
+                
+
+        chat_env = self.update_chat_env(chat_env)
+        return chat_env

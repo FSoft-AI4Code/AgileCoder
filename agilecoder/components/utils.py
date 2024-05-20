@@ -190,3 +190,24 @@ def find_ancestors(adj_list, start_nodes):
             stack.extend(reverse_adj_list[node])
     
     return ancestors
+
+
+def extract_function_from_class(file_content, function_name):
+    tree = ast.parse(file_content)
+    lines = file_content.splitlines()
+    class_code = []
+    for line in lines:
+        if line.strip().startswith('def'): break
+        class_code.append(line)
+    function_code = None
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef):
+            for class_node in node.body:
+                if isinstance(class_node, ast.FunctionDef) and class_node.name == function_name:
+                    function_code = ast.get_source_segment(file_content, class_node)
+    if function_code is None: return file_content
+    function_code_lines = function_code.splitlines()
+    results = class_code
+    for line in function_code_lines:
+        results.append('\t' + line)
+    return '\n'.join(results)
