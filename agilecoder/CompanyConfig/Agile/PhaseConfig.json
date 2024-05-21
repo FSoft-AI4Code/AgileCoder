@@ -688,7 +688,6 @@
       "User's task: \"{task}\".",
       "Modality: \"{modality}\".",
       "Programming Language: \"{language}\"",
-      "Sprint backlog:\n\"{current_programming_task}\"",
       "Changed Codes:",
       "\"{codes}\"",
       "Comments on Changed Codes:",
@@ -701,7 +700,7 @@
       "'''",
       "CODE",
       "```",
-      "As the {assistant_role}, to satisfy the sprint backlog and ensure that the code resolves the comments, you should modify corresponding codes according to the comments, and then only return changed and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged codes. Your answer strictly obeys the required format."
+      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding codes according to the comments, and then only return changed and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged codes. Your answer strictly obeys the required format."
     ]
   },
   "CodeReview2Modification": {
@@ -712,7 +711,6 @@
       "User's task: \"{task}\".",
       "Modality: \"{modality}\".",
       "Programming Language: \"{language}\"",
-      "Sprint backlog:\n\"{current_programming_task}\"",
       "Changed Codes:",
       "\"{codes}\"",
       "Comments on Changed Codes:",
@@ -725,7 +723,7 @@
       "'''",
       "CODE",
       "```",
-      "As the {assistant_role}, to satisfy the sprint backlog and ensure that the code resolves the comments, you should modify corresponding changed codes according to the comments, and then only return changed and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged codes. Your answer strictly obeys the required format."
+      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding changed codes according to the comments, and then only return changed and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged codes. Your answer strictly obeys the required format."
     ]
   },
   "CodeReview3Modification": {
@@ -736,7 +734,6 @@
       "User's task: \"{task}\".",
       "Modality: \"{modality}\".",
       "Programming Language: \"{language}\"",
-      "Sprint acceptance criteria:\n\"{current_acceptance_criteria}\"",
       "Changed Codes:",
       "\"{codes}\"",
       "Comments on Changed Codes:",
@@ -749,7 +746,7 @@
       "'''",
       "CODE",
       "```",
-      "As the {assistant_role}, to satisfy the sprint acceptance criteria and ensure that the code resolves the comments, you should modify corresponding changed codes according to the comments, and then only return changed and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged codes. Your answer strictly obeys the required format."
+      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding changed codes according to the comments, and then only return changed and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged codes. Your answer strictly obeys the required format."
     ]
   },
   "CodeReviewHuman": {
