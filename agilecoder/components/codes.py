@@ -12,6 +12,11 @@ def is_valid_syntax(code):
         return True
     except SyntaxError:
         return False
+    
+def check_the_same_file(name1, name2):
+    name1 = name1.split('.')[0].replace('_', '')
+    name2 = name2.split('.')[0].replace('_', '')
+    return name2 in name1
 def extract_files(code_string):
     """Extracts code and names for each file from the given string."""
 
@@ -279,7 +284,7 @@ class Codes:
         return results
                 
 
-    def _update_codes(self, generated_content, is_testing):
+    def _update_codes(self, generated_content, is_testing, file_name):
         new_codes = Codes(generated_content, is_testing)
         # differ = difflib.Differ()
         flag = False
@@ -287,6 +292,8 @@ class Codes:
         total_changed_lines = ''
         changed_files = []
         for key in new_codes.codebooks.keys():
+            if file_name is not None and not check_the_same_file(key, file_name):  continue
+
             total_new_length += len(new_codes.codebooks[key])
             corres_key = None
             if key not in self.codebooks.keys():
@@ -372,6 +379,7 @@ class Codes:
         for filename in self.codebooks.keys():
             if get_entry_point:
                 if has_entry_point(self.codebooks[filename]):
+                    if ignore_test_code and (filename.startswith('test_') or filename.split('.')[0].endswith('_test')): continue
                     code = self.codebooks[filename]
                     if _simplify_code:
                         code = simplify_code(code)
@@ -379,8 +387,8 @@ class Codes:
                                                             "python" if filename.endswith(".py") else filename.split(".")[
                                                                 -1], code)
                 continue
-            elif only_test_code and filename not in self.testing_filenames: continue
-            elif ignore_test_code and filename in self.testing_filenames: continue
+            if only_test_code and not (filename.startswith('test_') or filename.split('.')[0].endswith('_test')): continue
+            elif ignore_test_code and (filename.startswith('test_') or filename.split('.')[0].endswith('_test')): continue
             code = self.codebooks[filename]
             if _simplify_code:
                 code = simplify_code(code)

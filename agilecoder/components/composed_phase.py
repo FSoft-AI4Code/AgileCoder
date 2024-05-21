@@ -5,8 +5,8 @@ from collections import defaultdict
 import copy
 from agilecoder.camel.typing import ModelType
 from agilecoder.components.chat_env import ChatEnv
-from agilecoder.components.utils import log_and_print_online
-
+from agilecoder.components.utils import log_and_print_online, find_ancestors
+from copy import deepcopy
 
 def check_bool(s):
     return s.lower() == "true"
@@ -285,6 +285,7 @@ class CodeReview(ComposedPhase):
 
     def break_cycle(self, phase_env) -> bool:
         if phase_env.get('has_no_comment', False): return True
+        if len(phase_env['changed_files']) == 0: return True
         return False
 
 class SprintBacklogUpdate(ComposedPhase):
@@ -520,10 +521,12 @@ class WritingFullTestSuite(ComposedPhase):
 
         """
         self.update_phase_env(chat_env)
-        while len(chat_env.env_dict.get('testing_commands', [None])):
+
+        all_changed_files = find_ancestors(chat_env.dependency_graph, deepcopy(list(chat_env.get_all_changed_files())))
+        if len(all_changed_files) == 0: return chat_env
+        for file_name in all_changed_files:
+            if file_name.startswith('test_') or file_name.split('.')[0].endswith('_test'): continue
             for phase_item in self.composition:
-                log_and_print_online("BUGFIXING:" + str(phase_item))
-                print("BUGFIXING:", phase_item)
                 if phase_item["phaseType"] == "SimplePhase":  # right now we do not support nested composition
                     phase = phase_item['phase']
                     max_turn_step = phase_item['max_turn_step']
@@ -531,22 +534,22 @@ class WritingFullTestSuite(ComposedPhase):
                     log_and_print_online(
                         f"**[Execute Detail]**\n\nexecute SimplePhase:[{phase}] in ComposedPhase:[{self.phase_name}]")
                     if phase in self.phases:
-                        self.phases[phase].phase_env = self.phase_env
-                        if phase_item['phase'] != 'TestErrorSummary':
-                            self.phases[phase].update_phase_env(chat_env)
-                     
+                        untested_code = chat_env.get_changed_codes([file_name], True)
+                        code_dependencies = chat_env.get_changed_codes(chat_env.dependency_graph.get(file_name, []), True)
+                        self.phases[phase].phase_env.update({
+                            'code_dependencies': code_dependencies,
+                            'untested_code': untested_code,
+                            'current_file_name': file_name
+                        })
                         chat_env = self.phases[phase].execute(chat_env,
                                                             self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
                                                             need_reflect)
-                        log_and_print_online("chat_env.env_dict['test_reports']: " + chat_env.env_dict['test_reports'])
-                        if chat_env.env_dict['test_reports'] == 'The software run successfully without errors.':
-                            break
+                        
                         # print('@' * 20)
                         # print('self.phases[phase].phase_env', self.phases[phase].phase_env)
                        
                         # chat_env = self.phases[phase].update_chat_env(chat_env)
-                        if chat_env.env_dict.get('end-sprint', False):
-                            return chat_env
+                        
                     else:
                         print(f"Phase '{phase}' is not yet implemented. \
                                 Please write its config in phaseConfig.json \

@@ -141,9 +141,9 @@ def extract_product_requirements(input, is_product = True):
 def get_non_leaf_and_intermediate_files(adj_list):
     all_deps = []
     for node, deps in adj_list.items():
-        if node.startswith('test_') or node.endswith('_test'): continue
+        if node.startswith('test_') or node.split('.')[0].endswith('_test'): continue
         all_deps.extend(deps)
-    return [node for node in adj_list if node not in all_deps and not (node.startswith('test_') or node.endswith('_test'))]
+    return [node for node in adj_list if node not in all_deps and not (node.startswith('test_') or node.split('.')[0].endswith('_test'))]
 
 def extract_first_error_traceback(traceback_output):
     # Split the traceback output into lines
@@ -193,6 +193,7 @@ def find_ancestors(adj_list, start_nodes):
 
 
 def extract_function_from_class(file_content, function_name):
+    if function_name == '<module>': return file_content
     tree = ast.parse(file_content)
     lines = file_content.splitlines()
     class_code = []

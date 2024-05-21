@@ -362,7 +362,13 @@ def extract_trunk_text(text, keyword, is_lower = True):
         pattern = re.compile(r'{}(.+?)(?=\bPRODUCT_BACKLOG|\bACCEPTANCE_CRITERIA|\Z)'.format(keyword), re.DOTALL)
     match = re.search(pattern, text)
     if match:
-        return match.group(1).strip()
+        text = match.group(1).strip()
+        lines = text.splitlines()
+        results = []
+        for i, line in enumerate(lines):
+            if len(line.strip()) ==  0: break
+            results.append(line)
+        return '\n'.join(results)
     
     
 class ProductBacklogCreating(Phase):
@@ -433,7 +439,13 @@ def extract_sprint_trunk_text(text, keyword, is_lower = True):
         pattern = re.compile(r'{}(.+?)(?=\bSPRINT_BACKLOG|\bSPRINT_ACCEPTANCE_CRITERIA|\Z)'.format(keyword), re.DOTALL)
     match = re.search(pattern, text)
     if match:
-        return match.group(1).strip()
+        text = match.group(1).strip()
+        lines = text.splitlines()
+        results = []
+        for i, line in enumerate(lines):
+            if len(line.strip()) ==  0: break
+            results.append(line)
+        return '\n'.join(results)
     
     
 class SprintBacklogCreating(Phase):
@@ -541,51 +553,6 @@ class NextSprintBacklogCreating(Phase):
                                'all_undone_tasks': all_undone_tasks})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        # print('chat_env', self.seminar_conclusion)
-        # sprint_goal = ''
-        # list_of_sprint_backlog_items = []
-        # if 'DONE.' in self.seminar_conclusion:
-        #     lines = self.seminar_conclusion.splitlines()
-        #     for line in lines:
-        #         if line.strip() == 'DONE.':
-        #             chat_env.env_dict['end-sprint'] = True
-        #             return chat_env
-
-        # if self.seminar_conclusion.strip() == 'DONE.':
-        #     chat_env.env_dict['end-sprint'] = True
-        #     return chat_env
-        # if len(self.seminar_conclusion) > 0 and 'Sprint Backlog:' in self.seminar_conclusion:
-        #     coms = self.seminar_conclusion.split('Sprint Backlog:')
-        #     sprint_goal = coms[0].split('Sprint Goals:')[1].strip()
-        #     sprint_backlog_items = coms[1].strip().splitlines()
-
-        #     for item in sprint_backlog_items:
-        #         flag = check_if_string_starts_with_number(item)
-        #         if flag > 0:
-        #             if flag == 1 and '. ' in item:
-        #                 list_of_sprint_backlog_items.append(item.split('.')[1].strip())
-        #             else:
-        #                 list_of_sprint_backlog_items.append(item.strip())
-        #         # else: break
-        # if 'all-sprints' not in chat_env.env_dict:
-        #     chat_env.env_dict['all-sprints'] = []
-        # if 'all-sprint-goals' not in chat_env.env_dict:
-        #     chat_env.env_dict['all-sprint-goals'] = []
-        # chat_env.env_dict['all-sprints'].append(list_of_sprint_backlog_items)
-        # chat_env.env_dict['all-sprint-goals'].append(sprint_goal)
-        # chat_env.env_dict['current-sprint-backlog'] = list_of_sprint_backlog_items
-        # chat_env.env_dict['current-sprint-goals'] = sprint_goal
-        # current_tasks = []
-        # chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
-        # task_id = 1
-        # for task in list_of_sprint_backlog_items:
-        #     if len(task.strip()) == 0: continue
-        #     if task.strip().startswith('-'):
-        #         current_tasks.append(task)
-        #     else:
-        #         current_tasks.append(str(task_id) + '. ' + task)
-        #         task_id += 1
-        # chat_env.env_dict['current-programming-task'] = '\n'.join(current_tasks)
         if len(self.seminar_conclusion) > 0:
             print('self.seminar_conclusion', self.seminar_conclusion)
             if self.seminar_conclusion.strip() in ["DONE", "DONE."]:
@@ -622,7 +589,34 @@ class NextSprintBacklogCreating(Phase):
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
         return chat_env
 
-import re
+class CheckProgressStatus(Phase):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_phase_env(self, chat_env):
+        plain_product_backlog = '\n'.join(chat_env.env_dict['product-backlog'])
+        plain_acceptance_criteria = '\n'.join(chat_env.env_dict['acceptance-criteria'])
+        all_done_tasks = '\n'.join(chat_env.env_dict['done-works'])
+        all_undone_tasks = '\n'.join(chat_env.env_dict['undone-works'])
+        self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
+                               "modality": chat_env.env_dict['modality'],
+                               "language": chat_env.env_dict['language'],
+                               "ideas": chat_env.env_dict['ideas'],
+                               'plain_product_backlog': plain_product_backlog,
+                               'plain_acceptance_criteria': plain_acceptance_criteria,
+                               'all_done_tasks': all_done_tasks,
+                               'num_sprints': chat_env.env_dict.get('num-sprints', 0),
+                               'all_undone_tasks': all_undone_tasks})
+
+    def update_chat_env(self, chat_env) -> ChatEnv:
+        if len(self.seminar_conclusion) > 0:
+            print('[CheckProgressStatus] self.seminar_conclusion', self.seminar_conclusion)
+            if self.seminar_conclusion.strip().replace('"', '') in ["DONE", "DONE."]:
+                chat_env.env_dict['end-sprint'] = True
+                return chat_env
+        # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
+        return chat_env
+
 
 def extract_information(text):
     pattern = r"Backlog Item: (.*) - Member: (.*)"
@@ -717,25 +711,24 @@ class WritingTestSuite(Phase):
         gui = "" if not chat_env.config.gui_design \
             else "The software should be equipped with graphical user interface (GUI) so that user can visually and graphically use it; so you must choose a GUI framework (e.g., in Python, you can implement GUI via tkinter, Pygame, Flexx, PyGUI, etc,)."
                 # print('chat_env', self.seminar_conclusion)
-        if chat_env.env_dict.get('num-sprints', 0) > 1:
-            codes =  chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()),  True) 
-        else:
-            codes = chat_env.get_codes(simplify_code = True)
+        # if chat_env.env_dict.get('num-sprints', 0) > 1:
+        #     codes =  chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()),  True) 
+        # else:
+        #     codes = chat_env.get_codes(simplify_code = True)
         print('ALL CHANGED FILES:',chat_env.get_all_changed_files())
         log_and_print_online('ALL CHANGED FILES: ' + str(chat_env.get_all_changed_files()))
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "ideas": chat_env.env_dict['ideas'],
                                "language": chat_env.env_dict['language'],
-                            #    "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
                                "current_sprint_backlog": chat_env.env_dict['current-sprint-backlog'],
                                'current_programming_task': chat_env.env_dict['current-programming-task'],
-                               'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
-                               "codes": codes})
+                               'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria']
+                               })
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         print('WritingTestSuite', self.seminar_conclusion)
-        chat_env.update_codes(self.seminar_conclusion, is_testing = True)
+        chat_env.update_codes(self.seminar_conclusion, is_testing = True, file_name = self.phase_env['current_file_name'])
         if len(chat_env.codes.codebooks.keys()) == 0:
             raise ValueError("No Valid Codes.")
         chat_env.rewrite_codes()
@@ -1158,6 +1151,7 @@ class CodeReviewComment(Phase):
              "language": chat_env.env_dict['language'],
              "codes": codes,
              "paths": assets_paths,
+             'changed_files': changed_files,
             #   "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
              'current_programming_task': chat_env.env_dict['current-programming-task'],
              'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
@@ -1270,10 +1264,10 @@ class TestingPlan(Phase):
     def update_phase_env(self, chat_env):
         # print(
             # f"You can participate in the development of the software {chat_env.env_dict['task_prompt']}. Please input your feedback. (\"End\" to quit the involvement.)")
-        if chat_env.env_dict.get('num-sprints', 0) > 1:
-            codes = chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()), True)
-        else:
-            codes = chat_env.get_codes(simplify_code = True, ignore_test_code = False, get_entry_point = True)
+        # if chat_env.env_dict.get('num-sprints', 0) > 1:
+        #     codes = chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()), True)
+        # else:
+        codes = chat_env.get_codes(simplify_code = True, ignore_test_code = True, get_entry_point = True)
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
@@ -1300,6 +1294,30 @@ class TestErrorSummary(Phase):
         print("======test_reports", test_reports)
         log_and_print_online("======test_reports: " + test_reports)
         file_names = extract_file_names(test_reports)
+        is_failed_test_case = False
+        if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('testing script lacks an entry point to start' not in test_reports):
+            self.phase_prompt = '\n'.join([
+                "Our potentially buggy source codes and corresponding test reports are listed below: ",
+                "Programming Language: \"{language}\"",
+                "Source Codes:",
+                "\"{codes}\"",
+                 "Failed Test Case:",
+                "\"{failed_test_case}\""
+                "Test Reports of Source Codes:",
+                "\"{test_reports}\"",
+                "According to my test reports, please locate and summarize the bugs that cause the problem."
+            ])
+            is_failed_test_case = True
+            _item = extract_file_names_and_lines(test_reports)[0]
+            context = ''
+            if _item[0] in chat_env.codes.codebooks:
+                _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
+                context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
+                                                                "python" if _item[0].endswith(".py") else _item[0].split(".")[
+                                                                    -1], _content)
+            self.phase_env.update({
+                'failed_test_case': context
+            })
         if 'AttributeError' in test_reports:
             error_line = test_reports.split('AttributeError')[-1]
             class_name = re.search(r"'(.+?)'", error_line).group(1).split('.')[-1]
@@ -1310,7 +1328,7 @@ class TestErrorSummary(Phase):
                 for file in relevant_files:
                     if 'class ' + class_name in chat_env.codes.codebooks[file]:
                         file_names.append(file)
-        else:
+        elif 'ModuleNotFoundError' not in test_reports:
             graph = chat_env.dependency_graph
             if len(file_names):
                 relevant_files = graph.get(file_names[-1], [])
@@ -1322,6 +1340,8 @@ class TestErrorSummary(Phase):
         if len(file_names):
             all_relevant_code = []
             code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
+            if is_failed_test_case:
+                file_names = file_names[1:]
             for file_name, code in code_sections:
                 if file_name in file_names:
                     all_relevant_code.extend([file_name, code, '\n'])
@@ -1330,8 +1350,11 @@ class TestErrorSummary(Phase):
             if test_reports == 'The software run successfully without errors.':
                 file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                 all_relevant_code = chat_env.get_changed_codes(file_names)
+            elif test_reports == '[Error] the software lacks an entry point to start':
+                file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
+                all_relevant_code = chat_env.get_changed_codes(file_names)
             else:
-                all_relevant_code = chat_env.get_codes()
+                all_relevant_code = chat_env.get_codes(ignore_test_code = True)
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "ideas": chat_env.env_dict['ideas'],
@@ -1352,20 +1375,27 @@ class TestErrorSummary(Phase):
         self.update_phase_env(chat_env)
         flag = True
         if "ModuleNotFoundError" in self.phase_env['test_reports']:
-            installed_module = chat_env.fix_module_not_found_error(self.phase_env['test_reports'])
-            if self.errors.get(installed_module, 0) == 0:
-                flag = False
-                
-                log_and_print_online(
-                    f"Software Test Engineer found ModuleNotFoundError:\n{self.phase_env['test_reports']}\n")
-                pip_install_content = ""
-                for match in re.finditer(r"No module named '(\S+)'", self.phase_env['test_reports'], re.DOTALL):
-                    module = match.group(1)
-                    pip_install_content += "{}\n```{}\n{}\n```\n".format("cmd", "bash", f"pip install {module}")
-                    log_and_print_online(f"Programmer resolve ModuleNotFoundError by:\n{pip_install_content}\n")
-                self.seminar_conclusion = "nothing need to do"
-                if installed_module is not None:
-                    self.errors[installed_module] = self.errors.get(installed_module, 0) + 1
+            local_module = False
+            for match in re.finditer(r"No module named '(\S+)'", self.phase_env['test_reports'], re.DOTALL):
+                module = match.group(1)
+                for file_name in chat_env.codes.codebooks:
+                    if module == file_name.split('.')[0]:
+                        local_module = True
+            if local_module:
+                installed_module = chat_env.fix_module_not_found_error(self.phase_env['test_reports'])
+                if self.errors.get(installed_module, 0) == 0:
+                    flag = False
+                    
+                    log_and_print_online(
+                        f"Software Test Engineer found ModuleNotFoundError:\n{self.phase_env['test_reports']}\n")
+                    pip_install_content = ""
+                    for match in re.finditer(r"No module named '(\S+)'", self.phase_env['test_reports'], re.DOTALL):
+                        module = match.group(1)
+                        pip_install_content += "{}\n```{}\n{}\n```\n".format("cmd", "bash", f"pip install {module}")
+                        log_and_print_online(f"Programmer resolve ModuleNotFoundError by:\n{pip_install_content}\n")
+                    self.seminar_conclusion = "nothing need to do"
+                    if installed_module is not None:
+                        self.errors[installed_module] = self.errors.get(installed_module, 0) + 1
         if flag:
             self.seminar_conclusion = \
                 self.chatting(chat_env=chat_env,
@@ -1403,7 +1433,7 @@ def extract_file_names_and_lines(traceback_str):
     results = []
     
     # Define a regular expression pattern to match file names in tracebacks
-    file_name_pattern = r'File "(.*?)", line (\d+), in (\w+)'
+    file_name_pattern = r'File "(.*?)", line (\d+), in (.+)'
     
     # Use re.finditer to find all matches in the traceback string
     matches = re.finditer(file_name_pattern, traceback_str)
@@ -1441,27 +1471,27 @@ class TestModification(Phase):
             assets_paths = list(map(lambda x: x.replace(directory, '.'), assets_paths))
             assets_paths = '\n'.join(assets_paths)
             self.phase_prompt = '\n'.join([
-      "Our developed source codes and corresponding test reports are listed below: ",
-      "Programming Language: \"{language}\"",
-      "Source Codes:",
-      "\"{codes}\"",
-      "Test Reports of Source Codes:",
-      "\"{test_reports}\"",
-      "Error Summary of Test Reports:",
-      "\"{error_summary}\"",
-        "Existing assets' paths:",
-      "\"{paths}\"",
-    "As the {assistant_role}, in light of a error relevant to FileNotFound, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes by considering the error summary and the paths of existing assets above to fix this error.",
-      "Note that each file must strictly follow a markdown code block format, where the following tokens must be replaced such that \"FILENAME\" is the lowercase file name including the file extension, \"LANGUAGE\" in the programming language, \"DOCSTRING\" is a string literal specified in source code that is used to document a specific segment of code, and \"CODE\" is the original code:",
-      "FILENAME",
-      "```LANGUAGE",
-      "'''",
-      "DOCSTRING",
-      "'''",
-      "CODE",
-      "```",
-      "Now, use the format exemplified above and modify the problematic codes based on the error summary. If you cannot find the assets from the existing paths, you should consider removing relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). If no bugs are reported, please return only one line like \"<INFO> Finished\"."
-    ])
+                "Our developed source codes and corresponding test reports are listed below: ",
+                "Programming Language: \"{language}\"",
+                "Source Codes:",
+                "\"{codes}\"",
+                "Test Reports of Source Codes:",
+                "\"{test_reports}\"",
+                "Error Summary of Test Reports:",
+                "\"{error_summary}\"",
+                    "Existing assets' paths:",
+                "\"{paths}\"",
+                "As the {assistant_role}, in light of a error relevant to FileNotFound, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes by considering the error summary and the paths of existing assets above to fix this error.",
+                "Note that each file must strictly follow a markdown code block format, where the following tokens must be replaced such that \"FILENAME\" is the lowercase file name including the file extension, \"LANGUAGE\" in the programming language, \"DOCSTRING\" is a string literal specified in source code that is used to document a specific segment of code, and \"CODE\" is the original code:",
+                "FILENAME",
+                "```LANGUAGE",
+                "'''",
+                "DOCSTRING",
+                "'''",
+                "CODE",
+                "```",
+                "Now, use the format exemplified above and modify the problematic codes based on the error summary. If you cannot find the assets from the existing paths, you should consider removing relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). If no bugs are reported, please return only one line like \"<INFO> Finished\"."
+            ])
         else:
             assets_paths = ''
         if 'NameError:' in test_reports or 'ImportError' in test_reports:
@@ -1502,15 +1532,44 @@ class TestModification(Phase):
         module = ''
         modules = ''
         file_names = extract_file_names(test_reports)
-        filenames_lines = extract_file_names_and_lines(test_reports)
-        context = ''
-        for _item in filenames_lines:
-            _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
-            context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
-                                                            "python" if _item[0].endswith(".py") else _item[0].split(".")[
-                                                                -1], _content)
+        is_failed_test_case = False
+        print('file_names:', file_names)
+        if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('testing script lacks an entry point to start' not in test_reports):
+            self.phase_prompt = '\n'.join([
+                "Our potentially buggy source codes and corresponding test reports are listed below:",
+                "Programming Language: \"{language}\"",
+                "Potentially Buggy Source Codes:",
+                "\"{codes}\"",
+                "Failed Test Case:",
+                "\"{failed_test_case}\""
+                "Test Reports of Source Codes:",
+                "\"{test_reports}\"",
+                "Error Summary of Test Reports:",
+                "\"{error_summary}\"",
+                "Note that each file must strictly follow a markdown code block format, where the following tokens must be replaced such that FILENAME is the lowercase file name including the file extension, LANGUAGE in the programming language, DOCSTRING is a string literal specified in source code that is used to document a specific segment of code, and CODE is the original code:",
+                "FILENAME",
+                "```LANGUAGE",
+                "'''",
+                "DOCSTRING",
+                "'''",
+                "CODE",
+                "```",
+                "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the failed test case and the error summary.",
+                "Now, use the format exemplified above and modify the problematic codes based on the failed test case and error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes changed codes and is prohibited from repeating unchanged codes. If no bugs are reported, please return only one line like \"<INFO> Finished\"."
+            ])
+            is_failed_test_case = True
+            _item = extract_file_names_and_lines(test_reports)[0]
+            context = ''
+            if _item[0] in chat_env.codes.codebooks:
+                _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
+                context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
+                                                                "python" if _item[0].endswith(".py") else _item[0].split(".")[
+                                                                    -1], _content)
+            self.phase_env.update({
+                'failed_test_case': context
+            })
         # print('file_names', file_names)
-        log_and_print_online('BUGGY CONTEXT: ' + context)
+        # log_and_print_online('BUGGY CONTEXT: ' + context)
         if 'ModuleNotFoundError' in test_reports:
             for match in re.finditer(r"No module named '(\S+)'", test_reports, re.DOTALL):
                 module = match.group(1)
@@ -1551,7 +1610,7 @@ class TestModification(Phase):
                         file_names.append(file)
         else:
             graph = chat_env.dependency_graph
-            if ('[Error] the software lacks an entry point to start' not in test_reports) or ('[Error] the testing script lacks an entry point to start.' in test_reports):
+            if ('[Error] the software lacks an entry point to start' not in test_reports) or ('[Error] the testing script lacks an entry point to start.' not in test_reports):
                 if len(file_names):
                     relevant_files = graph.get(file_names[-1], [])
                     file_names.extend(relevant_files)
@@ -1559,10 +1618,12 @@ class TestModification(Phase):
             # for filename, code in chat_env.codes.codebooks.items():
             #     if class_name.lower() in filename:
             #         file_names.append(filename)
-
+        
         if len(file_names):
             all_relevant_code = []
             code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
+            if is_failed_test_case:
+                file_names = file_names[1:]
             for file_name, code in code_sections:
                 if file_name in file_names:
                     all_relevant_code.extend([file_name, code, '\n'])

@@ -132,7 +132,7 @@ class ChatEnv:
                 if 'testing_commands' not in self.env_dict:
                     
                     testing_commands = self.env_dict['commands']
-                    _testing_commands = list(filter(lambda x: ('test_' in x) or ('_test' in x), get_test_order(chat_env.dependency_graph)))
+                    _testing_commands = list(filter(lambda x: x.startswith('test_') or x.split('.')[0].endswith('_test'), get_test_order(chat_env.dependency_graph)))
                     additional_commands = list(set(testing_commands) - set(_testing_commands))
                     # print('additional_commands', additional_commands)
                     # additional_commands = list(filter(lambda x: x in runnable_files, additional_commands))
@@ -154,7 +154,7 @@ class ChatEnv:
                 current_idx = 0
                 for testing_command in testing_commands:
                     if testing_command != '-m unittest' and testing_command not in runnable_files:
-                        if testing_command.startswith('test_') or testing_command.endswith('_test'):
+                        if testing_command.startswith('test_') or testing_command.split('.')[0].endswith('_test'):
                             errs = "[Error] the testing script lacks an entry point to start. Please modify accordingly to run test cases."
                         else:
                             errs = "[Error] the software lacks an entry point to start"
@@ -246,8 +246,8 @@ class ChatEnv:
     def print_employees(self):
         self.roster._print_employees()
 
-    def update_codes(self, generated_content, is_testing = False):
-       return self.codes._update_codes(generated_content, is_testing)
+    def update_codes(self, generated_content, is_testing = False, file_name = None):
+       return self.codes._update_codes(generated_content, is_testing, file_name)
 
     def rewrite_codes(self) -> None:
         self.codes._rewrite_codes(self.config.git_management)

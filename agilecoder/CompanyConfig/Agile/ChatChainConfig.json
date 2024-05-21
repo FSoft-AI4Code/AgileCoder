@@ -195,10 +195,17 @@
           "cycleNum": 3,
           "Composition": [
             {
-              "phase": "WritingTestSuite",
-              "phaseType": "SimplePhase",
-              "max_turn_step": 1,
-              "need_reflect": "False"
+              "phase": "WritingFullTestSuite",
+              "phaseType": "ComposedPhase",
+              "cycleNum": -1,
+              "Composition": [
+                {
+                  "phase": "WritingTestSuite",
+                  "phaseType": "SimplePhase",
+                  "max_turn_step": 1,
+                  "need_reflect": "False"
+                }
+              ]
             },
             {
               "phase": "TestingPlan",
@@ -248,6 +255,12 @@
         },
         {
           "phase": "SprintReview",
+          "phaseType": "SimplePhase",
+          "max_turn_step": 1,
+          "need_reflect": "False"
+        },
+        {
+          "phase": "CheckProgressStatus",
           "phaseType": "SimplePhase",
           "max_turn_step": 1,
           "need_reflect": "False"
@@ -412,10 +425,17 @@
           "cycleNum": 5,
           "Composition": [
             {
-              "phase": "WritingTestSuite",
-              "phaseType": "SimplePhase",
-              "max_turn_step": 1,
-              "need_reflect": "False"
+              "phase": "WritingFullTestSuite",
+              "phaseType": "ComposedPhase",
+              "cycleNum": -1,
+              "Composition": [
+                {
+                  "phase": "WritingTestSuite",
+                  "phaseType": "SimplePhase",
+                  "max_turn_step": 1,
+                  "need_reflect": "False"
+                }
+              ]
             },
             {
               "phase": "TestingPlan",
@@ -465,6 +485,12 @@
         },
         {
           "phase": "SprintReview",
+          "phaseType": "SimplePhase",
+          "max_turn_step": 1,
+          "need_reflect": "False"
+        },
+        {
+          "phase": "CheckProgressStatus",
           "phaseType": "SimplePhase",
           "max_turn_step": 1,
           "need_reflect": "False"
