@@ -3,6 +3,7 @@ import os
 from abc import ABC, abstractmethod
 from collections import defaultdict
 import copy
+import concurrent.futures
 from agilecoder.camel.typing import ModelType
 from agilecoder.components.chat_env import ChatEnv
 from agilecoder.components.utils import log_and_print_online, find_ancestors
@@ -490,6 +491,9 @@ class BugFixing(ComposedPhase):
         chat_env = self.update_chat_env(chat_env)
         return chat_env
 
+def write_a_single_instance(phase, chat_env, turn_limit, need_reflect):
+    return phase.phase_env['current_file_name'], phase.execute(chat_env, turn_limit, need_reflect)
+
 class WritingFullTestSuite(ComposedPhase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -524,52 +528,68 @@ class WritingFullTestSuite(ComposedPhase):
 
         all_changed_files = find_ancestors(chat_env.dependency_graph, deepcopy(list(chat_env.get_all_changed_files())))
         if len(all_changed_files) == 0: return chat_env
-        for file_name in all_changed_files:
-            if file_name.startswith('test_') or file_name.split('.')[0].endswith('_test'): continue
-            for phase_item in self.composition:
-                if phase_item["phaseType"] == "SimplePhase":  # right now we do not support nested composition
-                    phase = phase_item['phase']
-                    max_turn_step = phase_item['max_turn_step']
-                    need_reflect = check_bool(phase_item['need_reflect'])
-                    log_and_print_online(
-                        f"**[Execute Detail]**\n\nexecute SimplePhase:[{phase}] in ComposedPhase:[{self.phase_name}]")
-                    if phase in self.phases:
-                        untested_code = chat_env.get_changed_codes([file_name], True)
-                        code_dependencies = chat_env.get_changed_codes(chat_env.dependency_graph.get(file_name, []), True)
-                        self.phases[phase].phase_env.update({
-                            'code_dependencies': code_dependencies,
-                            'untested_code': untested_code,
-                            'current_file_name': file_name
-                        })
-                        chat_env = self.phases[phase].execute(chat_env,
-                                                            self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
-                                                            need_reflect)
+        futures = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers = 5) as executor:
+            for file_name in all_changed_files:
+                if file_name.startswith('test_') or file_name.split('.')[0].endswith('_test'): continue
+                for phase_item in self.composition:
+                    if phase_item["phaseType"] == "SimplePhase":  # right now we do not support nested composition
+                        phase = phase_item['phase']
+                        max_turn_step = phase_item['max_turn_step']
+                        need_reflect = check_bool(phase_item['need_reflect'])
+                        log_and_print_online(
+                            f"**[Execute Detail]**\n\nexecute SimplePhase:[{phase}] in ComposedPhase:[{self.phase_name}]")
+                        if phase in self.phases:
+                            untested_code = chat_env.get_changed_codes([file_name], True)
+                            code_dependencies = chat_env.get_changed_codes(chat_env.dependency_graph.get(file_name, []), True)
+                            _phase = deepcopy(self.phases[phase])
+                            _phase.phase_env.update({
+                                'code_dependencies': code_dependencies,
+                                'untested_code': untested_code,
+                                'current_file_name': file_name
+                            })
+                            futures.append(executor.submit(write_a_single_instance, _phase, deepcopy(chat_env), self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step, need_reflect))
+                            # chat_env = self.phases[phase].execute(chat_env,
+                            #                                     self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
+                            #                                     need_reflect)
+                            
+                            
+                            # print('@' * 20)
+                            # print('self.phases[phase].phase_env', self.phases[phase].phase_env)
                         
-                        # print('@' * 20)
-                        # print('self.phases[phase].phase_env', self.phases[phase].phase_env)
-                       
-                        # chat_env = self.phases[phase].update_chat_env(chat_env)
-                        
+                            # chat_env = self.phases[phase].update_chat_env(chat_env)
+                            
+                        else:
+                            print(f"Phase '{phase}' is not yet implemented. \
+                                    Please write its config in phaseConfig.json \
+                                    and implement it in components.phase")
+                    elif phase_item['phaseType'] == 'ComposedPhase':
+                        phase = phase_item['phase']
+                        cycle_num = phase_item['cycleNum']
+                        composition = phase_item['Composition']
+                        compose_phase_class = getattr(self.compose_phase_module, phase)
+                        compose_phase_instance = compose_phase_class(phase_name=phase,
+                                                            cycle_num=cycle_num,
+                                                            composition=composition,
+                                                            config_phase=self.config_phase,
+                                                            config_role=self.config_role,
+                                                            model_type=self.model_type,
+                                                            log_filepath=self.log_filepath)
+                        chat_env = compose_phase_instance.execute(chat_env)
                     else:
-                        print(f"Phase '{phase}' is not yet implemented. \
-                                Please write its config in phaseConfig.json \
-                                and implement it in components.phase")
-                elif phase_item['phaseType'] == 'ComposedPhase':
-                    phase = phase_item['phase']
-                    cycle_num = phase_item['cycleNum']
-                    composition = phase_item['Composition']
-                    compose_phase_class = getattr(self.compose_phase_module, phase)
-                    compose_phase_instance = compose_phase_class(phase_name=phase,
-                                                         cycle_num=cycle_num,
-                                                         composition=composition,
-                                                         config_phase=self.config_phase,
-                                                         config_role=self.config_role,
-                                                         model_type=self.model_type,
-                                                         log_filepath=self.log_filepath)
-                    chat_env = compose_phase_instance.execute(chat_env)
-                else:
-                    raise NotImplementedError
-                
-
+                        raise NotImplementedError
+        results = []
+        for future in concurrent.futures.as_completed(futures):
+            results.append(future.result())
+        testing_file_map = {}
+        for filename, result in results:
+            _files = list(filter(lambda x: x.startswith('test') or x.split('.')[0].endswith('test'), result.get_changed_files()))
+            if len(_files):
+                testing_file_map[filename] = _files
+            # print('[FILENAME]:', filename, result.codes.codebooks.keys())
+            chat_env.codes.codebooks.update(result.codes.codebooks)
+        chat_env.rewrite_codes()
+        for key, value in testing_file_map.items():
+            chat_env.testing_file_map[key] = chat_env.testing_file_map.get(key, []) + value
         chat_env = self.update_chat_env(chat_env)
         return chat_env

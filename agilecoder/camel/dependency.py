@@ -37,19 +37,25 @@ def dfs(adj_list, node, visited, result):
                 dfs(adj_list, neighbor, visited, result)
     result.append(node)
 
-def get_test_order(adj_list):
-    if not adj_list:
-        return []
-
+def get_test_order(adj_list, testing_file_map):
+    def dfs(node, visited, stack):
+        visited.add(node)
+        for neighbor in adj_list.get(node, []):
+            if neighbor not in visited:
+                dfs(neighbor, visited, stack)
+        stack.append(node)
     visited = set()
-    test_order = []
+    stack = []
 
-    # Find leaf nodes (test suites)
-    leaf_nodes = [node for node in adj_list if node.startswith("test")]
+    # Call the DFS function for each node
+    for node in adj_list:
+        if node not in visited:
+            dfs(node, visited, stack)
 
-    # Perform DFS starting from each leaf node
-    for leaf_node in leaf_nodes:
-        if leaf_node not in visited:
-            dfs(adj_list, leaf_node, visited, test_order)
-    print(test_order)
-    return test_order
+    stack = list(filter(lambda x: not (x.startswith('test') or x.split('.')[0].endswith('test')), stack))
+    order = []
+    for filename in stack:
+        if filename in testing_file_map:
+            order.extend(testing_file_map[filename])
+    print('TEST ORDER:', order)
+    return order

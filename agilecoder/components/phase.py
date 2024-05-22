@@ -727,7 +727,7 @@ class WritingTestSuite(Phase):
                                })
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        print('WritingTestSuite', self.seminar_conclusion)
+        # print('WritingTestSuite', self.seminar_conclusion)
         chat_env.update_codes(self.seminar_conclusion, is_testing = True, file_name = self.phase_env['current_file_name'])
         if len(chat_env.codes.codebooks.keys()) == 0:
             raise ValueError("No Valid Codes.")
@@ -1280,7 +1280,8 @@ class TestingPlan(Phase):
     def update_chat_env(self, chat_env) -> ChatEnv:
         if len(self.seminar_conclusion) > 0:
             commands = re.findall(r"python (\w+\.py)", self.seminar_conclusion)
-            chat_env.env_dict['commands'] = commands
+            existing_commands = list(filter(lambda x: x in chat_env.codes.codebooks, commands))
+            chat_env.env_dict['commands'] = existing_commands
             # print('commands', commands)
         return chat_env
 
@@ -1328,11 +1329,23 @@ class TestErrorSummary(Phase):
                 for file in relevant_files:
                     if 'class ' + class_name in chat_env.codes.codebooks[file]:
                         file_names.append(file)
+        elif 'TypeError:' in test_reports and 'missing' in test_reports:
+            words = test_reports.strip().split()
+            index = words.index('TypeError:')
+            class_name = words[index + 1].split('.')[0]
+            graph = chat_env.dependency_graph
+            # print('graph', graph)
+            if len(file_names):
+                relevant_files = graph.get(file_names[-1], [])
+                for file in relevant_files:
+                    if 'class ' + class_name in chat_env.codes.codebooks[file]:
+                        file_names.append(file)
         elif 'ModuleNotFoundError' not in test_reports:
             graph = chat_env.dependency_graph
             if len(file_names):
                 relevant_files = graph.get(file_names[-1], [])
                 file_names.extend(relevant_files)
+        
             # for filename, code in chat_env.codes.codebooks.items():
             #     if class_name.lower() in filename:
             #         file_names.append(filename)
@@ -1533,7 +1546,7 @@ class TestModification(Phase):
         modules = ''
         file_names = extract_file_names(test_reports)
         is_failed_test_case = False
-        print('file_names:', file_names)
+        # print('file_names:', file_names)
         if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('testing script lacks an entry point to start' not in test_reports):
             self.phase_prompt = '\n'.join([
                 "Our potentially buggy source codes and corresponding test reports are listed below:",
@@ -1601,6 +1614,17 @@ class TestModification(Phase):
         elif 'AttributeError' in test_reports:
             error_line = test_reports.split('AttributeError')[-1]
             class_name = re.search(r"'(.+?)'", error_line).group(1).split('.')[-1]
+            graph = chat_env.dependency_graph
+            # print('graph', graph)
+            if len(file_names):
+                relevant_files = graph.get(file_names[-1], [])
+                for file in relevant_files:
+                    if 'class ' + class_name in chat_env.codes.codebooks[file]:
+                        file_names.append(file)
+        elif 'TypeError:' in test_reports and 'missing' in test_reports:
+            words = test_reports.strip().split()
+            index = words.index('TypeError:')
+            class_name = words[index + 1].split('.')[0]
             graph = chat_env.dependency_graph
             # print('graph', graph)
             if len(file_names):

@@ -55,6 +55,7 @@ class ChatEnv:
         self.roster: Roster = Roster()
         self.codes: Codes = Codes()
         self.dependency_graph = None
+        self.testing_file_map = {}
         self.proposed_images: Dict[str, str] = {}
         self.incorporated_images: Dict[str, str] = {}
         self.requirements: Documents = Documents()
@@ -132,7 +133,7 @@ class ChatEnv:
                 if 'testing_commands' not in self.env_dict:
                     
                     testing_commands = self.env_dict['commands']
-                    _testing_commands = list(filter(lambda x: x.startswith('test_') or x.split('.')[0].endswith('_test'), get_test_order(chat_env.dependency_graph)))
+                    _testing_commands = list(filter(lambda x: x.startswith('test_') or x.split('.')[0].endswith('_test'), get_test_order(chat_env.dependency_graph, chat_env.testing_file_map)))
                     additional_commands = list(set(testing_commands) - set(_testing_commands))
                     # print('additional_commands', additional_commands)
                     # additional_commands = list(filter(lambda x: x in runnable_files, additional_commands))
