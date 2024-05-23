@@ -1298,7 +1298,7 @@ class TestErrorSummary(Phase):
         log_and_print_online("======test_reports: " + test_reports)
         file_names = extract_file_names(test_reports)
         is_failed_test_case = False
-        if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('testing script lacks an entry point to start' not in test_reports):
+        if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('testing script lacks an entry point to start' not in test_reports) and 'ImportError:' not in test_reports:
             self.phase_prompt = '\n'.join([
                 "Our potentially buggy source codes and corresponding test reports are listed below: ",
                 "Programming Language: \"{language}\"",
@@ -1346,11 +1346,12 @@ class TestErrorSummary(Phase):
                         flag = True
                 if not flag:
                     file_names.extend(relevant_files)
-        elif 'ModuleNotFoundError' not in test_reports:
+        elif 'ModuleNotFoundError' not in test_reports and 'ImportError' not in test_reports:
             graph = chat_env.dependency_graph
-            if len(file_names):
-                relevant_files = graph.get(file_names[-1], [])
-                file_names.extend(relevant_files)
+            if ('[Error] the software lacks an entry point to start' not in test_reports) or ('[Error] the testing script lacks an entry point to start.' not in test_reports):
+                if len(file_names):
+                    relevant_files = graph.get(file_names[-1], [])
+                    file_names.extend(relevant_files)
         
             # for filename, code in chat_env.codes.codebooks.items():
             #     if class_name.lower() in filename:
@@ -1646,7 +1647,7 @@ class TestModification(Phase):
                         flag = True
                 if not flag:
                     file_names.extend(relevant_files)
-        else:
+        elif 'ModuleNotFoundError' not in test_reports and 'ImportError' not in test_reports:
             graph = chat_env.dependency_graph
             if ('[Error] the software lacks an entry point to start' not in test_reports) or ('[Error] the testing script lacks an entry point to start.' not in test_reports):
                 if len(file_names):
