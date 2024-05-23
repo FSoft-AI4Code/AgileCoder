@@ -163,9 +163,9 @@ class ChatEnv:
                         return_flag = True
                         break
                     if 'main.py' in self.codes.codebooks and testing_command == 'main.py':
-                        command = "cd {}; ls -l; python3 main.py;".format(directory)
+                        command = "cd {}; ls -l; python main.py;".format(directory)
                     else:
-                        command = "cd {}; ls -l; python3 ".format(directory) + testing_command
+                        command = "cd {}; ls -l; python ".format(directory) + testing_command
                     print('COMMAND:', command)
                     process = subprocess.Popen(command,
                                     shell=True,

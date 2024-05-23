@@ -11,7 +11,7 @@ if 'run_button' in st.session_state and st.session_state.run_button == True:
 else:
     st.session_state.running = False
 if st.button('Run', disabled = st.session_state.running, key = 'run_button'):
-    subprocess.run(['python3', '../run.py', '--task', task_description, '--name', project_name])
+    subprocess.run(['python', '../run.py', '--task', task_description, '--name', project_name])
     components.html(
         """
     <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />

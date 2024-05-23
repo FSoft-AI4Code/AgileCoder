@@ -143,7 +143,10 @@ def get_non_leaf_and_intermediate_files(adj_list):
     for node, deps in adj_list.items():
         if node.startswith('test_') or node.split('.')[0].endswith('_test'): continue
         all_deps.extend(deps)
-    return [node for node in adj_list if node not in all_deps and not (node.startswith('test_') or node.split('.')[0].endswith('_test'))]
+    all_nodes = set()
+    for k, v in adj_list.items():
+        all_nodes.update(v + [k])
+    return [node for node in all_nodes if node not in all_deps and not (node.startswith('test_') or node.split('.')[0].endswith('_test'))]
 
 def extract_first_error_traceback(traceback_output):
     # Split the traceback output into lines

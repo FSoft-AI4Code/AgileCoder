@@ -1267,7 +1267,9 @@ class TestingPlan(Phase):
         # if chat_env.env_dict.get('num-sprints', 0) > 1:
         #     codes = chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()), True)
         # else:
-        codes = chat_env.get_codes(simplify_code = True, ignore_test_code = True, get_entry_point = True)
+        # codes = chat_env.get_codes(simplify_code = True, ignore_test_code = True, get_entry_point = True)
+        file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
+        codes = chat_env.get_changed_codes(file_names, True)
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
@@ -1336,10 +1338,14 @@ class TestErrorSummary(Phase):
             graph = chat_env.dependency_graph
             # print('graph', graph)
             if len(file_names):
+                flag = False
                 relevant_files = graph.get(file_names[-1], [])
                 for file in relevant_files:
                     if 'class ' + class_name in chat_env.codes.codebooks[file]:
                         file_names.append(file)
+                        flag = True
+                if not flag:
+                    file_names.extend(relevant_files)
         elif 'ModuleNotFoundError' not in test_reports:
             graph = chat_env.dependency_graph
             if len(file_names):
@@ -1478,11 +1484,15 @@ class TestModification(Phase):
 
     def update_phase_env(self, chat_env):
         test_reports = chat_env.env_dict['test_reports']
+        error_summary = chat_env.env_dict['error_summary']
         if 'FileNotFoundError' in test_reports:
             directory = chat_env.env_dict['directory']
             assets_paths = glob.glob(f'{directory}/*.png') + glob.glob(f'{directory}/*/*.png')
             assets_paths = list(map(lambda x: x.replace(directory, '.'), assets_paths))
             assets_paths = '\n'.join(assets_paths)
+            needed_filepath = re.search(r"'(.+?)'", test_reports).group(1)
+            if needed_filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
+                error_summary = error_summary + f". File {needed_filepath} does not exist, thereby removing code lines related to this file to fix this error."
             self.phase_prompt = '\n'.join([
                 "Our developed source codes and corresponding test reports are listed below: ",
                 "Programming Language: \"{language}\"",
@@ -1492,7 +1502,7 @@ class TestModification(Phase):
                 "\"{test_reports}\"",
                 "Error Summary of Test Reports:",
                 "\"{error_summary}\"",
-                    "Existing assets' paths:",
+                "Existing assets' paths:",
                 "\"{paths}\"",
                 "As the {assistant_role}, in light of a error relevant to FileNotFound, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes by considering the error summary and the paths of existing assets above to fix this error.",
                 "Note that each file must strictly follow a markdown code block format, where the following tokens must be replaced such that \"FILENAME\" is the lowercase file name including the file extension, \"LANGUAGE\" in the programming language, \"DOCSTRING\" is a string literal specified in source code that is used to document a specific segment of code, and \"CODE\" is the original code:",
@@ -1628,10 +1638,14 @@ class TestModification(Phase):
             graph = chat_env.dependency_graph
             # print('graph', graph)
             if len(file_names):
+                flag = False
                 relevant_files = graph.get(file_names[-1], [])
                 for file in relevant_files:
                     if 'class ' + class_name in chat_env.codes.codebooks[file]:
                         file_names.append(file)
+                        flag = True
+                if not flag:
+                    file_names.extend(relevant_files)
         else:
             graph = chat_env.dependency_graph
             if ('[Error] the software lacks an entry point to start' not in test_reports) or ('[Error] the testing script lacks an entry point to start.' not in test_reports):
@@ -1667,7 +1681,7 @@ class TestModification(Phase):
                                "ideas": chat_env.env_dict['ideas'],
                                "language": chat_env.env_dict['language'],
                                "test_reports": test_reports,
-                               "error_summary": chat_env.env_dict['error_summary'],
+                               "error_summary": error_summary,
                                "paths": assets_paths,
                                "codes": all_relevant_code,
                                "module_structure": module_structure,
