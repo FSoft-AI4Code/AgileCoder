@@ -1298,7 +1298,152 @@ class TestErrorSummary(Phase):
         log_and_print_online("======test_reports: " + test_reports)
         file_names = extract_file_names(test_reports)
         is_failed_test_case = False
-        if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('testing script lacks an entry point to start' not in test_reports) and 'ImportError:' not in test_reports:
+        if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('lacks an entry point to start' not in test_reports) and 'ImportError:' not in test_reports:
+            self.phase_prompt = '\n'.join([
+                "Our potentially buggy source codes and corresponding test reports are listed below: ",
+                "Programming Language: \"{language}\"",
+                "Source Codes:",
+                "\"{codes}\"",
+                 "Failed Test Case:",
+                "\"{failed_test_case}\""
+                "Test Reports of Source Codes:",
+                "\"{test_reports}\"",
+                "According to my test reports, please locate and summarize the bugs that cause the problem."
+            ])
+            is_failed_test_case = True
+            _item = extract_file_names_and_lines(test_reports)[0]
+            context = ''
+            if _item[0] in chat_env.codes.codebooks:
+                _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
+                context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
+                                                                "python" if _item[0].endswith(".py") else _item[0].split(".")[
+                                                                    -1], _content)
+            self.phase_env.update({
+                'failed_test_case': context
+            })
+        if 'AttributeError' in test_reports:
+            error_line = test_reports.split('AttributeError')[-1]
+            class_name = re.search(r"'(.+?)'", error_line).group(1).split('.')[-1]
+            graph = chat_env.dependency_graph
+            # print('graph', graph)
+            if len(file_names):
+                relevant_files = graph.get(file_names[-1], [])
+                for file in relevant_files:
+                    if 'class ' + class_name in chat_env.codes.codebooks[file]:
+                        file_names.append(file)
+        elif 'TypeError:' in test_reports and 'missing' in test_reports:
+            words = test_reports.strip().split()
+            index = words.index('TypeError:')
+            class_name = words[index + 1].split('.')[0]
+            graph = chat_env.dependency_graph
+            # print('graph', graph)
+            if len(file_names):
+                flag = False
+                relevant_files = graph.get(file_names[-1], [])
+                for file in relevant_files:
+                    if 'class ' + class_name in chat_env.codes.codebooks[file]:
+                        file_names.append(file)
+                        flag = True
+                if not flag:
+                    file_names.extend(relevant_files)
+        elif 'ModuleNotFoundError' not in test_reports and 'ImportError' not in test_reports:
+            graph = chat_env.dependency_graph
+            if ('[Error] the software lacks an entry point to start' not in test_reports) or ('[Error] the testing script lacks an entry point to start.' not in test_reports):
+                if len(file_names):
+                    relevant_files = graph.get(file_names[-1], [])
+                    file_names.extend(relevant_files)
+        
+            # for filename, code in chat_env.codes.codebooks.items():
+            #     if class_name.lower() in filename:
+            #         file_names.append(filename)
+
+        if len(file_names):
+            all_relevant_code = []
+            code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
+            if is_failed_test_case:
+                file_names = file_names[1:]
+            for file_name, code in code_sections:
+                if file_name in file_names:
+                    all_relevant_code.extend([file_name, code, '\n'])
+            all_relevant_code = '\n'.join(all_relevant_code)
+        else:
+            if test_reports == 'The software run successfully without errors.':
+                file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
+                all_relevant_code = chat_env.get_changed_codes(file_names)
+            elif test_reports == '[Error] the software lacks an entry point to start':
+                file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
+                all_relevant_code = chat_env.get_changed_codes(file_names)
+            else:
+                all_relevant_code = chat_env.get_codes(ignore_test_code = True)
+        self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
+                               "modality": chat_env.env_dict['modality'],
+                               "ideas": chat_env.env_dict['ideas'],
+                               "language": chat_env.env_dict['language'],
+                               "codes": all_relevant_code,
+                               "test_reports": test_reports,
+                               "exist_bugs_flag": exist_bugs_flag})
+        log_and_print_online("**[Test Reports]**:\n\n{}".format(test_reports))
+
+    def update_chat_env(self, chat_env) -> ChatEnv:
+        print("self.phase_env['test_reports']", self.phase_env['test_reports'])
+        chat_env.env_dict['error_summary'] = self.seminar_conclusion
+        chat_env.env_dict['test_reports'] = self.phase_env['test_reports']
+
+        return chat_env
+
+    def execute(self, chat_env, chat_turn_limit, need_reflect) -> ChatEnv:
+        self.update_phase_env(chat_env)
+        flag = True
+        if "ModuleNotFoundError" in self.phase_env['test_reports']:
+            local_module = False
+            for match in re.finditer(r"No module named '(\S+)'", self.phase_env['test_reports'], re.DOTALL):
+                module = match.group(1)
+                for file_name in chat_env.codes.codebooks:
+                    if module == file_name.split('.')[0]:
+                        local_module = True
+            if local_module:
+                installed_module = chat_env.fix_module_not_found_error(self.phase_env['test_reports'])
+                if self.errors.get(installed_module, 0) == 0:
+                    flag = False
+                    
+                    log_and_print_online(
+                        f"Software Test Engineer found ModuleNotFoundError:\n{self.phase_env['test_reports']}\n")
+                    pip_install_content = ""
+                    for match in re.finditer(r"No module named '(\S+)'", self.phase_env['test_reports'], re.DOTALL):
+                        module = match.group(1)
+                        pip_install_content += "{}\n```{}\n{}\n```\n".format("cmd", "bash", f"pip install {module}")
+                        log_and_print_online(f"Programmer resolve ModuleNotFoundError by:\n{pip_install_content}\n")
+                    self.seminar_conclusion = "nothing need to do"
+                    if installed_module is not None:
+                        self.errors[installed_module] = self.errors.get(installed_module, 0) + 1
+        if flag:
+            self.seminar_conclusion = \
+                self.chatting(chat_env=chat_env,
+                              task_prompt=chat_env.env_dict['task_prompt'],
+                              need_reflect=need_reflect,
+                              assistant_role_name=self.assistant_role_name,
+                              user_role_name=self.user_role_name,
+                              phase_prompt=self.phase_prompt,
+                              phase_name=self.phase_name,
+                              assistant_role_prompt=self.assistant_role_prompt,
+                              user_role_prompt=self.user_role_prompt,
+                              chat_turn_limit=chat_turn_limit,
+                              placeholders=self.phase_env)
+        chat_env = self.update_chat_env(chat_env)
+        return chat_env
+
+class SprintTestErrorSummary(Phase):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.errors = {}
+    def update_phase_env(self, chat_env):
+        # chat_env.generate_images_from_codes()
+        (exist_bugs_flag, test_reports) = chat_env.exist_bugs_ignoring_test_cases(chat_env)
+        print("======test_reports", test_reports)
+        log_and_print_online("======test_reports: " + test_reports)
+        file_names = extract_file_names(test_reports)
+        is_failed_test_case = False
+        if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('lacks an entry point to start' not in test_reports) and 'ImportError:' not in test_reports:
             self.phase_prompt = '\n'.join([
                 "Our potentially buggy source codes and corresponding test reports are listed below: ",
                 "Programming Language: \"{language}\"",
@@ -1486,7 +1631,9 @@ class TestModification(Phase):
     def update_phase_env(self, chat_env):
         test_reports = chat_env.env_dict['test_reports']
         error_summary = chat_env.env_dict['error_summary']
+        overwrite_prompt = False
         if 'FileNotFoundError' in test_reports:
+            overwrite_prompt = True
             directory = chat_env.env_dict['directory']
             assets_paths = glob.glob(f'{directory}/*.png') + glob.glob(f'{directory}/*/*.png')
             assets_paths = list(map(lambda x: x.replace(directory, '.'), assets_paths))
@@ -1518,6 +1665,7 @@ class TestModification(Phase):
             ])
         else:
             assets_paths = ''
+        
         if 'NameError:' in test_reports or 'ImportError' in test_reports:
             directory = chat_env.env_dict['directory']
             module_dict = get_classes_in_folder(directory)
@@ -1528,6 +1676,7 @@ class TestModification(Phase):
                 for c in classes:
                     module_structure.append(f'\t- class {c}')
             module_structure = '\n'.join(module_structure)
+            overwrite_prompt = True
             self.phase_prompt = '\n'.join([
                 "Our developed source codes, corresponding test reports and module structure are listed below: ",
                 "Programming Language: \"{language}\"",
@@ -1558,7 +1707,7 @@ class TestModification(Phase):
         file_names = extract_file_names(test_reports)
         is_failed_test_case = False
         # print('file_names:', file_names)
-        if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('testing script lacks an entry point to start' not in test_reports):
+        if len(file_names) and not overwrite_prompt and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('testing script lacks an entry point to start' not in test_reports):
             self.phase_prompt = '\n'.join([
                 "Our potentially buggy source codes and corresponding test reports are listed below:",
                 "Programming Language: \"{language}\"",
@@ -1581,6 +1730,7 @@ class TestModification(Phase):
                 "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the failed test case and the error summary.",
                 "Now, use the format exemplified above and modify the problematic codes based on the failed test case and error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes changed codes and is prohibited from repeating unchanged codes. If no bugs are reported, please return only one line like \"<INFO> Finished\"."
             ])
+            overwrite_prompt = True
             is_failed_test_case = True
             _item = extract_file_names_and_lines(test_reports)[0]
             context = ''
@@ -1594,7 +1744,7 @@ class TestModification(Phase):
             })
         # print('file_names', file_names)
         # log_and_print_online('BUGGY CONTEXT: ' + context)
-        if 'ModuleNotFoundError' in test_reports:
+        if 'ModuleNotFoundError' in test_reports and not overwrite_prompt:
             for match in re.finditer(r"No module named '(\S+)'", test_reports, re.DOTALL):
                 module = match.group(1)
             modules = list(map(lambda x: '- ' + os.path.basename(x).split('.')[0], glob.glob(chat_env.env_dict['directory'] + '/*.py')))

@@ -248,7 +248,7 @@
           ]
         },
         {
-          "phase": "TestErrorSummary",
+          "phase": "SprintTestErrorSummary",
           "phaseType": "SimplePhase",
           "max_turn_step": 1,
           "need_reflect": "False"
@@ -478,7 +478,7 @@
           ]
         },
         {
-          "phase": "TestErrorSummary",
+          "phase": "SprintTestErrorSummary",
           "phaseType": "SimplePhase",
           "max_turn_step": 1,
           "need_reflect": "False"

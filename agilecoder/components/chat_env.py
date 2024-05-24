@@ -58,6 +58,7 @@ class ChatEnv:
         self.testing_file_map = {}
         self.proposed_images: Dict[str, str] = {}
         self.incorporated_images: Dict[str, str] = {}
+        self.context_images: Dict[str, str] = {}
         self.requirements: Documents = Documents()
         self.manuals: Documents = Documents()
         self.env_dict = {
@@ -238,6 +239,127 @@ class ChatEnv:
 
         return False, success_info
 
+    def exist_bugs_ignoring_test_cases(self, chat_env) -> tuple[bool, str]:
+        directory = self.env_dict['directory']
+        print('DIRECTORY:', directory)
+
+        success_info = "The software run successfully without errors."
+        try:
+
+            # check if we are on windows or linux
+            if os.name == 'nt':
+                command = "cd {} && dir && python main.py".format(directory)
+                process = subprocess.Popen(
+                    command,
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+                )
+            else:
+                runnable_files = []
+                is_python = False
+                program_files = []
+                for file, code in self.codes.codebooks.items():
+                    # print('FILE:', file, code)
+                    if not file.endswith('.py'): continue
+                    is_python = True
+                    if has_entry_point(code):
+                        runnable_files.append(file)
+                        if not (('test_' in file) or ('_test' in file)):
+                            program_files.append(file)
+                return_flag = False
+                    
+                testing_commands = self.env_dict['commands']
+                _testing_commands = list(filter(lambda x: x.startswith('test_') or x.split('.')[0].endswith('_test'), get_test_order(chat_env.dependency_graph, chat_env.testing_file_map)))
+                additional_commands = list(set(testing_commands) - set(_testing_commands))
+                # print('additional_commands', additional_commands)
+                # additional_commands = list(filter(lambda x: x in runnable_files, additional_commands))
+                testing_commands = additional_commands + program_files
+                error_contents = ''
+                
+                if is_python and len(program_files) == 0:
+                    return True, "[Error] the software lacks an entry point to start"
+
+                for testing_command in testing_commands:
+                    if testing_command not in runnable_files:
+                        
+                        errs = "[Error] the software lacks an entry point to start"
+                        error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
+                        return_flag = True
+                        continue
+                    if 'main.py' in self.codes.codebooks and testing_command == 'main.py':
+                        command = "cd {}; ls -l; python main.py;".format(directory)
+                    else:
+                        command = "cd {}; ls -l; python ".format(directory) + testing_command
+                    print('COMMAND:', command)
+                    process = subprocess.Popen(command,
+                                    shell=True,
+                                    preexec_fn=os.setsid,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE
+                                    )
+                            # if len(process.stderr.read().decode('utf-8')) > 0: break
+                        # if not flag:
+                        #     return False, "Error: the software lacks the entry point to start"
+                    time.sleep(3)
+                    return_code = process.returncode
+                    # Check if the software is still running
+                    if process.poll() is None:
+                        if "killpg" in dir(os):
+                            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                        else:
+                            os.kill(process.pid, signal.SIGTERM)
+                            if process.poll() is None:
+                                os.kill(process.pid,signal.CTRL_BREAK_EVENT)
+
+                    # if return_code == 0:
+                    #     return False, success_info
+                    # else:
+                    #     error_output = process.stderr.read().decode('utf-8')
+                    #     if error_output:
+                    #         if "Traceback".lower() in error_output.lower():
+                    #             errs = error_output.replace(directory + "/", "")
+                    #             return True, errs
+                            
+                    #     else:
+                    #         return False, success_info
+                    error_output = process.stderr.read().decode('utf-8')
+                    print('error_output', "Traceback".lower() in error_output.lower(), ':return_code:', return_code)
+                    if return_code != 0:
+                        if error_output:
+                            if "Traceback".lower() in error_output.lower():
+                                errs = error_output.replace(directory + "/", "")
+                                # all_file_names = re.findall(r'File "(.*?)"', errs)
+                                # if len(all_file_names) > len(set(all_file_names)):
+                                #     errs = extract_first_error_traceback(errs)
+                                if errs.count('--------------------------') > 1:
+                                    new_errs = extract_first_error_traceback(errs)
+                                    if len(new_errs):
+                                        errs = new_errs
+                                
+                                # return True, errs
+                                error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
+                                return_flag = True
+                                
+                            # else:
+                            #     return False, success_info
+                        # else:
+                        #     return_flag = True
+                        #     error_contents += """\nError Traceback for Running `{testing_command}`":\n{errs}""".format(testing_command = testing_command, errs = errs)
+                   
+                    
+                if return_flag:
+                    return return_flag, error_contents
+                else:
+                    return False, success_info
+        except subprocess.CalledProcessError as e:
+            return True, f"Error: {e}"
+        except Exception as ex:
+            return True, f"An error occurred: {ex}"
+
+        return False, success_info
+
     def recruit(self, agent_name: str):
         self.roster._recruit(agent_name)
 
@@ -319,17 +441,20 @@ class ChatEnv:
                 print("{} Downloaded".format(filepath))
         flag = False
         for regex in [r"(\w+.png)", r"(\w+.gif)"]:
-            joined_codes = self.get_codes()
-            matches = re.finditer(regex, joined_codes, re.DOTALL)
-            # matched_images = {}
+            for _code in self.codes.codebooks.values():
+                
+                joined_codes = _code
+                matches = re.finditer(regex, joined_codes, re.DOTALL)
+                # matched_images = {}
 
-            for match in matches:
-                filename = match.group(1).strip()
-                if filename in self.proposed_images.keys():
-                    self.incorporated_images[filename] = self.proposed_images[filename]
-                    flag = True 
-                else:
-                    self.incorporated_images[filename] = filename.replace("_", " ")
+                for match in matches:
+                    filename = match.group(1).strip()
+                    if filename in self.proposed_images.keys():
+                        self.incorporated_images[filename] = self.proposed_images[filename]
+                        flag = True 
+                    else:
+                        self.incorporated_images[filename] = filename.replace("_", " ")
+                    self.context_images[filename] = _code
         
         for filename in self.incorporated_images.keys():
             if not os.path.exists(os.path.join(self.env_dict['directory'], "assets", filename)):
@@ -338,7 +463,7 @@ class ChatEnv:
                 prompt = openai.ChatCompletion.create(engine = os.environ['API_ENGINE'], 
                                                         messages = [
                                                             {"role": "system", "content": "You are an experienced Art Prompt Engineer and working in the AgileCoder in the IT field. Your task is to write optimal prompts to feed to DALLE models to generate high-quality images needed for software."},
-                                                            {"role": "user", "content": f"The user's task and our relevant code files are listed:\nTask: \"{self.env_dict['task_prompt']}\"\nCodes:\n\"{self.codes}\".\nAs a Prompt Engineer, you write a prompt to generate the image \"{filename}\" and you also make sure that the generated image has a suitable size and highly aligns with the user's task and existing source code.\nThen just output the prompt with the format:\nPrompt: PROMPT where PROMPT is the possible prompt."}
+                                                            {"role": "user", "content": f"The user's task and our relevant code files are listed:\nTask: \"{self.env_dict['task_prompt']}\"\nCodes:\n\"{self.context_images[filename]}\".\nAs a Prompt Engineer, you write a prompt to generate the image \"{filename}\" and you also make sure that the generated image has a suitable size and highly aligns with the user's task and existing source code.\nThen just output the prompt with the format:\nPrompt: PROMPT where PROMPT is the possible prompt."}
                                                         ])['choices'][0]["message"]["content"]
                 # log_and_print_online('*****************response', response)
                 response = openai.Image.create(
@@ -347,7 +472,7 @@ class ChatEnv:
                     size="256x256"
                 )
                 image_url = response['data'][0]['url']
-                download(image_url, filename)
+                download(image_url, filename) 
                 flag = True
         return flag
 
@@ -387,7 +512,7 @@ class ChatEnv:
                 prompt = openai.ChatCompletion.create(engine = os.environ['API_ENGINE'], 
                                                         messages = [
                                                             {"role": "system", "content": "You are an experienced Prompt Engineer and working in a AgileCoder in the IT field. Your task is to write optimal prompts to feed to DALLE models to generate high-quality images needed for software."},
-                                                            {"role": "user", "content": f"The user's task and our relevant code files are listed:\nTask: \"{self.env_dict['task_prompt']}\"\nCodes:\n\"{self.codes}\".\nAs a Prompt Engineer, you write a prompt to generate the image \"{filename}\" and you also make sure that the generated image has a suitable size and highly aligns with the user's task and existing source code.\nThen just output the prompt with the format:\nPrompt: PROMPT where PROMPT is the possible prompt."}
+                                                            {"role": "user", "content": f"The user's task and our relevant code files are listed:\nTask: \"{self.env_dict['task_prompt']}\"\nCodes:\n\"{self.context_images[filename]}\".\nAs a Prompt Engineer, you write a prompt to generate the image \"{filename}\" and you also make sure that the generated image has a suitable size and highly aligns with the user's task and existing source code.\nThen just output the prompt with the format:\nPrompt: PROMPT where PROMPT is the possible prompt."}
                                                         ])['choices'][0]["message"]["content"]
                 # log_and_print_online('*****************response', response)
                 # log_and_print_online('*****************response', response)

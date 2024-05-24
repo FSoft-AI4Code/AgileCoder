@@ -151,7 +151,7 @@
       "Comments on sprint backlog and sprint acceptance criteria:",
       "\"{sprint_backlog_comments}\"",
       "We have decided to complete the task through a executable software with multiple files implemented via {language}.",
-      "As the {assistant_role}, to satisfy the user's demand and make the software executive and robust, and ensure that the sprint backlog and sprint acceptance criteria are feasible and can be accomplished, you should modify corresponding sprint backlog according to the comments. Then, output the full and complete sprint backlog with all based on the comments. Return the output strictly following the required format and you are not allowed to change the required format:",
+      "As the {assistant_role}, to ensure that the first sprint backlog and sprint acceptance criteria are feasible and can be accomplished, you should modify corresponding sprint backlog according to the comments. It is important that the product backlog should be divided into at least 2 sprints and now the first sprint. Next, output the full and complete backlog and acceptance criteria of the first sprint with all based on the comments. Return the output strictly following the required format and you are not allowed to change the required format:",
       "Sprint backlog:",
       "SPRINT_BACKLOG",
       "Sprint acceptance criteria:",
@@ -242,8 +242,8 @@
       "\"{all_undone_tasks}\"",
       "As the {assistant_role}, to satisfy the user's demands, you should carefully consider whether to deciding to conclude the project or create a next sprint based on the product backlog, acceptance criteria, done works and undone works.",
       "Specifically, you compare done works with the product backlog to determine whether any items in the product backlog or acceptance criteria are incomplete, and you carefully review undone works to check if the program has any errors.", 
-      "When all items in the product backlog and acceptance criteria are fully accomplished and the program is error-free, you should end the project by returning a only single line with the content: \"<INFO> DONE.\".",
-      "Otherwise, your answer must be a single line with \"<INFO> UNDONE.\", indicating that the product backlog has not been accomplished and you should create a next sprint.",
+      "When all items in the product backlog and acceptance criteria are fully accomplished and the program is completely error-free, you should end the project by returning a only single line with the content: \"<INFO> DONE.\".",
+      "Otherwise, your answer must be a single line with \"<INFO> UNDONE.\", indicating that the product backlog has not been accomplished or the program has some unfixed bugs, so you must create a next sprint to complete remaining tasks and fix all existing bugs.",
       "Think step by step and reason yourself to the right decisions to make sure we get it right.",
       "Additionally, you must adhere to the following regulations:",
       "\t1) the project is concluded only if all the tasks in the product backlog and acceptance criteria are accomplished without any errors,",
@@ -778,6 +778,19 @@
     ]
   },
   "TestErrorSummary": {
+    "assistant_role_name": "Programmer",
+    "user_role_name": "Software Test Engineer",
+    "phase_prompt": [
+      "Our potentially buggy source codes and corresponding test reports are listed below: ",
+      "Programming Language: \"{language}\"",
+      "Source Codes:",
+      "\"{codes}\"",
+      "Test Reports of Source Codes:",
+      "\"{test_reports}\"",
+      "According to my test reports, please locate and summarize the bugs that cause the problem."
+    ]
+  },
+  "SprintTestErrorSummary": {
     "assistant_role_name": "Programmer",
     "user_role_name": "Software Test Engineer",
     "phase_prompt": [

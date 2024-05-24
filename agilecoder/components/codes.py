@@ -360,7 +360,7 @@ class Codes:
             rewrite_codes_content += "{} Created\n".format(directory)
 
         for filename in self.codebooks.keys():
-            filepath = os.path.join(directory, filename)
+            filepath = os.path.join(directory, os.path.basename(filename))
             with open(filepath, "w", encoding="utf-8") as writer:
                 writer.write(self.codebooks[filename])
                 rewrite_codes_content += os.path.join(directory, filename) + " Wrote\n"

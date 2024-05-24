@@ -374,9 +374,12 @@ class CodeAndFormat(ComposedPhase):
                         while not self.break_cycle(self.phases[phase].phase_env) and counter < 3:
                             log_and_print_online('TEST FORMAT COUNTER: ' + str(counter))
                             _chat_env = copy.deepcopy(chat_env)
-                            _chat_env = self.phases[phase].execute(_chat_env,
-                                                                    self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
-                                                                    need_reflect)
+                            try:
+                                _chat_env = self.phases[phase].execute(_chat_env,
+                                                                        self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
+                                                                        need_reflect)
+                            except:
+                                pass
                             counter += 1
                         chat_env = _chat_env
                         # print('@' * 20)
@@ -583,9 +586,9 @@ class WritingFullTestSuite(ComposedPhase):
             results.append(future.result())
         testing_file_map = {}
         for filename, result in results:
-            _files = list(filter(lambda x: x.startswith('test') or x.split('.')[0].endswith('test'), result.get_changed_files()))
+            _files = set(filter(lambda x: x.startswith('test') or x.split('.')[0].endswith('test'), result.get_changed_files()))
             if len(_files):
-                testing_file_map[filename] = _files
+                testing_file_map[filename] = list(_files)
             # print('[FILENAME]:', filename, result.codes.codebooks.keys())
             chat_env.codes.codebooks.update(result.codes.codebooks)
         chat_env.rewrite_codes()
