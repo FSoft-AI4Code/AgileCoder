@@ -247,7 +247,7 @@ class ClaudeAIModel(ModelBackend):
         num_prompt_tokens = len(encoding.encode(string))
         gap_between_send_receive = 15 * len(kwargs["messages"])
         num_prompt_tokens += gap_between_send_receive
-        print('0'*100)
+        # print('0'*100)
         num_max_token_map = {
             "claude-3-haiku-20240307": 4096,
             "claude-3-opus-20240307": 4096,
