@@ -7,5 +7,5 @@ WareHouse/
 build/
 dist/
 agilecoder.egg-info/
-
+key.json
 ui/
