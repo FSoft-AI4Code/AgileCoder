@@ -174,6 +174,23 @@ def extract_first_error_traceback(traceback_output, num_returns = 3):
     # Join the lines to form the complete traceback
     return '\n'.join(first_error_traceback)
 
+def extract_top_k_errors(content, k = 1):
+    lines = content.splitlines()
+    results = []
+    start_flag = False
+    count = 0
+    for line in lines:
+        if 'FAILURES' in line:
+            start_flag = True
+        if start_flag and len(results) == 0:
+            results.append(line)
+            continue
+        if line.startswith('_______________'):
+            count += 1
+        if start_flag and count <= k:
+            results.append(line)
+    return '\n'.join(results)
+
 def _build_reverse_adjacency_list(adj_list):
     reverse_adj_list = defaultdict(list)
     for child, parents in adj_list.items():

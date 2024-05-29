@@ -13,7 +13,7 @@ import requests
 from agilecoder.components.codes import Codes
 from agilecoder.components.documents import Documents
 from agilecoder.components.roster import Roster
-from agilecoder.components.utils import log_and_print_online, extract_first_error_traceback
+from agilecoder.components.utils import log_and_print_online, extract_first_error_traceback, extract_top_k_errors
 from agilecoder.camel.dependency import build_dependency_graph, get_test_order
 
 class ChatEnvConfig:
@@ -343,6 +343,7 @@ class ChatEnv:
                         elif testing_command.startswith('test_') or testing_command.split('.')[0].endswith('_test'):
                             std_output = process.stdout.read().decode('utf-8')
                             if 'FAILED' in std_output:
+                                std_output = extract_top_k_errors(std_output, k = 1)
                                 error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
                                 return_flag = True
 

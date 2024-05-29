@@ -1305,7 +1305,10 @@ class TestErrorSummary(Phase):
                 "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly."
             ])
             is_failed_test_case = True
-            _item = extract_file_names_and_lines(test_reports)[0]
+            try:
+                _item = extract_file_names_and_lines(test_reports)[0]
+            except:
+                _item = extract_pytest_file_names(test_reports)[0]
             context = ''
             if _item[0] in chat_env.codes.codebooks:
                 _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
@@ -1450,7 +1453,10 @@ class SprintTestErrorSummary(Phase):
                 "According to my test reports, please locate and summarize the bugs that cause the problem."
             ])
             is_failed_test_case = True
-            _item = extract_file_names_and_lines(test_reports)[0]
+            try:
+                _item = extract_file_names_and_lines(test_reports)[0]
+            except:
+                _item = extract_pytest_file_names(test_reports)[0]
             context = ''
             if _item[0] in chat_env.codes.codebooks:
                 _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
@@ -1602,6 +1608,24 @@ def extract_file_names_and_lines(traceback_str):
         results.append((match.group(1), match.group(2), match.group(3)))
     
     return results
+def extract_pytest_file_names(traceback):
+    lines = traceback.splitlines()
+    file_name_pattern = r'File "(.*?)"'
+    results = []
+    filename = None
+    for line in lines:
+        x = re.search(file_name_pattern, line)
+        if x is not None:
+            filename = x.group(1)
+            continue
+        if line.startswith('_______________'): 
+            function_name = re.findall(r"(\w+)", line)[1]
+            if filename is not None:
+                results.append((filename, None, function_name))
+    return results
+
+
+
 def extract_code_and_filename(file_content):
     # Define a regular expression pattern to match code sections
     code_pattern = r'([\w.]+)\n```(.*?)```'
@@ -1735,7 +1759,10 @@ class TestModification(Phase):
             ])
             overwrite_prompt = True
             is_failed_test_case = True
-            _item = extract_file_names_and_lines(test_reports)[0]
+            try:
+                _item = extract_file_names_and_lines(test_reports)[0]
+            except:
+                _item = extract_pytest_file_names(test_reports)[0]
             context = ''
             if _item[0] in chat_env.codes.codebooks:
                 _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
