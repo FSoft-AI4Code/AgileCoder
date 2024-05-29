@@ -270,7 +270,7 @@
       "Sprint acceptance criteria:\n\"{current_acceptance_criteria}\"",
       "Comments on sprint backlog and sprint acceptance criteria:",
       "\"{sprint_backlog_comments}\"",
-      "As the {assistant_role}, to satisfy the user's demand and ensure that the sprint backlog and sprint acceptance criteria are feasible and can be accomplished, you should review comments to decide whether to conclude the project or modify corresponding sprint backlog according to the comments. In case of stopping, just return a single line: \"<INFO> DONE.\". Otherwise, output the full and complete sprint backlog based on the comments. Return the output strictly following the required format and you are not allowed to change the required format:",
+      "As the {assistant_role}, to satisfy the user's demand and ensure that the sprint backlog and sprint acceptance criteria are feasible and can be accomplished, you should review comments to modify corresponding sprint backlog according to the comments. Then output the full and complete sprint backlog based on the comments. Return the output strictly following the required format and you are not allowed to change the required format:",
       "Sprint backlog:",
       "SPRINT_BACKLOG",
       "Sprint acceptance criteria:",
@@ -302,7 +302,7 @@
       "Your tasks are:",
       "\t1. Review each item in the sprint backlog,",
       "\t2. Categorize each item as Done Work or Undone Work,",
-      "\t3. Review test reports and error summaries to identify any existing bugs in the Undone Work.",
+      "\t3. Review test reports and error summaries to idenitify any existing bugs or failed test cases as Undone Work.",
       "Please provide your answer in the following format:",
       "Done Work:",
       "DONE_WORK",
@@ -338,7 +338,7 @@
       "Programming Language: \"{language}\"",
       "Sprint backlog:\n\"{current_programming_task}\"",
       "Sprint acceptance criteria:\n\"{current_acceptance_criteria}\"",
-      "To satisfy the user's task, we have decided to complete the sprint backlog through a executable software with multiple files implemented via {language}. As the {assistant_role}, to satisfy the user's demands, you should accomplish the sprint backlog by writing one or multiple files and make sure that every detail of the architecture is, in the end, implemented as code. {gui}",
+      "To satisfy the user's task, we have decided to complete the sprint backlog through a executable software with multiple files implemented via {language}. As the {assistant_role}, to satisfy the user's demands, you should accomplish the sprint backlog by writing one or multiple files and make sure that every detail of the architecture is, in the end, implemented as code.",
       "Think step by step and reason yourself to the right decisions to make sure we get it right.",
       "You will first lay out the names of the core classes, functions, methods that will be necessary, as well as a quick comment on their purpose.",
       "Then you will output the content of each file including complete code, and each file should contain only one class. Each file must strictly follow a markdown code block format, where the following tokens must be replaced such that FILENAME is the lowercase file name including the file extension, LANGUAGE in the programming language, DOCSTRING is a string literal specified in source code that is used to document a specific segment of code, and CODE is the original code:",
@@ -377,7 +377,8 @@
       "\"{code_dependencies}\"",
       "Untested code:",
       "\"{untested_code}\"",
-      "As the Software Test Engineer, you are only allowed to write automated test cases for the untested code to ensure that the source code runs flawlessly and aligns with the sprint backlog and sprint acceptance criteria. You should not write test cases for code dependencies and just focus on the untested code. Your test cases should cover all possibilities of source code and fulfill the sprint acceptance criteria. Test cases should cover normal conditions and extreme or unusual conditions.",
+      "As the Software Test Engineer, you are only allowed to write automated test cases for the untested code to ensure that the source code runs flawlessly and aligns with the sprint backlog and sprint acceptance criteria. You should not write test cases for code dependencies and just focus on the untested code. Your test cases should cover all possibilities of source code and fulfill the sprint acceptance criteria.",
+      "Importantly, test cases should cover basic, normal conditions and extreme or unusual conditions to comprehensively test the correctness of source code in all possible cases.",
       "Think step by step and reason yourself to the right decisions to make sure we get it right.",
       "Then you will only output the content of each testing script including complete testing code. Each file must strictly follow a markdown code block format, where the following tokens must be replaced such that FILENAME is the lowercase file name including the file extension, LANGUAGE in the programming language, DOCSTRING is a string literal specified in source code that is used to document a specific segment of code, and CODE is the original code:",
       "FILENAME",
@@ -469,7 +470,7 @@
       "Here is the details of the current sprint:",
       "Sprint backlog:\n\"{current_programming_task}\"",
       "Sprint acceptance criteria:\n\"{current_acceptance_criteria}\"",
-      "As the {assistant_role}, to satisfy the user's demands, you should accomplish the sprint backlog by inheriting existing source code and writing one or multiple files and make sure that every detail of the architecture is, in the end, implemented as code. {gui}",
+      "As the {assistant_role}, to satisfy the user's demands, you should accomplish the sprint backlog by inheriting existing source code and writing one or multiple files and make sure that every detail of the architecture is, in the end, implemented as code.",
       "Think step by step and reason yourself to the right decisions to make sure we get it right.",
       "You will first lay out the names of the core classes, functions, methods that will be necessary, as well as a quick comment on their purpose.",
       "Then you will output the content of each file including complete code. Each file must strictly follow a markdown code block format, where the following tokens must be replaced such that FILENAME is the lowercase file name including the file extension, LANGUAGE in the programming language, DOCSTRING is a string literal specified in source code that is used to document a specific segment of code, and CODE is the original code:",
@@ -787,7 +788,7 @@
       "\"{codes}\"",
       "Test Reports of Source Codes:",
       "\"{test_reports}\"",
-      "According to my test reports, please locate and summarize the bugs that cause the problem."
+      "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly."
     ]
   },
   "SprintTestErrorSummary": {
@@ -800,7 +801,7 @@
       "\"{codes}\"",
       "Test Reports of Source Codes:",
       "\"{test_reports}\"",
-      "According to my test reports, please locate and summarize the bugs that cause the problem."
+      "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly."
     ]
   },
   "TestingPlan": {
@@ -816,7 +817,7 @@
       "\"{codes}\"",
       "As the {assistant_role}, to make that the code above satisfies the sprint backlog and runs flawlessly, you must write commands to:",
       "\t1) run testing scripts available in the source code,",
-      "\t2) start the UI of the software and test the correctness of the code above.",
+      "\t2) test the correctness of the code above.",
       "Also, you strictly follow the format:",
       "Commands:",
       "COMMANDS",
@@ -852,9 +853,10 @@
       "'''",
       "    pass",
       "```",
-      "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the error summary.",
-      "Now, use the format exemplified above and modify the problematic codes based on the error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes changed codes and is prohibited from repeating unchanged codes. If no bugs are reported, please return only one line like \"<INFO> Finished\"."
-    ]
+      "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the failed test case and the error summary. It is important to note that failed test case may be an incorrect test case, so you should comprehend the user's task, sprint backlog and sprint acceptance criteria to modify code correctly.",
+      "Now, use the format exemplified above and carefully review code, failed test case to modify code correctly. Next, output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes changed codes and is prohibited from repeating unchanged codes."
+
+      ]
   },
   "EnvironmentDoc": {
     "assistant_role_name": "Development Team",

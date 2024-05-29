@@ -56,6 +56,6 @@ def get_test_order(adj_list, testing_file_map):
     order = []
     for filename in stack:
         if filename in testing_file_map:
-            order.extend(testing_file_map[filename])
-    print('TEST ORDER:', order)
+            order.extend(list(set(testing_file_map[filename])))
+    # print('TEST ORDER:', order)
     return order

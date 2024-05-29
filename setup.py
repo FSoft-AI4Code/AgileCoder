@@ -20,7 +20,11 @@ install_requires=[
         "nltk",
         "tenacity",
         "python-dotenv",
-        "codebleu"
+        "codebleu",
+        "google-auth",
+        "google-auth-oauthlib",
+        "google-auth-httplib2",
+        "anthropic"
       ],
 packages=find_packages(),
 zip_safe=False)

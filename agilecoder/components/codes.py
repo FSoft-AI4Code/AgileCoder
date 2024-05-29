@@ -291,10 +291,11 @@ class Codes:
         total_new_length = 0
         total_changed_lines = ''
         changed_files = []
+        total_generated_line_num = len(list(filter(lambda x: len(x.strip()), generated_content.splitlines())))
         for key in new_codes.codebooks.keys():
             if file_name is not None and not check_the_same_file(key, file_name):  continue
 
-            total_new_length += len(new_codes.codebooks[key])
+            total_new_length += len(new_codes.codebooks[key].splitlines())
             corres_key = None
             if key not in self.codebooks.keys():
                 scores = []
@@ -343,8 +344,8 @@ class Codes:
         self.changed_files = changed_files
         self.all_changed_files.update(self.changed_files)
 
-        print('changed_files', changed_files)
-        return flag and (total_new_length / len(generated_content) > 0.7)
+        # print('changed_files', changed_files)
+        return flag and (total_new_length / total_generated_line_num > 0.5)
         # return hasattr(new_codes, 'has_correct_format') and new_codes.has_correct_format
 
     def _get_changed_files(self):
@@ -375,7 +376,7 @@ class Codes:
 
     def _get_codes(self, ignore_test_code, get_entry_point = False, _simplify_code = False, only_test_code = False) -> str:
         content = ""
-        print('self.testing_filenames', self.testing_filenames)
+        # print('self.testing_filenames', self.testing_filenames)
         for filename in self.codebooks.keys():
             if get_entry_point:
                 if has_entry_point(self.codebooks[filename]):

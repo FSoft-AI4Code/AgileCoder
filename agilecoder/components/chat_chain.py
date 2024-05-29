@@ -159,13 +159,13 @@ class ChatChain:
         Returns: None
 
         """
-        for phase_item in self.chain[:5]:
+        for phase_item in self.chain[:3]:
             self.execute_step(phase_item)
-        for i in range(10):
+        for i in range(9):
             if self.chat_env.env_dict.get('end-sprint', False):
                 break
-            self.execute_step(self.chain[5])
-        for phase_item in self.chain[6:]:
+            self.execute_step(self.chain[3])
+        for phase_item in self.chain[4:]:
             self.execute_step(phase_item)
 
     def get_logfilepath(self):
@@ -200,7 +200,7 @@ class ChatChain:
                 # logs with error trials are left in WareHouse/
                 if os.path.isfile(file_path) and not filename.endswith(".py") and not filename.endswith(".log"):
                     os.remove(file_path)
-                    print("{} Removed.".format(file_path))
+                    # print("{} Removed.".format(file_path))
         software_path = os.path.join(directory, "_".join([self.project_name, self.org_name, self.start_time]))
         self.chat_env.set_directory(software_path)
 
@@ -256,7 +256,7 @@ class ChatChain:
 
         post_info += "Software Info: {}".format(
             get_info(self.chat_env.env_dict['directory'], self.log_filepath) + "\n\n🕑**duration**={:.2f}s\n\n".format(duration))
-        post_info += f'Number of sprints {self.chat_env.env_dict["num-sprints"]}\n\n'
+        post_info += f'Number of sprints {self.chat_env.env_dict.get("num-sprints", 1)}\n\n'
         post_info += "AgileCoder Starts ({})".format(self.start_time) + "\n\n"
         post_info += "AgileCoder Ends ({})".format(now_time) + "\n\n"
 

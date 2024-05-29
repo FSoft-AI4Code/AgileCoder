@@ -446,7 +446,7 @@ class BugFixing(ComposedPhase):
         while len(chat_env.env_dict.get('testing_commands', [None])):
             for phase_item in self.composition:
                 log_and_print_online("BUGFIXING:" + str(phase_item))
-                print("BUGFIXING:", phase_item)
+                # print("BUGFIXING:", phase_item)
                 if phase_item["phaseType"] == "SimplePhase":  # right now we do not support nested composition
                     phase = phase_item['phase']
                     max_turn_step = phase_item['max_turn_step']

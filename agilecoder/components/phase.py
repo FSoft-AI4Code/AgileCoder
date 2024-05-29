@@ -529,7 +529,7 @@ class SprintBacklogCreating(Phase):
             # chat_env.env_dict['all-sprint-acceptance-criteria'].append(list_of_sprint_acceptance_criteria)
             # chat_env.env_dict['all-sprint-goals'].append(sprint_goals)
             # chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
-        print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
+        # print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
         return chat_env
 
@@ -554,10 +554,7 @@ class NextSprintBacklogCreating(Phase):
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         if len(self.seminar_conclusion) > 0:
-            print('self.seminar_conclusion', self.seminar_conclusion)
-            if self.seminar_conclusion.strip() in ["DONE", "DONE."]:
-                chat_env.env_dict['end-sprint'] = True
-                return chat_env
+            # print('self.seminar_conclusion', self.seminar_conclusion)
             # sprint_goals = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint Goals").strip()
             try:
                 sprint_backlog = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint backlog").strip()
@@ -585,7 +582,7 @@ class NextSprintBacklogCreating(Phase):
             # chat_env.env_dict['all-sprint-goals'].append(sprint_goals)
             chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
             chat_env.reset_all_changed_files()
-        print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
+        # print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
         return chat_env
 
@@ -610,7 +607,7 @@ class CheckProgressStatus(Phase):
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         if len(self.seminar_conclusion) > 0:
-            print('[CheckProgressStatus] self.seminar_conclusion', self.seminar_conclusion)
+            # print('[CheckProgressStatus] self.seminar_conclusion', self.seminar_conclusion)
             if self.seminar_conclusion.strip().replace('"', '') in ["DONE", "DONE."]:
                 chat_env.env_dict['end-sprint'] = True
                 return chat_env
@@ -715,7 +712,7 @@ class WritingTestSuite(Phase):
         #     codes =  chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()),  True) 
         # else:
         #     codes = chat_env.get_codes(simplify_code = True)
-        print('ALL CHANGED FILES:',chat_env.get_all_changed_files())
+        # print('ALL CHANGED FILES:',chat_env.get_all_changed_files())
         log_and_print_online('ALL CHANGED FILES: ' + str(chat_env.get_all_changed_files()))
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
@@ -897,8 +894,8 @@ class SprintReview(Phase):
 
         chat_env.env_dict['done-works'].append(done_work)
         chat_env.env_dict['undone-works'].append(undone_work)
-        print('done work:', done_work)
-        print('undone work:', undone_work)
+        # print('done work:', done_work)
+        # print('undone work:', undone_work)
         return chat_env
 class ProductBacklogReview(Phase):
     def __init__(self, **kwargs):
@@ -1063,7 +1060,7 @@ class SprintBacklogModification(Phase):
             chat_env.env_dict['all-sprint-acceptance-criteria'].append(list_of_sprint_acceptance_criteria)
             # chat_env.env_dict['all-sprint-goals'].append(sprint_goals)
             chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
-        print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
+        # print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
         return chat_env
 class NextSprintBacklogModification(Phase):
@@ -1090,9 +1087,6 @@ class NextSprintBacklogModification(Phase):
     def update_chat_env(self, chat_env) -> ChatEnv:
         if len(self.seminar_conclusion) > 0:
             # sprint_goals = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint Goals").strip()
-            if self.seminar_conclusion.strip() in ["DONE", "DONE."]:
-                chat_env.env_dict['end-sprint'] = True
-                return chat_env
             try:
                 sprint_backlog = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint backlog").strip()
                 sprint_acceptance_criteria = extract_sprint_trunk_text(self.seminar_conclusion, "Sprint acceptance criteria").strip()
@@ -1118,7 +1112,7 @@ class NextSprintBacklogModification(Phase):
             chat_env.env_dict['all-sprint-acceptance-criteria'].append(list_of_sprint_acceptance_criteria)
             # chat_env.env_dict['all-sprint-goals'].append(sprint_goals)
             chat_env.env_dict['num-sprints'] = chat_env.env_dict.get('num-sprints', 0) + 1
-        print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
+        # print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
         return chat_env
 class CodeReviewComment(Phase):
@@ -1294,7 +1288,7 @@ class TestErrorSummary(Phase):
     def update_phase_env(self, chat_env):
         # chat_env.generate_images_from_codes()
         (exist_bugs_flag, test_reports) = chat_env.exist_bugs(chat_env)
-        print("======test_reports", test_reports)
+        # print("======test_reports", test_reports)
         log_and_print_online("======test_reports: " + test_reports)
         file_names = extract_file_names(test_reports)
         is_failed_test_case = False
@@ -1308,7 +1302,7 @@ class TestErrorSummary(Phase):
                 "\"{failed_test_case}\""
                 "Test Reports of Source Codes:",
                 "\"{test_reports}\"",
-                "According to my test reports, please locate and summarize the bugs that cause the problem."
+                "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly."
             ])
             is_failed_test_case = True
             _item = extract_file_names_and_lines(test_reports)[0]
@@ -1385,7 +1379,7 @@ class TestErrorSummary(Phase):
         log_and_print_online("**[Test Reports]**:\n\n{}".format(test_reports))
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        print("self.phase_env['test_reports']", self.phase_env['test_reports'])
+        # print("self.phase_env['test_reports']", self.phase_env['test_reports'])
         chat_env.env_dict['error_summary'] = self.seminar_conclusion
         chat_env.env_dict['test_reports'] = self.phase_env['test_reports']
 
@@ -1439,7 +1433,7 @@ class SprintTestErrorSummary(Phase):
     def update_phase_env(self, chat_env):
         # chat_env.generate_images_from_codes()
         (exist_bugs_flag, test_reports) = chat_env.exist_bugs_ignoring_test_cases(chat_env)
-        print("======test_reports", test_reports)
+        # print("======test_reports", test_reports)
         log_and_print_online("======test_reports: " + test_reports)
         file_names = extract_file_names(test_reports)
         is_failed_test_case = False
@@ -1530,7 +1524,7 @@ class SprintTestErrorSummary(Phase):
         log_and_print_online("**[Test Reports]**:\n\n{}".format(test_reports))
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        print("self.phase_env['test_reports']", self.phase_env['test_reports'])
+        # print("self.phase_env['test_reports']", self.phase_env['test_reports'])
         chat_env.env_dict['error_summary'] = self.seminar_conclusion
         chat_env.env_dict['test_reports'] = self.phase_env['test_reports']
 
@@ -1727,8 +1721,17 @@ class TestModification(Phase):
                 "'''",
                 "CODE",
                 "```",
-                "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the failed test case and the error summary.",
-                "Now, use the format exemplified above and modify the problematic codes based on the failed test case and error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes changed codes and is prohibited from repeating unchanged codes. If no bugs are reported, please return only one line like \"<INFO> Finished\"."
+                "Example of the format:",
+                "a.py",
+                "```python",
+                "def f():",
+                "'''",
+                "an empty function",
+                "'''",
+                "    pass",
+                "```",
+                "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the failed test case and the error summary. It is important to note that failed test case may be an incorrect test case, so you should comprehend the user's task, sprint backlog and sprint acceptance criteria to modify code correctly.",
+                "Now, use the format exemplified above and carefully review code, failed test case to modify code correctly. Next, output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes changed codes and is prohibited from repeating unchanged codes. If no bugs are reported, please return only one line like \"<INFO> Finished\"."
             ])
             overwrite_prompt = True
             is_failed_test_case = True
@@ -1767,6 +1770,15 @@ class TestModification(Phase):
                 "DOCSTRING",
                 "'''",
                 "CODE",
+                "```",
+                "Example of the format:",
+                "a.py",
+                "```python",
+                "def f():",
+                "'''",
+                "an empty function",
+                "'''",
+                "    pass",
                 "```",
                 "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the error summary.",
                 "There is a raised issue relevant to ModuleNotFoundError because you have not implemented the required module {missing_module}. To fix this error, you must take a great care to current source code to implement the module {missing_module} accurately.",

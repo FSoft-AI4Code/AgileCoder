@@ -191,15 +191,28 @@ class ChatAgent(BaseAgent):
             response = self.model_backend.run(messages=openai_messages)
             # if not isinstance(response, dict):
             #     raise RuntimeError("OpenAI returned unexpected struct")
-            output_messages = [
+            try:
+                output_messages = [
                 ChatMessage(role_name=self.role_name, role_type=self.role_type,
                             meta_dict=dict(), role = choice.message.role, content = choice.message.content)
-                for choice in response.choices
-            ]
-            info = self.get_info(
+                for choice in response.choices]
+                info = self.get_info(
                 response.id,
                 response.usage,
                 [str(choice.finish_reason) for choice in response.choices],
+                num_tokens,
+            )
+            except:
+                
+                output_messages = [
+                ChatMessage(role_name=self.role_name, role_type=self.role_type,
+                            meta_dict=dict(), **dict(choice["message"]))
+                for choice in response["choices"]
+            ]
+            info = self.get_info(
+                response["id"],
+                response["usage"],
+                [str(choice["finish_reason"]) for choice in response["choices"]],
                 num_tokens,
             )
 

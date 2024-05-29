@@ -148,21 +148,23 @@ def get_non_leaf_and_intermediate_files(adj_list):
         all_nodes.update(v + [k])
     return [node for node in all_nodes if node not in all_deps and not (node.startswith('test_') or node.split('.')[0].endswith('_test'))]
 
-def extract_first_error_traceback(traceback_output):
+def extract_first_error_traceback(traceback_output, num_returns = 3):
     # Split the traceback output into lines
     traceback_lines = traceback_output.splitlines()
     
     # Iterate through the lines to find the first failed test case traceback
     first_error_traceback = []
     found_failure = False
+    count = 0
     for line in traceback_lines:
         # print('LINE', line)
         if line.startswith("FAIL:") or line.startswith("ERROR:"):
-            found_failure = len(first_error_traceback) == 0
+            found_failure = True#len(first_error_traceback) == 0
             # print('line', line)
-            if found_failure:
+            if found_failure and count < num_returns:
                 first_error_traceback.append(line)
-        elif found_failure:
+            count += 1
+        elif found_failure and count <= num_returns:
             # Append subsequent lines until the next test case starts
             if line.startswith("Ran "):
                 break
@@ -180,6 +182,7 @@ def _build_reverse_adjacency_list(adj_list):
     return reverse_adj_list
 
 def find_ancestors(adj_list, start_nodes):
+    if adj_list is None: return []
     reverse_adj_list = _build_reverse_adjacency_list(adj_list)
     ancestors = set()
     for start_node in start_nodes:
@@ -195,23 +198,25 @@ def find_ancestors(adj_list, start_nodes):
     return ancestors
 
 
-def extract_function_from_class(file_content, function_name):
-    if function_name == '<module>': return file_content
+def extract_function_from_class(file_content, function_names):
     tree = ast.parse(file_content)
     lines = file_content.splitlines()
     class_code = []
     for line in lines:
         if line.strip().startswith('def'): break
         class_code.append(line)
-    function_code = None
-    for node in tree.body:
-        if isinstance(node, ast.ClassDef):
-            for class_node in node.body:
-                if isinstance(class_node, ast.FunctionDef) and class_node.name == function_name:
-                    function_code = ast.get_source_segment(file_content, class_node)
-    if function_code is None: return file_content
-    function_code_lines = function_code.splitlines()
-    results = class_code
-    for line in function_code_lines:
-        results.append('\t' + line)
+    function_code_lines = []
+    for function_name in function_names:
+        if function_name == '<module>': return file_content
+        
+        function_code = None
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef):
+                for class_node in node.body:
+                    if isinstance(class_node, ast.FunctionDef) and class_node.name == function_name:
+                        function_code = ast.get_source_segment(file_content, class_node)
+                        break
+        if function_code is None: return file_content
+        function_code_lines.extend(function_code.splitlines())
+    results = class_code + function_code_lines
     return '\n'.join(results)

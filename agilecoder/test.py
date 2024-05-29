@@ -220,7 +220,7 @@ class Codes:
 '''\n""" + unified_diff + "\n```"
 
                 self.codebooks[key] = new_codes.codebooks[key]
-        print('self.codebooks', self.codebooks)
+        # print('self.codebooks', self.codebooks)
 
     def _rewrite_codes(self, git_management) -> None:
         directory = self.directory

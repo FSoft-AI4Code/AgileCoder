@@ -64,9 +64,9 @@ class ChatEnv:
         self.env_dict = {
             "directory": "",
             "task_prompt": "",
-            "modality": "",
+            "modality": "Python script",
             "ideas": "",
-            "language": "",
+            "language": "Python",
             "review_comments": "",
             "error_summary": "",
             "test_reports": ""
@@ -91,19 +91,19 @@ class ChatEnv:
         if os.path.exists(self.env_dict['directory']) and len(os.listdir(directory)) > 0:
             new_directory = "{}.{}".format(directory, time.strftime("%Y%m%d%H%M%S", time.localtime()))
             shutil.copytree(directory, new_directory)
-            print("{} Copied to {}".format(directory, new_directory))
+            # print("{} Copied to {}".format(directory, new_directory))
         if self.config.clear_structure:
             if os.path.exists(self.env_dict['directory']):
                 shutil.rmtree(self.env_dict['directory'])
                 os.mkdir(self.env_dict['directory'])
-                print("{} Created".format(directory))
+                # print("{} Created".format(directory))
             else:
                 os.mkdir(self.env_dict['directory'])
         os.makedirs(os.path.join(self.env_dict['directory'], 'assets'), exist_ok = True)
 
     def exist_bugs(self, chat_env) -> tuple[bool, str]:
         directory = self.env_dict['directory']
-        print('DIRECTORY:', directory)
+        # print('DIRECTORY:', directory)
 
         success_info = "The software run successfully without errors."
         try:
@@ -139,10 +139,12 @@ class ChatEnv:
                     # print('additional_commands', additional_commands)
                     # additional_commands = list(filter(lambda x: x in runnable_files, additional_commands))
                     testing_commands = _testing_commands + additional_commands + program_files
+                    # testing_commands = _testing_commands + additional_commands
+                    for file in program_files:
+                        if file not in testing_commands:
+                            testing_commands.append(file)
                     error_contents = ''
                     
-                    if is_python and len(program_files) == 0:
-                        return True, "[Error] the software lacks an entry point to start"
                     # testing_commands.extend(runnable_files)
                     for file in runnable_files:
                         if file not in testing_commands:
@@ -158,16 +160,15 @@ class ChatEnv:
                     if testing_command != '-m unittest' and testing_command not in runnable_files:
                         if testing_command.startswith('test_') or testing_command.split('.')[0].endswith('_test'):
                             errs = "[Error] the testing script lacks an entry point to start. Please modify accordingly to run test cases."
-                        else:
-                            errs = "[Error] the software lacks an entry point to start"
-                        error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
-                        return_flag = True
-                        break
+                        
+                            error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
+                            return_flag = True
+                            break
                     if 'main.py' in self.codes.codebooks and testing_command == 'main.py':
                         command = "cd {}; ls -l; python main.py;".format(directory)
                     else:
                         command = "cd {}; ls -l; python ".format(directory) + testing_command
-                    print('COMMAND:', command)
+                    # print('COMMAND:', command)
                     process = subprocess.Popen(command,
                                     shell=True,
                                     preexec_fn=os.setsid,
@@ -200,7 +201,7 @@ class ChatEnv:
                     #     else:
                     #         return False, success_info
                     error_output = process.stderr.read().decode('utf-8')
-                    print('error_output', "Traceback".lower() in error_output.lower(), ':return_code:', return_code)
+                    # print('error_output', "Traceback".lower() in error_output.lower(), ':return_code:', return_code)
                     if return_code != 0:
                         if error_output:
                             if "Traceback".lower() in error_output.lower():
@@ -222,7 +223,7 @@ class ChatEnv:
                         # else:
                         #     return_flag = True
                         #     error_contents += """\nError Traceback for Running `{testing_command}`":\n{errs}""".format(testing_command = testing_command, errs = errs)
-                    print('return_flag:', return_flag)
+                    # print('return_flag:', return_flag)
                     current_idx += 1
                     if return_flag:
                         chat_env.env_dict['testing_commands'] = testing_commands[current_idx:]
@@ -241,7 +242,7 @@ class ChatEnv:
 
     def exist_bugs_ignoring_test_cases(self, chat_env) -> tuple[bool, str]:
         directory = self.env_dict['directory']
-        print('DIRECTORY:', directory)
+        # print('DIRECTORY:', directory)
 
         success_info = "The software run successfully without errors."
         try:
@@ -275,12 +276,10 @@ class ChatEnv:
                 additional_commands = list(set(testing_commands) - set(_testing_commands))
                 # print('additional_commands', additional_commands)
                 # additional_commands = list(filter(lambda x: x in runnable_files, additional_commands))
-                testing_commands = additional_commands + program_files
+                testing_commands = _testing_commands + additional_commands + program_files
                 error_contents = ''
                 
-                if is_python and len(program_files) == 0:
-                    return True, "[Error] the software lacks an entry point to start"
-
+            
                 for testing_command in testing_commands:
                     if testing_command not in runnable_files:
                         
@@ -292,7 +291,7 @@ class ChatEnv:
                         command = "cd {}; ls -l; python main.py;".format(directory)
                     else:
                         command = "cd {}; ls -l; python ".format(directory) + testing_command
-                    print('COMMAND:', command)
+                    # print('COMMAND:', command)
                     process = subprocess.Popen(command,
                                     shell=True,
                                     preexec_fn=os.setsid,
@@ -325,7 +324,7 @@ class ChatEnv:
                     #     else:
                     #         return False, success_info
                     error_output = process.stderr.read().decode('utf-8')
-                    print('error_output', "Traceback".lower() in error_output.lower(), ':return_code:', return_code)
+                    # print('error_output', "Traceback".lower() in error_output.lower(), ':return_code:', return_code)
                     if return_code != 0:
                         if error_output:
                             if "Traceback".lower() in error_output.lower():
@@ -334,13 +333,19 @@ class ChatEnv:
                                 # if len(all_file_names) > len(set(all_file_names)):
                                 #     errs = extract_first_error_traceback(errs)
                                 if errs.count('--------------------------') > 1:
-                                    new_errs = extract_first_error_traceback(errs)
+                                    new_errs = extract_first_error_traceback(errs, 1)
                                     if len(new_errs):
                                         errs = new_errs
                                 
                                 # return True, errs
                                 error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                                 return_flag = True
+                        elif testing_command.startswith('test_') or testing_command.split('.')[0].endswith('_test'):
+                            std_output = process.stdout.read().decode('utf-8')
+                            if 'FAILED' in std_output:
+                                error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
+                                return_flag = True
+
                                 
                             # else:
                             #     return False, success_info
@@ -375,7 +380,7 @@ class ChatEnv:
     def rewrite_codes(self) -> None:
         self.codes._rewrite_codes(self.config.git_management)
         self.dependency_graph = build_dependency_graph(self.env_dict['directory'])
-        print('self.dependency_graph', self.dependency_graph)
+        # print('self.dependency_graph', self.dependency_graph)
     def get_high_overlap_code(self):
         return self.codes._get_high_overlap_code()
 
