@@ -598,6 +598,27 @@ class CheckProgressStatus(Phase):
         plain_acceptance_criteria = '\n'.join(chat_env.env_dict['acceptance-criteria'])
         all_done_tasks = '\n'.join(chat_env.env_dict['done-works'])
         all_undone_tasks = '\n'.join(chat_env.env_dict['undone-works'])
+        if all_undone_tasks.strip() == 'None':
+            self.phase_prompt = '\n'.join([
+               "According to the user's task, our software designs, product backlog and acceptance criteria listed below: ",
+                "Task: \"{task}\".",
+                "Modality: \"{modality}\".",
+                "Programming Language: \"{language}\"",
+                "Product backlog:\n\"{plain_product_backlog}\"",
+                "Acceptance Criteria:\n\"{plain_acceptance_criteria}\"",
+                "We have decided to complete the task through a executable software with multiple files implemented via {language} by accomplishing the product backlog and acceptance criteria through multiple sprints. Until now, we have finished done tasks and undone tasks as below:",
+                "Current done tasks:",
+                "\"{all_done_tasks}\"",
+                "As the {assistant_role}, to satisfy the user's demands, you should carefully consider whether to deciding to conclude the project or create a next sprint based on the product backlog, acceptance criteria, done works.",
+                "Specifically, you compare current done works with the product backlog to determine whether any items in the product backlog and acceptance criteria are incomplete, so you should create a next sprint to accomplish", 
+                "When the product backlog has not fully been accomplished or the program has some unfixed bugs, you must create a next sprint to complete remaining tasks and fix all existing bugs by returning a only single line with the content: \"<INFO> UNDONE.\".",
+                "Otherwise, your answer must be a single line with \"<INFO> DONE.\", indicating that all items in the product backlog and acceptance criteria are fully accomplished and the program is completely error-free, so you should end the project.",
+                "Think step by step and reason yourself to the right decisions to make sure we get it right.",
+                "Additionally, you must adhere to the following regulations:",
+                "\t1) the project is concluded only if all the tasks in the product backlog and acceptance criteria are accomplished without any errors,",
+                "\t2) if the software has any bugs and errors, you should not conclude the project, and you should focus on making the software executable successfully.",
+                "Note that your answer must follow the required format above."
+            ])
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
@@ -611,7 +632,7 @@ class CheckProgressStatus(Phase):
     def update_chat_env(self, chat_env) -> ChatEnv:
         if len(self.seminar_conclusion) > 0:
             print('[CheckProgressStatus] self.seminar_conclusion', self.seminar_conclusion)
-            if self.seminar_conclusion.strip().replace('"', '') in ["DONE", "DONE."]:
+            if self.seminar_conclusion.strip().replace('"', '') in ["DONE", "DONE."] and len(chat_env.env_dict['done-works'])  >= len(chat_env.env_dict['product-backlog']):
                 chat_env.env_dict['end-sprint'] = True
                 return chat_env
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
@@ -885,6 +906,11 @@ class SprintReview(Phase):
         if len(self.seminar_conclusion):
             coms = self.seminar_conclusion.split('Undone Work:')
             undone_work = coms[1].strip()
+            undone_work_lines = undone_work.splitlines()
+            for line in undone_work_lines:
+                if  line.strip().lower() == 'none':
+                    undone_work = 'None'
+                    break
             done_work = coms[0].split('Done Work:')[1].strip()
         else:
             undone_work, done_work = '', ''
@@ -1308,7 +1334,7 @@ class TestErrorSummary(Phase):
                 "\"{failed_test_case}\""
                 "Test Reports of Source Codes:",
                 "\"{test_reports}\"",
-                "According to my test reports, please locate and summarize the bugs that cause the problem."
+                "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly."
             ])
             is_failed_test_case = True
             _item = extract_file_names_and_lines(test_reports)[0]
@@ -1443,6 +1469,7 @@ class SprintTestErrorSummary(Phase):
         log_and_print_online("======test_reports: " + test_reports)
         file_names = extract_file_names(test_reports)
         is_failed_test_case = False
+        is_success = "The software run successfully without errors."
         if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('lacks an entry point to start' not in test_reports) and 'ImportError:' not in test_reports:
             self.phase_prompt = '\n'.join([
                 "Our potentially buggy source codes and corresponding test reports are listed below: ",
@@ -1453,7 +1480,7 @@ class SprintTestErrorSummary(Phase):
                 "\"{failed_test_case}\""
                 "Test Reports of Source Codes:",
                 "\"{test_reports}\"",
-                "According to my test reports, please locate and summarize the bugs that cause the problem."
+                "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly."
             ])
             is_failed_test_case = True
             _item = extract_file_names_and_lines(test_reports)[0]
@@ -1727,7 +1754,7 @@ class TestModification(Phase):
                 "'''",
                 "CODE",
                 "```",
-                "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the failed test case and the error summary.",
+                "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the failed test case and the error summary. It is important to note that failed test case may be an incorrect test case, so you should comprehend the user's task, sprint backlog and sprint acceptance criteria to modify code correctly.",
                 "Now, use the format exemplified above and modify the problematic codes based on the failed test case and error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes changed codes and is prohibited from repeating unchanged codes. If no bugs are reported, please return only one line like \"<INFO> Finished\"."
             ])
             overwrite_prompt = True
