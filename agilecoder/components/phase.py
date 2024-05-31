@@ -882,6 +882,12 @@ class SprintReview(Phase):
         if len(self.seminar_conclusion):
             coms = self.seminar_conclusion.split('Undone Work:')
             undone_work = coms[1].strip()
+            _undone_work = []
+            undone_work_lines = undone_work.splitlines()
+            for line in undone_work_lines:
+                if len(line.strip()) == 0: break
+                _undone_work.append(line)
+            undone_work = '\n'.join(_undone_work)
             done_work = coms[0].split('Done Work:')[1].strip()
         else:
             undone_work, done_work = '', ''
@@ -893,7 +899,8 @@ class SprintReview(Phase):
             chat_env.env_dict['undone-works'] = []
 
         chat_env.env_dict['done-works'].append(done_work)
-        chat_env.env_dict['undone-works'].append(undone_work)
+        chat_env.env_dict['undone-works'] = [undone_work]
+        # chat_env.env_dict['undone-works'].append(undone_work)
         # print('done work:', done_work)
         # print('undone work:', undone_work)
         return chat_env
@@ -1127,7 +1134,7 @@ class CodeReviewComment(Phase):
             codes1 = chat_env.get_codes()
         else:
             codes1 = chat_env.get_changed_codes(changed_files)
-        if len(codes) / len(codes1) > 1.3: codes = codes1
+        if len(codes1) and len(codes) / len(codes1) > 1.3: codes = codes1
         # print('codescodes:', codes)
         if '.png' in codes:
             chat_env.generate_images_from_codes()
@@ -1262,8 +1269,11 @@ class TestingPlan(Phase):
         #     codes = chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()), True)
         # else:
         # codes = chat_env.get_codes(simplify_code = True, ignore_test_code = True, get_entry_point = True)
-        file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-        codes = chat_env.get_changed_codes(file_names, True)
+        if chat_env.dependency_graph  is not None:
+            file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
+            codes = chat_env.get_changed_codes(file_names, True)
+        else:
+            codes = chat_env.get_codes(ignore_test_code = False, simplify_code = True)
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
@@ -1359,17 +1369,17 @@ class TestErrorSummary(Phase):
             code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
             if is_failed_test_case:
                 file_names = file_names[1:]
-            for file_name, code in code_sections:
-                if file_name in file_names:
-                    all_relevant_code.extend([file_name, code, '\n'])
-            all_relevant_code = '\n'.join(all_relevant_code)
+            all_relevant_code = chat_env.get_changed_codes(file_names)
         else:
-            if test_reports == 'The software run successfully without errors.':
-                file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                all_relevant_code = chat_env.get_changed_codes(file_names)
-            elif test_reports == '[Error] the software lacks an entry point to start':
-                file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                all_relevant_code = chat_env.get_changed_codes(file_names)
+            if chat_env.dependency_graph  is not None:
+                if test_reports == 'The software run successfully without errors.':
+                    file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
+                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                elif test_reports == '[Error] the software lacks an entry point to start':
+                    file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
+                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                else:
+                    all_relevant_code = chat_env.get_codes(ignore_test_code = True)
             else:
                 all_relevant_code = chat_env.get_codes(ignore_test_code = True)
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
@@ -1507,17 +1517,17 @@ class SprintTestErrorSummary(Phase):
             code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
             if is_failed_test_case:
                 file_names = file_names[1:]
-            for file_name, code in code_sections:
-                if file_name in file_names:
-                    all_relevant_code.extend([file_name, code, '\n'])
-            all_relevant_code = '\n'.join(all_relevant_code)
+            all_relevant_code = chat_env.get_changed_codes(file_names)
         else:
-            if test_reports == 'The software run successfully without errors.':
-                file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                all_relevant_code = chat_env.get_changed_codes(file_names)
-            elif test_reports == '[Error] the software lacks an entry point to start':
-                file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                all_relevant_code = chat_env.get_changed_codes(file_names)
+            if chat_env.dependency_graph  is not None:
+                if test_reports == 'The software run successfully without errors.':
+                    file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
+                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                elif test_reports == '[Error] the software lacks an entry point to start':
+                    file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
+                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                else:
+                    all_relevant_code = chat_env.get_codes(ignore_test_code = True)
             else:
                 all_relevant_code = chat_env.get_codes(ignore_test_code = True)
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
@@ -1849,22 +1859,24 @@ class TestModification(Phase):
         
         if len(file_names):
             all_relevant_code = []
-            code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
+            # code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
             if is_failed_test_case:
                 file_names = file_names[1:]
-            for file_name, code in code_sections:
-                if file_name in file_names:
-                    all_relevant_code.extend([file_name, code, '\n'])
-            all_relevant_code = '\n'.join(all_relevant_code)
+            all_relevant_code = chat_env.get_changed_codes(file_names)
+            # print('all_relevant_code', all_relevant_code)
         else:
-            if test_reports == 'The software run successfully without errors.':
-                file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                all_relevant_code = chat_env.get_changed_codes(file_names)
-            elif test_reports == '[Error] the software lacks an entry point to start':
-                file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                all_relevant_code = chat_env.get_changed_codes(file_names)
+            if chat_env.dependency_graph  is not None:
+                if test_reports == 'The software run successfully without errors.':
+                    file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
+                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                elif test_reports == '[Error] the software lacks an entry point to start':
+                    file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
+                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                else:
+                    all_relevant_code = chat_env.get_codes(ignore_test_code = True)
             else:
                 all_relevant_code = chat_env.get_codes(ignore_test_code = True)
+            # print('=====all_relevant_code', all_relevant_code)
         
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],

@@ -278,7 +278,7 @@ class ClaudeAIModel(ModelBackend):
         new_kwargs = {}
         new_kwargs['system'] = kwargs['messages'][0]['content']
         kwargs['messages'][1]['role'] = 'user'
-        messages = [kwargs['messages'][1]]
+        messages = kwargs['messages'][1:]
         new_kwargs['model'] ='claude-3-haiku-20240307'
         valid_kwargs = ['system', 'messages', 'model','max_tokens']  
         

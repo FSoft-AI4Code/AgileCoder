@@ -21,6 +21,7 @@ def check_bool(s):
 class ChatChain:
 
     def __init__(self,
+                 max_num_sprints: int,
                  config_path: str = None,
                  config_phase_path: str = None,
                  config_role_path: str = None,
@@ -40,6 +41,7 @@ class ChatChain:
         """
 
         # load config file
+        self.max_num_sprints = max_num_sprints
         self.config_path = config_path
         self.config_phase_path = config_phase_path
         self.config_role_path = config_role_path
@@ -161,7 +163,7 @@ class ChatChain:
         """
         for phase_item in self.chain[:3]:
             self.execute_step(phase_item)
-        for i in range(9):
+        for i in range(self.max_num_sprints - 1):
             if self.chat_env.env_dict.get('end-sprint', False):
                 break
             self.execute_step(self.chain[3])

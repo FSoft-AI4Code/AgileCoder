@@ -410,7 +410,7 @@
         {
           "phase": "Test",
           "phaseType": "ComposedPhase",
-          "cycleNum": 2,
+          "cycleNum": 3,
           "Composition": [
             {
               "phase": "WritingFullTestSuite",

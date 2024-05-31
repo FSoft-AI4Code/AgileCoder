@@ -147,6 +147,8 @@ def openai_api_key_required(func: F) -> F:
             return func(self, *args, **kwargs)
         elif 'OPENAI_API_KEY' in os.environ or 'API_KEY' in os.environ:
             return func(self, *args, **kwargs)
+        elif 'CLAUDE' in os.environ:
+            return func(self, *args, **kwargs)
         else:
             raise ValueError('OpenAI API key not found.')
 

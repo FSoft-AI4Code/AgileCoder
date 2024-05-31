@@ -240,11 +240,11 @@
       "\"{all_done_tasks}\"",
       "Undone tasks:",
       "\"{all_undone_tasks}\"",
-      "As the {assistant_role}, to satisfy the user's demands, you should carefully consider whether to deciding to conclude the project or create a next sprint based on the product backlog, acceptance criteria, done works and undone works.",
+      "As the {assistant_role}, to satisfy the user's demands, you should carefully decide whether to conclude the project or create a next sprint based on the product backlog, acceptance criteria, done works and undone works.",
       "Specifically, you compare done works with the product backlog to determine whether any items in the product backlog or acceptance criteria are incomplete, and you carefully review undone works to check if the program has any errors.", 
-      "When all items in the product backlog and acceptance criteria are fully accomplished and the program is completely error-free, you should end the project by returning a only single line with the content: \"<INFO> DONE.\".",
-      "Otherwise, your answer must be a single line with \"<INFO> UNDONE.\", indicating that the product backlog has not been accomplished or the program has some unfixed bugs, so you must create a next sprint to complete remaining tasks and fix all existing bugs.",
-      "Think step by step and reason yourself to the right decisions to make sure we get it right.",
+      "When the product backlog and acceptance criteria are fully accomplished and the program is completely error-free, you should end the project by returning a only single line containing the content: \"<INFO> DONE.\".",
+      "Otherwise, your answer must be a single line containing the content: \"<INFO> UNDONE.\", indicating that the product backlog has not been accomplished or the program has some existing bugs, so you must create a next sprint to complete remaining tasks and fix all existing bugs.",
+      "Think step by step and reason yourself to the right decisions before making a decision to make sure we get it right.",
       "Additionally, you must adhere to the following regulations:",
       "\t1) the project is concluded only if all the tasks in the product backlog and acceptance criteria are accomplished without any errors,",
       "\t2) if the software has any bugs and errors, you should not conclude the project, and you should focus on making the software executable successfully.",
@@ -705,7 +705,7 @@
       "'''",
       "CODE",
       "```",
-      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding codes according to the comments, and then only return changed and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged codes. Your answer strictly obeys the required format."
+      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding codes according to the comments, and then only return completed and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged files. Your answer strictly obeys the required format."
     ]
   },
   "CodeReview2Modification": {
@@ -728,7 +728,7 @@
       "'''",
       "CODE",
       "```",
-      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding changed codes according to the comments, and then only return changed and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged codes. Your answer strictly obeys the required format."
+      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding changed codes according to the comments, and then only return complete and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged files. Your answer strictly obeys the required format."
     ]
   },
   "CodeReview3Modification": {
@@ -751,7 +751,7 @@
       "'''",
       "CODE",
       "```",
-      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding changed codes according to the comments, and then only return changed and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged codes. Your answer strictly obeys the required format."
+      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding changed codes according to the comments, and then only return complete and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged files. Your answer strictly obeys the required format."
     ]
   },
   "CodeReviewHuman": {
@@ -854,7 +854,7 @@
       "    pass",
       "```",
       "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the failed test case and the error summary. It is important to note that failed test case may be an incorrect test case, so you should comprehend the user's task, sprint backlog and sprint acceptance criteria to modify code correctly.",
-      "Now, use the format exemplified above and carefully review code, failed test case to modify code correctly. Next, output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes changed codes and is prohibited from repeating unchanged codes."
+      "Now, use the format exemplified above and carefully review code, failed test case to modify code correctly. Next, output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes complete and new codes and is prohibited from repeating unchanged files."
 
       ]
   },

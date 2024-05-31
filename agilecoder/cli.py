@@ -11,6 +11,7 @@ def main():
                         help="Prompt of software")
     parser.add_argument('--name', type=str, default="Gomoku",
                         help="Name of software, your software will be generated in WareHouse/name_org_timestamp")
+    parser.add_argument('--max-num-sprints', type=int, default=10)
     parser.add_argument('--model', type=str, default="GPT_3_5_AZURE",
                         help="GPT Model, choose from {'GPT_3_5_TURBO','GPT_4','GPT_4_32K', 'GPT_3_5_AZURE', 'CLAUDE'}")
     args = parser.parse_args()

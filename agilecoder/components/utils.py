@@ -139,6 +139,7 @@ def extract_product_requirements(input, is_product = True):
     return '\n'.join(backlog), '\n'.join(acceptance_criteria)
 
 def get_non_leaf_and_intermediate_files(adj_list):
+    if adj_list is None: return []
     all_deps = []
     for node, deps in adj_list.items():
         if node.startswith('test_') or node.split('.')[0].endswith('_test'): continue
