@@ -201,6 +201,7 @@ class ChatEnv:
                     #     else:
                     #         return False, success_info
                     error_output = process.stderr.read().decode('utf-8')
+                    std_output = process.stdout.read().decode('utf-8')
                     # print('error_output', "Traceback".lower() in error_output.lower(), ':return_code:', return_code)
                     if return_code != 0:
                         if error_output:
@@ -217,7 +218,15 @@ class ChatEnv:
                                 # return True, errs
                                 error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                                 return_flag = True
-                                
+                        elif 'failures' in std_output.lower() and 'failed' in std_output.lower():
+                            error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
+                            return_flag = True
+                        elif testing_command.startswith('test_') or testing_command.split('.')[0].endswith('_test'):
+                            # std_output = process.stdout.read().decode('utf-8')
+                            if 'FAILED' in std_output:
+                                std_output = extract_top_k_errors(std_output, k = 1)
+                                error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
+                                return_flag = True
                             # else:
                             #     return False, success_info
                         # else:
@@ -325,6 +334,7 @@ class ChatEnv:
                     #         return False, success_info
                     error_output = process.stderr.read().decode('utf-8')
                     # print('error_output', "Traceback".lower() in error_output.lower(), ':return_code:', return_code)
+                    std_output = process.stdout.read().decode('utf-8')
                     if return_code != 0:
                         if error_output:
                             if "Traceback".lower() in error_output.lower():
@@ -341,13 +351,14 @@ class ChatEnv:
                                 error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                                 return_flag = True
                         elif testing_command.startswith('test_') or testing_command.split('.')[0].endswith('_test'):
-                            std_output = process.stdout.read().decode('utf-8')
-                            if 'FAILED' in std_output:
+                            if 'FAILED' in std_output and '**************' not in std_output:
                                 std_output = extract_top_k_errors(std_output, k = 1)
                                 error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
                                 return_flag = True
 
-                                
+                        elif 'failures' in std_output.lower() and 'failed' in std_output.lower():
+                            error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
+                            return_flag = True
                             # else:
                             #     return False, success_info
                         # else:

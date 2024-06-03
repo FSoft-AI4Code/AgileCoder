@@ -1374,10 +1374,16 @@ class TestErrorSummary(Phase):
             if chat_env.dependency_graph  is not None:
                 if test_reports == 'The software run successfully without errors.':
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                    if len(file_names) == 0:
+                        all_relevant_code = chat_env.get_codes(ignore_test_code = True)
+                    else:
+                        all_relevant_code = chat_env.get_changed_codes(file_names)
                 elif test_reports == '[Error] the software lacks an entry point to start':
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                    if len(file_names) == 0:
+                        all_relevant_code = chat_env.get_codes(ignore_test_code = True)
+                    else:
+                        all_relevant_code = chat_env.get_changed_codes(file_names)
                 else:
                     all_relevant_code = chat_env.get_codes(ignore_test_code = True)
             else:
@@ -1522,10 +1528,16 @@ class SprintTestErrorSummary(Phase):
             if chat_env.dependency_graph  is not None:
                 if test_reports == 'The software run successfully without errors.':
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                    if len(file_names) == 0:
+                        all_relevant_code = chat_env.get_codes(ignore_test_code = True)
+                    else:
+                        all_relevant_code = chat_env.get_changed_codes(file_names)
                 elif test_reports == '[Error] the software lacks an entry point to start':
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                    if len(file_names) == 0:
+                        all_relevant_code = chat_env.get_codes(ignore_test_code = True)
+                    else:
+                        all_relevant_code = chat_env.get_changed_codes(file_names)
                 else:
                     all_relevant_code = chat_env.get_codes(ignore_test_code = True)
             else:
@@ -1868,10 +1880,16 @@ class TestModification(Phase):
             if chat_env.dependency_graph  is not None:
                 if test_reports == 'The software run successfully without errors.':
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                    if len(file_names) == 0:
+                        all_relevant_code = chat_env.get_codes(ignore_test_code = True)
+                    else:
+                        all_relevant_code = chat_env.get_changed_codes(file_names)
                 elif test_reports == '[Error] the software lacks an entry point to start':
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-                    all_relevant_code = chat_env.get_changed_codes(file_names)
+                    if len(file_names) == 0:
+                        all_relevant_code = chat_env.get_codes(ignore_test_code = True)
+                    else:
+                        all_relevant_code = chat_env.get_changed_codes(file_names)
                 else:
                     all_relevant_code = chat_env.get_codes(ignore_test_code = True)
             else:
