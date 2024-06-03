@@ -26,18 +26,19 @@
   - [Introduction](#introduction)
   - [Installation](#installation-guide)
   - [Getting Started](#getting-started)
-    - [Inferencing Pipeline](#inferencing-pipeline)
-    - [Model Zoo](#model-zoo)
-    - [Fine-Tuning Your Own Model](#fine-tuning-pipeline)
-    - [Evaluate On Well-Known Benchmarks](#evaluate-on-well-known-benchmarks)
-    - [Utilities to Manipulate Source Code Based on AST](#code-utilities)
-        - [AST Parser in Multiple Languages](#ast-parser-in-multiple-languages)
-        - [Extract Code Attributes](#extract-code-attributes)
-        - [Remove Comments](#remove-comments)
-  - [Ethical and Responsible Use](#ethical-and-responsible-use) 
   - [License](#license)
 
 ## Overview
+***AgileCoder*** integrates Agile Methodology into a multi-agent system framework, enabling a collaborative environment where software agents assume specific Agile roles such as Product Owner, Developer, and Tester. These agents work together to develop software efficiently and iteratively, simulating a dynamic and adaptive software development team.
+
+Mission Statement: “Empowering agents to deliver high-quality software solutions swiftly and efficiently, transforming software development through agility and collaboration.”
+
+In AgileCoder, each agent is not just a participant but a stakeholder in the software development process, engaging in sprints that mimic real-world Agile practices. This setup enhances the adaptability and effectiveness of development workflows, aligning closely with modern software engineering demands. The system is designed to handle the complexities of real-world software projects, supporting incremental development and continuous integration seamlessly.
+
+Key Features of ***AgileCoder***:
+- Dynamic Role Assignment: Agents dynamically assume roles based on the project needs and user inputs, ensuring flexibility and optimal resource utilization.
+- Sprint-Based Development: The framework organizes development tasks into sprints, promoting rapid prototyping and frequent reassessment of project goals.
+- Dynamic Code Graph Generator: This innovative module automatically generates and updates a dependency graph whenever the codebase changes, enhancing the agents’ understanding of the code structure and interdependencies. This feature is crucial for maintaining high accuracy in code generation and modifications.
 
 
 ## Installation
