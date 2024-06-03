@@ -29,9 +29,7 @@
   - [License](#license)
 
 ## Overview
-***AgileCoder*** integrates Agile Methodology into a multi-agent system framework, enabling a collaborative environment where software agents assume specific Agile roles such as Product Owner, Developer, and Tester. These agents work together to develop software efficiently and iteratively, simulating a dynamic and adaptive software development team.
-
-Mission Statement: “Empowering agents to deliver high-quality software solutions swiftly and efficiently, transforming software development through agility and collaboration.”
+***AgileCoder*** integrates Agile Methodology into a multi-agent system framework, enabling a collaborative environment where software agents assume specific Agile roles such as Product Owner, Developer, Reviewer, and Tester. These agents work together to develop software efficiently and iteratively, simulating a dynamic and adaptive software development team.
 
 In AgileCoder, each agent is not just a participant but a stakeholder in the software development process, engaging in sprints that mimic real-world Agile practices. This setup enhances the adaptability and effectiveness of development workflows, aligning closely with modern software engineering demands. The system is designed to handle the complexities of real-world software projects, supporting incremental development and continuous integration seamlessly.
 
