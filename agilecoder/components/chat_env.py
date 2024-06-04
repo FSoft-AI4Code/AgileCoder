@@ -5,7 +5,7 @@ import signal
 import glob
 import subprocess
 import time
-from typing import Dict
+from typing import Dict, Tuple
 
 import openai
 import requests
@@ -101,7 +101,7 @@ class ChatEnv:
                 os.mkdir(self.env_dict['directory'])
         os.makedirs(os.path.join(self.env_dict['directory'], 'assets'), exist_ok = True)
 
-    def exist_bugs(self, chat_env) -> tuple[bool, str]:
+    def exist_bugs(self, chat_env) -> Tuple[bool, str]:
         directory = self.env_dict['directory']
         # print('DIRECTORY:', directory)
 
@@ -249,7 +249,7 @@ class ChatEnv:
 
         return False, success_info
 
-    def exist_bugs_ignoring_test_cases(self, chat_env) -> tuple[bool, str]:
+    def exist_bugs_ignoring_test_cases(self, chat_env) -> Tuple[bool, str]:
         directory = self.env_dict['directory']
         # print('DIRECTORY:', directory)
 

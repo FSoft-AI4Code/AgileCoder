@@ -532,7 +532,8 @@ class WritingFullTestSuite(ComposedPhase):
         all_changed_files = find_ancestors(chat_env.dependency_graph, deepcopy(list(chat_env.get_all_changed_files())))
         if len(all_changed_files) == 0: return chat_env
         futures = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers = 5) as executor:
+        max_workers = min(len(all_changed_files), 5)
+        with concurrent.futures.ThreadPoolExecutor(max_workers = max_workers) as executor:
             for file_name in all_changed_files:
                 if file_name.startswith('test_') or file_name.split('.')[0].endswith('_test'): continue
                 for phase_item in self.composition:
