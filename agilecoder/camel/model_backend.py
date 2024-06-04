@@ -300,6 +300,84 @@ class ClaudeAIModel(ModelBackend):
         #     raise RuntimeError("Unexpected return from OpenAI API")
         return response
 
+class AuthropicClaudeAIModel(ModelBackend):
+    r"""Claude API in a unified ModelBackend interface."""
+
+    def __init__(self, model_type: ModelType, model_config_dict: Dict) -> None:
+        super().__init__()
+        self.model_type = model_type
+        self.model_config_dict = model_config_dict
+        self.client = anthropic.Anthropic(
+            api_key = os.environ["ANTHROPIC_API_KEY"],
+        )
+                    
+
+    def run(self, *args, **kwargs) -> Dict[str, Any]:
+        string = "\n".join([message["content"] for message in kwargs["messages"]])
+        # encoding = tiktoken.encoding_for_model(self.model_type.value)
+        try:
+            encoding = tiktoken.encoding_for_model(self.model_type.value)
+        except KeyError:
+            encoding = tiktoken.get_encoding("cl100k_base")
+        num_prompt_tokens = len(encoding.encode(string))
+        gap_between_send_receive = 15 * len(kwargs["messages"])
+        num_prompt_tokens += gap_between_send_receive
+
+        num_max_token_map = {
+            "claude-3-haiku-20240307": 4096,
+            "claude-3-opus-20240307": 4096,
+            "claude-3-sonneet-20240307": 4096,
+            'claude':4096,
+            'Authropic_Claude': 4096
+        }
+        # kwargs['model'] = 'claude-3-opus-20240229'
+        # num_max_token = num_max_token_map[self.model_type.value]
+        # num_max_completion_tokens = num_max_token - num_prompt_tokens
+        self.model_config_dict['max_tokens'] = num_max_token_map[self.model_type.value]
+        # self.model_config_dict
+        # if self.model_type == ModelType.GPT_3_5_CODE_VISTA:
+        #     kwargs['engine'] = os.environ['API_ENGINE']
+        # else:
+        #     raise NotImplementedError
+        #     kwargs['model'] = self.model_type.value
+
+        # breakpoint()
+        # print('0'*100)
+        new_kwargs = {}
+        new_kwargs['system'] = kwargs['messages'][0]['content']
+        kwargs['messages'][1]['role'] = 'user'
+        messages = kwargs['messages'][1:2]
+        new_kwargs['model'] ='claude-3-haiku-20240307'
+        valid_kwargs = ['system', 'messages', 'model','max_tokens']  
+        
+        filtered_kwargs = {key: value for key, value in self.model_config_dict.items() if key in valid_kwargs}
+        kwargs['max_tokens'] = filtered_kwargs['max_tokens']
+        kwargs = new_kwargs
+        # llm = AI4CodeHaiku()
+        # # try:
+        # claude_output = llm.generate(*args, messages=messages,**kwargs)
+        # except:
+        #     breakpoint()
+    
+        kwargs.update({
+            'max_tokens': 1024,
+            'stop_sequences': None,
+            'temperature': 0.2, 
+            'top_k': 0
+        })
+        claude_output = self.client.messages.create(
+                messages=messages,
+                **kwargs
+            )
+        response = convert_claude_to_openai(claude_output)
+
+        log_and_print_online(
+            "**[CLAUDE_Usage_Info Receive]**\nprompt_tokens: {}\ncompletion_tokens: {}\ntotal_tokens: {}\n".format(
+                response["usage"]["prompt_tokens"], response["usage"]["completion_tokens"],
+                response["usage"]["total_tokens"]))
+        # if not isinstance(response, Dict):
+        #     raise RuntimeError("Unexpected return from OpenAI API")
+        return response
 
 class StubModel(ModelBackend):
     r"""A dummy model used for unit tests."""
@@ -337,6 +415,8 @@ class ModelFactory:
             model_class = OpenAIModel
         elif model_type in {ModelType.CLAUDE }:
             model_class = ClaudeAIModel
+        elif model_type in {ModelType.ANTHROPIC_CLAUDE}:
+            model_class = AuthropicClaudeAIModel
         elif model_type == ModelType.STUB:
             model_class = StubModel
         else:

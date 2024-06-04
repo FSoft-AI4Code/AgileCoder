@@ -690,11 +690,11 @@
     "assistant_role_name": "Programmer",
     "user_role_name": "Code Reviewer",
     "phase_prompt": [
-      "According to the user's task, our designed product modality, languages, the sprint backlog, and our changed source codes are listed below: ",
+      "According to the user's task, our designed product modality, languages, the sprint backlog, and our changed code files are listed below: ",
       "User's task: \"{task}\".",
       "Modality: \"{modality}\".",
       "Programming Language: \"{language}\"",
-      "Changed Codes:",
+      "Changed Code Files:",
       "\"{codes}\"",
       "Comments on Changed Codes:",
       "\"{comments}\"",
@@ -706,7 +706,7 @@
       "'''",
       "CODE",
       "```",
-      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding codes according to the comments, and then only return completed and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged files. Your answer strictly obeys the required format."
+      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding codes according to the comments. Then, only return complete and new code files that were changed, with all bugs fixed based on the comments. Your response must not include unchanged files and must strictly follow the required format."
     ]
   },
   "CodeReview2Modification": {
@@ -729,7 +729,7 @@
       "'''",
       "CODE",
       "```",
-      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding changed codes according to the comments, and then only return complete and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged files. Your answer strictly obeys the required format."
+      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding codes according to the comments. Then, only return complete and new code files that were changed, with all bugs fixed based on the comments. Your response must not include unchanged files and must strictly follow the required format."
     ]
   },
   "CodeReview3Modification": {
@@ -752,7 +752,7 @@
       "'''",
       "CODE",
       "```",
-      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding changed codes according to the comments, and then only return complete and new codes with all bugs fixed based on the comments. Your answer are prohibited from repeating unchanged files. Your answer strictly obeys the required format."
+      "As the {assistant_role}, to ensure that the code resolves the comments, you should modify corresponding codes according to the comments. Then, only return complete and new code files that were changed, with all bugs fixed based on the comments. Your response must not include unchanged files and must strictly follow the required format."
     ]
   },
   "CodeReviewHuman": {
@@ -854,8 +854,8 @@
       "'''",
       "    pass",
       "```",
-      "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the failed test case and the error summary. It is important to note that failed test case may be an incorrect test case, so you should comprehend the user's task, sprint backlog and sprint acceptance criteria to modify code correctly.",
-      "Now, use the format exemplified above and carefully review code, failed test case to modify code correctly. Next, output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes complete and new codes and is prohibited from repeating unchanged files."
+      "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on failed test cases and the error summary. It is important to note that failed test case may be an incorrect test case, so you should comprehend the user's task, sprint backlog and sprint acceptance criteria to modify code correctly.",
+      "Now, use the format exemplified above, and carefully review code and failed test cases to modify code correctly. Next, output complete and updated code files that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your response should include only the complete and updated code files and must not repeat unchanged files."
 
       ]
   },

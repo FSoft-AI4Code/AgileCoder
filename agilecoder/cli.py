@@ -13,7 +13,7 @@ def main():
                         help="Name of software, your software will be generated in WareHouse/name_org_timestamp")
     parser.add_argument('--max-num-sprints', type=int, default=10)
     parser.add_argument('--model', type=str, default="GPT_3_5_AZURE",
-                        help="GPT Model, choose from {'GPT_3_5_TURBO','GPT_4','GPT_4_32K', 'GPT_3_5_AZURE', 'CLAUDE'}")
+                        help="GPT Model, choose from {'GPT_3_5_TURBO','GPT_4','GPT_4_32K', 'GPT_3_5_AZURE', 'CLAUDE', 'ANTHROPIC_CLAUDE'}")
     args = parser.parse_args()
     print('------------------------------')
     run_task(args)                                           
