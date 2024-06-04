@@ -903,6 +903,12 @@ class SprintReview(Phase):
         if len(self.seminar_conclusion):
             coms = self.seminar_conclusion.split('Undone Work:')
             undone_work = coms[1].strip()
+            _undone_work = []
+            undone_work_lines = undone_work.splitlines()
+            for line in undone_work_lines:
+                if len(line.strip()) == 0: break
+                _undone_work.append(line)
+            undone_work = '\n'.join(_undone_work)
             done_work = coms[0].split('Done Work:')[1].strip()
         else:
             undone_work, done_work = '', ''
@@ -1393,7 +1399,7 @@ class TestErrorSummary(Phase):
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
                     else:
                         all_relevant_code = chat_env.get_changed_codes(file_names)
-                elif test_reports == '[Error] the software lacks an entry point to start':
+                elif '[Error] the software lacks an entry point to start' in test_reports:
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                     if len(file_names) == 0:
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
@@ -1548,7 +1554,7 @@ class SprintTestErrorSummary(Phase):
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
                     else:
                         all_relevant_code = chat_env.get_changed_codes(file_names)
-                elif test_reports == '[Error] the software lacks an entry point to start':
+                elif '[Error] the software lacks an entry point to start' in test_reports:
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                     if len(file_names) == 0:
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
@@ -1891,7 +1897,7 @@ class TestModification(Phase):
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
                     else:
                         all_relevant_code = chat_env.get_changed_codes(file_names)
-                elif test_reports == '[Error] the software lacks an entry point to start':
+                elif '[Error] the software lacks an entry point to start' in test_reports:
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                     if len(file_names) == 0:
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)

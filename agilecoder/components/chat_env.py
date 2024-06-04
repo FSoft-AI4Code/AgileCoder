@@ -140,9 +140,9 @@ class ChatEnv:
                     # additional_commands = list(filter(lambda x: x in runnable_files, additional_commands))
                     testing_commands = _testing_commands + additional_commands + program_files
                     # testing_commands = _testing_commands + additional_commands
-                    for file in program_files:
-                        if file not in testing_commands:
-                            testing_commands.append(file)
+                    # for file in program_files:
+                    #     if file not in testing_commands:
+                    #         testing_commands.append(file)
                     error_contents = ''
                     
                     # testing_commands.extend(runnable_files)
@@ -161,6 +161,11 @@ class ChatEnv:
                         if testing_command.startswith('test_') or testing_command.split('.')[0].endswith('_test'):
                             errs = "[Error] the testing script lacks an entry point to start. Please modify accordingly to run test cases."
                         
+                            error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
+                            return_flag = True
+                            break
+                        else:
+                            errs = "[Error] the software lacks an entry point to start. Please modify accordingly to make the program executable."
                             error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                             return_flag = True
                             break
@@ -218,15 +223,16 @@ class ChatEnv:
                                 # return True, errs
                                 error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                                 return_flag = True
-                        elif 'failures' in std_output.lower() and 'failed' in std_output.lower():
-                            error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
-                            return_flag = True
                         elif testing_command.startswith('test_') or testing_command.split('.')[0].endswith('_test'):
-                            # std_output = process.stdout.read().decode('utf-8')
-                            if 'FAILED' in std_output:
+                            if 'FAILED' in std_output and '**************' not in std_output:
                                 std_output = extract_top_k_errors(std_output, k = 1)
                                 error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
                                 return_flag = True
+
+                        elif 'failures' in std_output.lower() and 'failed' in std_output.lower():
+                            error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
+                            return_flag = True
+
                             # else:
                             #     return False, success_info
                         # else:
@@ -292,7 +298,7 @@ class ChatEnv:
                 for testing_command in testing_commands:
                     if testing_command not in runnable_files:
                         
-                        errs = "[Error] the software lacks an entry point to start"
+                        errs = "[Error] the software lacks an entry point to start. Please modify accordingly to make the program executable."
                         error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                         return_flag = True
                         continue
