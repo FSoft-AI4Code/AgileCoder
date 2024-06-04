@@ -64,9 +64,9 @@ class ChatEnv:
         self.env_dict = {
             "directory": "",
             "task_prompt": "",
-            "modality": "Python script",
+            "modality": "",
             "ideas": "",
-            "language": "Python",
+            "language": "",
             "review_comments": "",
             "error_summary": "",
             "test_reports": ""
@@ -291,7 +291,7 @@ class ChatEnv:
                 additional_commands = list(set(testing_commands) - set(_testing_commands))
                 # print('additional_commands', additional_commands)
                 # additional_commands = list(filter(lambda x: x in runnable_files, additional_commands))
-                testing_commands = _testing_commands + additional_commands + program_files
+                testing_commands = additional_commands + program_files
                 error_contents = ''
                 
             

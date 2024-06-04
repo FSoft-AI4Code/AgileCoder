@@ -1,6 +1,18 @@
 {
   "chain": [
     {
+      "phase": "DemandAnalysis",
+      "phaseType": "SimplePhase",
+      "max_turn_step": -1,
+      "need_reflect": "True"
+    },
+    {
+      "phase": "LanguageChoose",
+      "phaseType": "SimplePhase",
+      "max_turn_step": -1,
+      "need_reflect": "True"
+    },
+    {
       "phase": "ProductBacklogCreating",
       "phaseType": "SimplePhase",
       "max_turn_step": 1,

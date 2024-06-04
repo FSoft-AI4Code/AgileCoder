@@ -629,7 +629,7 @@ class CheckProgressStatus(Phase):
     def update_chat_env(self, chat_env) -> ChatEnv:
         if len(self.seminar_conclusion) > 0:
             print('[CheckProgressStatus] self.seminar_conclusion', self.seminar_conclusion)
-            if self.seminar_conclusion.strip().replace('"', '') in ["DONE", "DONE."] and len(chat_env.env_dict['done-works'])  >= len(chat_env.env_dict['product-backlog']):
+            if self.seminar_conclusion.strip().replace('"', '') in ["DONE", "DONE."]:
                 chat_env.env_dict['end-sprint'] = True
                 return chat_env
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
@@ -1531,7 +1531,7 @@ class SprintTestErrorSummary(Phase):
                     file_names.extend(relevant_files)
         elif 'ModuleNotFoundError' not in test_reports and 'ImportError' not in test_reports:
             graph = chat_env.dependency_graph
-            if ('[Error] the software lacks an entry point to start' not in test_reports) or ('[Error] the testing script lacks an entry point to start.' not in test_reports):
+            if ('[Error] the software lacks an entry point to start' not in test_reports) and ('[Error] the testing script lacks an entry point to start.' not in test_reports):
                 if len(file_names):
                     relevant_files = graph.get(file_names[-1], [])
                     file_names.extend(relevant_files)
@@ -1873,7 +1873,7 @@ class TestModification(Phase):
                     file_names.extend(relevant_files)
         elif 'ModuleNotFoundError' not in test_reports and 'ImportError' not in test_reports:
             graph = chat_env.dependency_graph
-            if ('[Error] the software lacks an entry point to start' not in test_reports) or ('[Error] the testing script lacks an entry point to start.' not in test_reports):
+            if ('[Error] the software lacks an entry point to start' not in test_reports) and ('[Error] the testing script lacks an entry point to start.' not in test_reports):
                 if len(file_names):
                     relevant_files = graph.get(file_names[-1], [])
                     file_names.extend(relevant_files)
