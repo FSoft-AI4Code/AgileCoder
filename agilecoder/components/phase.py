@@ -1150,6 +1150,7 @@ class CodeReviewComment(Phase):
     def update_phase_env(self, chat_env):
         
         codes = chat_env.get_total_changed_lines()
+        # chat_env.count_graph_call()
         changed_files = chat_env.get_changed_files()
         if len(changed_files) == 0:
             codes1 = chat_env.get_codes()
@@ -1238,7 +1239,7 @@ class CodeReviewModification(Phase):
             self.phase_env.update({
                 'has_correct_format': True
             })
-            self.phase_env['modification_conclusion'] = self.seminar_conclusion
+            self.phase_env['raw_code_conclusion'] = self.seminar_conclusion
         else:
             self.phase_env.update({
                 'has_correct_format': False
@@ -1290,6 +1291,7 @@ class TestingPlan(Phase):
         #     codes = chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()), True)
         # else:
         # codes = chat_env.get_codes(simplify_code = True, ignore_test_code = True, get_entry_point = True)
+        chat_env.count_graph_call()
         if chat_env.dependency_graph  is not None:
             file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
             codes = chat_env.get_changed_codes(file_names, True)
@@ -1336,6 +1338,7 @@ class TestErrorSummary(Phase):
                 "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly."
             ])
             is_failed_test_case = True
+            chat_env.count_test_case_call()
             try:
                 _item = extract_file_names_and_lines(test_reports)[0]
             except:
@@ -1350,6 +1353,7 @@ class TestErrorSummary(Phase):
                 'failed_test_case': context
             })
         if 'AttributeError' in test_reports:
+            chat_env.count_attribute_error()
             error_line = test_reports.split('AttributeError')[-1]
             class_name = re.search(r"'(.+?)'", error_line).group(1).split('.')[-1]
             graph = chat_env.dependency_graph
@@ -1360,6 +1364,7 @@ class TestErrorSummary(Phase):
                     if 'class ' + class_name in chat_env.codes.codebooks[file]:
                         file_names.append(file)
         elif 'TypeError:' in test_reports and 'missing' in test_reports:
+            chat_env.count_type_error()
             words = test_reports.strip().split()
             index = words.index('TypeError:')
             class_name = words[index + 1].split('.')[0]
@@ -1376,8 +1381,10 @@ class TestErrorSummary(Phase):
                     file_names.extend(relevant_files)
         elif 'ModuleNotFoundError' not in test_reports and 'ImportError' not in test_reports:
             graph = chat_env.dependency_graph
+            chat_env.count_other_call()
             if ('[Error] the software lacks an entry point to start' not in test_reports) or ('[Error] the testing script lacks an entry point to start.' not in test_reports):
                 if len(file_names):
+                    chat_env.count_graph_call()
                     relevant_files = graph.get(file_names[-1], [])
                     file_names.extend(relevant_files)
         
@@ -1393,6 +1400,7 @@ class TestErrorSummary(Phase):
             all_relevant_code = chat_env.get_changed_codes(file_names)
         else:
             if chat_env.dependency_graph  is not None:
+                chat_env.count_graph_call()
                 if test_reports == 'The software run successfully without errors.':
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                     if len(file_names) == 0:
@@ -1699,10 +1707,13 @@ class TestModification(Phase):
             directory = chat_env.env_dict['directory']
             assets_paths = glob.glob(f'{directory}/*.png') + glob.glob(f'{directory}/*/*.png')
             assets_paths = list(map(lambda x: x.replace(directory, '.'), assets_paths))
+            
             assets_paths = '\n'.join(assets_paths)
             needed_filepath = re.search(r"'(.+?)'", test_reports).group(1)
             if needed_filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
                 error_summary = error_summary + f". File {needed_filepath} does not exist, thereby removing code lines related to this file to fix this error."
+            
+            chat_env.count_file_system_call()
             self.phase_prompt = '\n'.join([
                 "Our developed source codes and corresponding test reports are listed below: ",
                 "Programming Language: \"{language}\"",
@@ -1732,6 +1743,7 @@ class TestModification(Phase):
             directory = chat_env.env_dict['directory']
             module_dict = get_classes_in_folder(directory)
             module_structure = []
+            chat_env.count_class_call()
             for k, classes in module_dict.items():
                 if len(classes) == 0: continue
                 module_structure.append(k)
@@ -1794,6 +1806,7 @@ class TestModification(Phase):
             ])
             overwrite_prompt = True
             is_failed_test_case = True
+            chat_env.count_test_case_call()
             try:
                 _item = extract_file_names_and_lines(test_reports)[0]
             except:
@@ -1814,6 +1827,7 @@ class TestModification(Phase):
                 module = match.group(1)
             modules = list(map(lambda x: '- ' + os.path.basename(x).split('.')[0], glob.glob(chat_env.env_dict['directory'] + '/*.py')))
             modules = '\n'.join(modules)
+            chat_env.count_module_call()
             self.phase_prompt = '\n'.join([
                 "Our developed source codes, corresponding test reports and available modules are listed below: ",
                 "Programming Language: \"{language}\"",
@@ -1851,6 +1865,7 @@ class TestModification(Phase):
             class_name = re.search(r"'(.+?)'", error_line).group(1).split('.')[-1]
             graph = chat_env.dependency_graph
             # print('graph', graph)
+            chat_env.count_attribute_error()
             if len(file_names):
                 relevant_files = graph.get(file_names[-1], [])
                 for file in relevant_files:
@@ -1862,6 +1877,7 @@ class TestModification(Phase):
             class_name = words[index + 1].split('.')[0]
             graph = chat_env.dependency_graph
             # print('graph', graph)
+            chat_env.count_type_error()
             if len(file_names):
                 flag = False
                 relevant_files = graph.get(file_names[-1], [])
@@ -1873,10 +1889,12 @@ class TestModification(Phase):
                     file_names.extend(relevant_files)
         elif 'ModuleNotFoundError' not in test_reports and 'ImportError' not in test_reports:
             graph = chat_env.dependency_graph
+            chat_env.count_other_call()
             if ('[Error] the software lacks an entry point to start' not in test_reports) and ('[Error] the testing script lacks an entry point to start.' not in test_reports):
                 if len(file_names):
                     relevant_files = graph.get(file_names[-1], [])
                     file_names.extend(relevant_files)
+                    chat_env.count_graph_call()
             
             # for filename, code in chat_env.codes.codebooks.items():
             #     if class_name.lower() in filename:
@@ -1891,6 +1909,7 @@ class TestModification(Phase):
             # print('all_relevant_code', all_relevant_code)
         else:
             if chat_env.dependency_graph  is not None:
+                chat_env.count_graph_call()
                 if test_reports == 'The software run successfully without errors.':
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                     if len(file_names) == 0:

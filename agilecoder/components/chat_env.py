@@ -2,7 +2,7 @@ import os
 import re
 import shutil
 import signal
-import glob
+import json
 import subprocess
 import time
 from typing import Dict, Tuple
@@ -61,6 +61,16 @@ class ChatEnv:
         self.context_images: Dict[str, str] = {}
         self.requirements: Documents = Documents()
         self.manuals: Documents = Documents()
+        self.tool_usage = {
+            'FileSystem': 0,
+            'Class': 0,
+            'Testcase': 0,
+            'Module': 0,
+            'AttributeError': 0,
+            'TypeError': 0,
+            'other': 0,
+            'graph': 0
+        }
         self.env_dict = {
             "directory": "",
             "task_prompt": "",
@@ -71,7 +81,23 @@ class ChatEnv:
             "error_summary": "",
             "test_reports": ""
         }
-
+    
+    def count_file_system_call(self):
+        self.tool_usage['FileSystem'] += 1
+    def count_class_call(self):
+        self.tool_usage['Class'] += 1
+    def count_test_case_call(self):
+        self.tool_usage['Testcase'] += 1
+    def count_module_call(self):
+        self.tool_usage['Module'] += 1
+    def count_attribute_error(self):
+        self.tool_usage['AttributeError'] += 1
+    def count_type_error(self):
+        self.tool_usage['TypeError'] += 1
+    def count_other_call(self):
+        self.tool_usage['other'] += 1
+    def count_graph_call(self):
+        self.tool_usage['graph'] += 1
     @staticmethod
     def fix_module_not_found_error(test_reports):
         if "ModuleNotFoundError" in test_reports:
@@ -132,7 +158,7 @@ class ChatEnv:
                             program_files.append(file)
                 return_flag = False
                 if 'testing_commands' not in self.env_dict:
-                    
+                    chat_env.count_graph_call()
                     testing_commands = self.env_dict['commands']
                     _testing_commands = list(filter(lambda x: x.startswith('test_') or x.split('.')[0].endswith('_test'), get_test_order(chat_env.dependency_graph, chat_env.testing_file_map)))
                     additional_commands = list(set(testing_commands) - set(_testing_commands))
@@ -451,6 +477,8 @@ class ChatEnv:
             writer.write("{}:\n{}\n\n".format("Code_Version", self.codes.version))
             writer.write("{}:\n{}\n\n".format("Proposed_images", len(self.proposed_images.keys())))
             writer.write("{}:\n{}\n\n".format("Incorporated_images", len(self.incorporated_images.keys())))
+        with open(os.path.join(directory, 'tool_usage.json'), "w") as f:
+            json.dump(self.tool_usage, f)
         print(os.path.join(directory, meta_filename), "Wrote")
 
     def generate_images_from_codes(self):
