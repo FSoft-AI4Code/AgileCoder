@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 setup(name='agilecoder',
-version='0.1.6.1',
+version='0.1.7',
 description='AgileCoder',
 url='https://github.com/FSoft-AI4Code/AgileCoder',
 author='FSoft-AI4Code',
@@ -14,18 +14,22 @@ entry_points={
 },
 install_requires=[
         "openai==0.28.1",
-        "tiktoken",
-        "markdown",
+        "tiktoken==0.6.0",
+        "markdown==3.5.2",
         "colorama",
-        "nltk",
+        "nltk==3.8.1",
         "flask",
-        "tenacity",
+        "tenacity==8.2.3",
         "python-dotenv",
-        "codebleu",
+        "codebleu==0.7.0",
         "google-auth",
         "google-auth-oauthlib",
         "google-auth-httplib2",
-        "anthropic"
+        "anthropic",
+        "pygame",
+        "numpy",
+        "tree-sitter",
+        "tree-sitter-python@git+https://github.com/tree-sitter/tree-sitter-python"
       ],
 packages=find_packages(),
 zip_safe=False)

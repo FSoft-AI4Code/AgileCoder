@@ -140,7 +140,7 @@ class OpenAIModel(ModelBackend):
             API_TYPE = os.environ['API_TYPE']
             API_VERSION = os.environ['API_VERSION']
             API_KEY = os.environ['API_KEY']
-            print('RESOURCE_ENDPOINT', RESOURCE_ENDPOINT)
+            # print('RESOURCE_ENDPOINT', RESOURCE_ENDPOINT)
             openai.api_key = API_KEY
             openai.api_type = API_TYPE
             openai.api_base = RESOURCE_ENDPOINT
@@ -168,7 +168,7 @@ class OpenAIModel(ModelBackend):
         self.model_config_dict['max_tokens'] = num_max_completion_tokens
         if self.model_type == ModelType.GPT_3_5_AZURE or self.model_type==ModelType.GPT_4_32k:
             kwargs['engine'] = os.environ['API_ENGINE']
-            print('API_ENGINE', os.environ['API_ENGINE'])
+            # print('API_ENGINE', os.environ['API_ENGINE'])
         else:
             kwargs['model'] = self.model_type.value
         # import pdb; pdb.set_trace()
