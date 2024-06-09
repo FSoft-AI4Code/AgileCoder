@@ -1,4 +1,4 @@
-import os
+import os, ast
 import re
 from abc import ABC, abstractmethod
 
@@ -10,6 +10,12 @@ from agilecoder.components.statistics import get_info
 from agilecoder.components.utils import log_and_print_online, log_arguments, get_classes_in_folder, extract_product_requirements, get_non_leaf_and_intermediate_files, find_ancestors, extract_function_from_class
 import glob
 
+def is_valid_syntax(code):
+    try:
+        ast.parse(code)
+        return True
+    except SyntaxError:
+        return False
 
 class Phase(ABC):
 
@@ -1201,6 +1207,32 @@ class CodeReviewComment(Phase):
 class CodeReviewComment1(CodeReviewComment):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+    def update_chat_env(self, chat_env) -> ChatEnv:
+        if self.seminar_conclusion.strip() == "Finished.":
+            self.phase_env.update({
+                'has_no_comment': True
+            })
+            return chat_env
+        invalid_filenames = []
+        for filename, code in chat_env.codes.codebooks.items():
+            if not filename.endswith('.py'): continue
+            if not is_valid_syntax(code):
+                invalid_filenames.append(filename)
+        if len(invalid_filenames):
+            plain_filenames = ', '.join(invalid_filenames)
+            invalid_error = f"\nThere is a serious problem regarding syntax errors. Files {plain_filenames} have syntax errors. Please modify them correctly to fix syntax errors."
+            self.seminar_conclusion += invalid_error
+        results = chat_env.get_high_overlap_code()
+        content = "\nThere are high overlap among files: "
+        for f1, f2 in results:
+            content += f"({f1}, {f2}), "
+        content += "\nThus, considering removing redundant code."
+        if len(results) > 0:
+            chat_env.env_dict['review_comments'] = self.seminar_conclusion + content
+        else:
+            chat_env.env_dict['review_comments'] = self.seminar_conclusion
+
+        return chat_env
 class CodeReviewComment2(CodeReviewComment):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -3,8 +3,11 @@ import os
 
 def extract_imports(filename):
     """Extract import statements from a Python source file."""
-    with open(filename, 'r') as file:
-        tree = ast.parse(file.read(), filename=filename)
+    try:
+        with open(filename, 'r') as file:
+            tree = ast.parse(file.read(), filename=filename)
+    except:
+        return []
 
     imports = []
     for node in ast.walk(tree):

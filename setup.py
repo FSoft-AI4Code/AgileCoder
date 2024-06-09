@@ -29,7 +29,7 @@ install_requires=[
         "pygame",
         "numpy",
         "tree-sitter",
-        "tree-sitter-python@git+https://github.com/tree-sitter/tree-sitter-python"
+        "tree-sitter-python @ git+https://github.com/tree-sitter/tree-sitter-python.git@master"
       ],
 packages=find_packages(),
 zip_safe=False)
