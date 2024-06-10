@@ -496,6 +496,18 @@
           "need_reflect": "False"
         }
       ]
+    },
+    {
+      "phase": "EnvironmentDoc",
+      "phaseType": "SimplePhase",
+      "max_turn_step": 1,
+      "need_reflect": "True"
+    },
+    {
+      "phase": "Manual",
+      "phaseType": "SimplePhase",
+      "max_turn_step": 1,
+      "need_reflect": "False"
     }
   ],
   "recruitments": [

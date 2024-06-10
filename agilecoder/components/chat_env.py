@@ -244,7 +244,10 @@ class ChatEnv:
                                 if errs.count('--------------------------') > 1:
                                     new_errs = extract_first_error_traceback(errs)
                                     if len(new_errs):
-                                        errs = new_errs
+                                        if len(new_errs.splitlines()) < 50:
+                                            errs = new_errs
+                                        else:
+                                            errs = extract_first_error_traceback(errs, 1)
                                 
                                 # return True, errs
                                 error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
@@ -375,9 +378,12 @@ class ChatEnv:
                                 # if len(all_file_names) > len(set(all_file_names)):
                                 #     errs = extract_first_error_traceback(errs)
                                 if errs.count('--------------------------') > 1:
-                                    new_errs = extract_first_error_traceback(errs, 1)
+                                    new_errs = extract_first_error_traceback(errs)
                                     if len(new_errs):
-                                        errs = new_errs
+                                        if len(new_errs.splitlines()) < 50:
+                                            errs = new_errs
+                                        else:
+                                            errs = extract_first_error_traceback(errs, 1)
                                 
                                 # return True, errs
                                 error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)

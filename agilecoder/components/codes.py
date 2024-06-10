@@ -360,8 +360,14 @@ class Codes:
             os.mkdir(self.directory)
             rewrite_codes_content += "{} Created\n".format(directory)
 
+
         for filename in self.codebooks.keys():
-            filepath = os.path.join(directory, os.path.basename(filename))
+            if self.codebooks[filename].endswith('.py') and 'flask' in self.codebooks[filename]:
+                os.makedirs(os.path.join(directory, 'templates'), exist_ok = True)
+            if filename.endswith('.html'):
+                filepath = os.path.join(directory, 'templates', os.path.basename(filename))
+            else:
+                filepath = os.path.join(directory, os.path.basename(filename))
             with open(filepath, "w", encoding="utf-8") as writer:
                 writer.write(self.codebooks[filename])
                 rewrite_codes_content += os.path.join(directory, filename) + " Wrote\n"

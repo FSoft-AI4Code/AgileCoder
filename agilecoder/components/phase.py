@@ -1222,6 +1222,23 @@ class CodeReviewComment1(CodeReviewComment):
             plain_filenames = ', '.join(invalid_filenames)
             invalid_error = f"\nThere is a serious problem regarding syntax errors. Files {plain_filenames} have syntax errors. Please modify them correctly to fix syntax errors."
             self.seminar_conclusion += invalid_error
+        
+        changed_files = chat_env.get_changed_files()
+        if len(changed_files) == 0:
+            codes = chat_env.get_codes()
+        else:
+            codes = chat_env.get_changed_codes(changed_files)
+
+        filepaths = list(set(re.findall(r'"(.*?\.\w+)"', codes) + re.findall(r"'(.*?\.\w+)'", codes)))
+        non_paths = []
+        for _filepath in filepaths:
+            if not os.path.exists(_filepath):
+                if _filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
+                    non_paths.append(_filepath)
+        if len(non_paths):
+            _plain_non_path = ', '.join(non_paths)
+            self.seminar_conclusion += f"The code has FileNotFound errors. The files {_plain_non_path} do not exist, so please modify correctly to fix."
+
         results = chat_env.get_high_overlap_code()
         content = "\nThere are high overlap among files: "
         for f1, f2 in results:
@@ -1741,9 +1758,20 @@ class TestModification(Phase):
             assets_paths = list(map(lambda x: x.replace(directory, '.'), assets_paths))
             
             assets_paths = '\n'.join(assets_paths)
-            needed_filepath = re.search(r"'(.+?)'", test_reports).group(1)
-            if needed_filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
-                error_summary = error_summary + f". File {needed_filepath} does not exist, thereby removing code lines related to this file to fix this error."
+            # needed_filepath = re.search(r"'(.+?)'", test_reports).group(1)
+            lines = test_reports.splitlines()
+            needed_filepaths = []
+            for line in lines:
+                if 'FileNotFoundError' in line:
+                    try:
+                        needed_filepath = re.search(r'(.*?\.\w+)', line).group(1).replace('"', '').replace("'", '')
+                        if needed_filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
+                            needed_filepaths.append(needed_filepath)
+                    except:
+                        pass
+            if len(needed_filepaths):
+                _plain_path = ', '.join(needed_filepaths)
+                error_summary = error_summary + f". File {_plain_path} does not exist, thereby removing code lines related to this file to fix this error."
             
             chat_env.count_file_system_call()
             self.phase_prompt = '\n'.join([
