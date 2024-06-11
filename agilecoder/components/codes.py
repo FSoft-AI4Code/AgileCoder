@@ -80,12 +80,17 @@ def has_entry_point(code):
         # Check for if __name__ == "__main__": condition
       
         # Check for standalone code (no functions or classes)
+        all_flags = []
         for node in ast.iter_child_nodes(tree):
-            if not isinstance(node, (ast.Expr, ast.Import, ast.ImportFrom, ast.Module, ast.FunctionDef, ast.ClassDef)):
+            if isinstance(node, ast.Call):
                 return True
-
+            elif not isinstance(node, (ast.Assign, ast.AugAssign, ast.Import, ast.ImportFrom, ast.Module, ast.FunctionDef, ast.ClassDef)):
+                
+                all_flags.append(has_entry_point(node))
+        
+        if len(all_flags): return any(all_flags)        
+        
         return False
-
     except SyntaxError:
         return False
 

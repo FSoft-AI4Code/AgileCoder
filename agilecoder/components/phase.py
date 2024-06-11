@@ -1492,7 +1492,7 @@ class TestErrorSummary(Phase):
                 for file_name in chat_env.codes.codebooks:
                     if module == file_name.split('.')[0]:
                         local_module = True
-            if local_module:
+            if not local_module:
                 installed_module = chat_env.fix_module_not_found_error(self.phase_env['test_reports'])
                 if self.errors.get(installed_module, 0) == 0:
                     flag = False

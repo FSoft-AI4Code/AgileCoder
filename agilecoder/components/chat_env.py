@@ -41,12 +41,17 @@ def has_entry_point(code):
         # Check for if __name__ == "__main__": condition
       
         # Check for standalone code (no functions or classes)
+        all_flags = []
         for node in ast.iter_child_nodes(tree):
-            if not isinstance(node, (ast.Expr, ast.Import, ast.ImportFrom, ast.Module, ast.FunctionDef, ast.ClassDef)):
+            if isinstance(node, ast.Call):
                 return True
-
+            elif not isinstance(node, (ast.Assign, ast.AugAssign, ast.Import, ast.ImportFrom, ast.Module, ast.FunctionDef, ast.ClassDef)):
+                
+                all_flags.append(has_entry_point(node))
+        
+        if len(all_flags): return any(all_flags)        
+        
         return False
-
     except SyntaxError:
         return False
 class ChatEnv:
@@ -103,8 +108,8 @@ class ChatEnv:
         if "ModuleNotFoundError" in test_reports:
             for match in re.finditer(r"No module named '(\S+)'", test_reports, re.DOTALL):
                 module = match.group(1)
-                subprocess.Popen("pip3 install {}".format(module), shell=True).wait()
-                log_and_print_online("**[CMD Execute]**\n\n[CMD] pip3 install {}".format(module))
+                subprocess.Popen("pip install {}".format(module), shell=True).wait()
+                log_and_print_online("**[CMD Execute]**\n\n[CMD] pip install {}".format(module))
                 return module
 
     def set_directory(self, directory):
