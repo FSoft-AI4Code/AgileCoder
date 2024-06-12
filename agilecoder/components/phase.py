@@ -603,20 +603,21 @@ class CheckProgressStatus(Phase):
         all_undone_tasks = '\n'.join(chat_env.env_dict['undone-works'])
         if all_undone_tasks.strip() == 'None':
             self.phase_prompt = '\n'.join([
-               "According to the user's task, our software designs, product backlog and acceptance criteria listed below: ",
+                "According to the user's task, our software designs, product backlog and acceptance criteria listed below: ",
                 "Task: \"{task}\".",
                 "Modality: \"{modality}\".",
                 "Programming Language: \"{language}\"",
                 "Product backlog:\n\"{plain_product_backlog}\"",
                 "Acceptance Criteria:\n\"{plain_acceptance_criteria}\"",
-                "We have decided to complete the task through a executable software with multiple files implemented via {language} by accomplishing the product backlog and acceptance criteria through multiple sprints. Until now, we have finished done tasks and undone tasks as below:",
+                "We have decided to complete the task through a executable software with multiple files implemented via {language} by accomplishing the product backlog and acceptance criteria through multiple sprints. Here are the tasks that have been completed so far:",
                 "Current done tasks:",
                 "\"{all_done_tasks}\"",
-                "As the {assistant_role}, to satisfy the user's demands, you should carefully consider whether to deciding to conclude the project or create a next sprint based on the product backlog, acceptance criteria, done works.",
-                "Specifically, you compare current done works with the product backlog to determine whether any items in the product backlog and acceptance criteria are incomplete, so you should create a next sprint to accomplish", 
-                "When the product backlog has not fully been accomplished or the program has some unfixed bugs, you must create a next sprint to complete remaining tasks and fix all existing bugs by returning a only single line with the content: \"<INFO> UNDONE.\".",
-                "Otherwise, your answer must be a single line with \"<INFO> DONE.\", indicating that all items in the product backlog and acceptance criteria are fully accomplished and the program is completely error-free, so you should end the project.",
-                "Think step by step and reason yourself to the right decisions to make sure we get it right.",
+                "As the {assistant_role}, to satisfy the user's demands, you should carefully decide whether to conclude the project or create a next sprint based on the product backlog, acceptance criteria, done works and undone works.",
+                "Specifically, you compare done works with the product backlog to determine whether any items in the product backlog or acceptance criteria are incomplete, and you carefully review undone works to check if the program has any errors.", 
+                "When all tasks in the product backlog and acceptance criteria are fully accomplished and the program is completely error-free, you should end the project by returning the response with the content: \"<INFO> DONE.\".",
+                "Otherwise, your answer includes the content: \"<INFO> UNDONE.\", indicating that the product backlog has not been accomplished or the program has some existing bugs, so you must create a next sprint to complete remaining tasks and fix all existing bugs.",
+                "Importantly, you are not allowed to conclude the project if there is any existing bug.",
+                "Think step by step and reason yourself to the right decisions before making a decision to make sure we get it right. Your answer should include reasons to justify your decision.",
                 "Additionally, you must adhere to the following regulations:",
                 "\t1) the project is concluded only if all the tasks in the product backlog and acceptance criteria are accomplished without any errors,",
                 "\t2) if the software has any bugs and errors, you should not conclude the project, and you should focus on making the software executable successfully.",
@@ -635,7 +636,7 @@ class CheckProgressStatus(Phase):
     def update_chat_env(self, chat_env) -> ChatEnv:
         if len(self.seminar_conclusion) > 0:
             print('[CheckProgressStatus] self.seminar_conclusion', self.seminar_conclusion)
-            if self.seminar_conclusion.strip().replace('"', '') in ["DONE", "DONE."]:
+            if 'DONE' in self.seminar_conclusion:
                 chat_env.env_dict['end-sprint'] = True
                 return chat_env
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
@@ -924,8 +925,22 @@ class SprintReview(Phase):
             chat_env.env_dict['done-works'] = []
         if 'undone-works' not in chat_env.env_dict:
             chat_env.env_dict['undone-works'] = []
-
+    
         chat_env.env_dict['done-works'].append(done_work)
+        done_work_lines = '\n'.join(chat_env.env_dict['done-works']).splitlines()
+        _lines = []
+        for i, line in enumerate(done_work_lines):
+            flag = check_if_string_starts_with_number(line)
+            if flag == 1:
+                _lines.append(re.sub(r'\d+', '', line, count = 1))
+            elif flag == 2:
+                _lines.append(re.sub(r'-', '', line, count = 1))
+            else:
+                _lines.append(line)
+            while not _lines[-1][0].isalpha():
+                _lines[-1] = _lines[-1][1:]
+            _lines[-1] = str(i + 1) + '. ' + _lines[-1]
+        chat_env.env_dict['done-works'] = _lines
         chat_env.env_dict['undone-works'] = [undone_work]
         # chat_env.env_dict['undone-works'].append(undone_work)
         # print('done work:', done_work)
@@ -1374,18 +1389,81 @@ class TestErrorSummary(Phase):
         log_and_print_online("======test_reports: " + test_reports)
         file_names = extract_file_names(test_reports)
         is_failed_test_case = False
-        if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('lacks an entry point to start' not in test_reports) and 'ImportError:' not in test_reports:
+        overwrite_prompt = False
+        if 'FileNotFoundError' in test_reports:
+            overwrite_prompt = True
+            directory = chat_env.env_dict['directory']
+            assets_paths = glob.glob(f'{directory}/*.png') + glob.glob(f'{directory}/*/*.png')
+            assets_paths = list(map(lambda x: x.replace(directory, '.'), assets_paths))
+            
+            assets_paths = '\n'.join(assets_paths)
+            # needed_filepath = re.search(r"'(.+?)'", test_reports).group(1)
+            lines = test_reports.splitlines()
+            needed_filepaths = []
+            for line in lines:
+                if 'FileNotFoundError' in line:
+                    try:
+                        needed_filepath = re.search(r'(.*?\.\w+)', line).group(1).replace('"', '').replace("'", '')
+                        if needed_filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
+                            needed_filepaths.append(needed_filepath)
+                    except:
+                        pass
+            if len(needed_filepaths):
+                _plain_path = ', '.join(needed_filepaths)
+                error_summary = error_summary + f". File {_plain_path} does not exist, thereby removing code lines related to this file to fix this error."
+            
+            chat_env.count_file_system_call()
+            self.phase_prompt = '\n'.join([
+                "Our developed source codes and corresponding test reports are listed below: ",
+                "Programming Language: \"{language}\"",
+                "Source Codes:",
+                "\"{codes}\"",
+                "Test Reports of Source Codes:",
+                "\"{test_reports}\"",
+                "Existing assets' paths:",
+                "\"{paths}\"",
+                "According to my test reports, please locate and summarize the bugs that cause the problem. You should carefully review source code, test reports and existing assets' paths to figure out problems correctly."
+            ])
+        else:
+            assets_paths = ''
+        if 'NameError:' in test_reports or 'ImportError' in test_reports:
+            directory = chat_env.env_dict['directory']
+            module_dict = get_classes_in_folder(directory)
+            module_structure = []
+            chat_env.count_class_call()
+            for k, classes in module_dict.items():
+                if len(classes) == 0: continue
+                module_structure.append(k)
+                for c in classes:
+                    module_structure.append(f'\t- class {c}')
+            module_structure = '\n'.join(module_structure)
+            overwrite_prompt = True
+            self.phase_prompt = '\n'.join([
+                "Our developed source codes, corresponding test reports and module structure are listed below: ",
+                "Programming Language: \"{language}\"",
+                "Buggy Source Codes:",
+                "\"{codes}\"",
+                "Test Reports of Source Codes:",
+                "\"{test_reports}\"",
+                "Module Structure:",
+                "\"{module_structure}\"",
+                "According to my test reports, please locate and summarize the bugs that cause the problem. You should carefully review source code, test reports and available modules to figure out problems correctly."
+            ])
+        else:
+            module_structure = ''
+        if len(file_names) and not overwrite_prompt and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('lacks an entry point to start' not in test_reports):
             self.phase_prompt = '\n'.join([
                 "Our potentially buggy source codes and corresponding test reports are listed below: ",
                 "Programming Language: \"{language}\"",
                 "Source Codes:",
                 "\"{codes}\"",
-                 "Failed Test Case:",
+                "Failed Test Case:",
                 "\"{failed_test_case}\""
                 "Test Reports of Source Codes:",
                 "\"{test_reports}\"",
                 "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly."
             ])
+            overwrite_prompt = True
             is_failed_test_case = True
             chat_env.count_test_case_call()
             try:
@@ -1401,6 +1479,26 @@ class TestErrorSummary(Phase):
             self.phase_env.update({
                 'failed_test_case': context
             })
+        if 'ModuleNotFoundError' in test_reports and not overwrite_prompt:
+            for match in re.finditer(r"No module named '(\S+)'", test_reports, re.DOTALL):
+                module = match.group(1)
+            modules = list(map(lambda x: '- ' + os.path.basename(x).split('.')[0], glob.glob(chat_env.env_dict['directory'] + '/*.py')))
+            modules = '\n'.join(modules)
+            chat_env.count_module_call()
+            self.phase_prompt = '\n'.join([
+                "Our developed source codes, corresponding test reports and available modules are listed below: ",
+                "Programming Language: \"{language}\"",
+                "Buggy Source Codes:",
+                "\"{codes}\"",
+                "Test Reports of Source Codes:",
+                "\"{test_reports}\"",
+                "Available Modules:",
+                "\"{modules}\"\n",
+                "According to my test reports, please locate and summarize the bugs that cause the problem. You should carefully review source code, test reports and available modules to figure out problems correctly."
+                
+            ])
+        else:
+            modules = ''
         if 'AttributeError' in test_reports:
             chat_env.count_attribute_error()
             error_line = test_reports.split('AttributeError')[-1]
@@ -1443,7 +1541,7 @@ class TestErrorSummary(Phase):
 
         if len(file_names):
             all_relevant_code = []
-            code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
+            # code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
             if is_failed_test_case:
                 file_names = file_names[1:]
             all_relevant_code = chat_env.get_changed_codes(file_names)
@@ -1466,13 +1564,18 @@ class TestErrorSummary(Phase):
                     all_relevant_code = chat_env.get_codes(ignore_test_code = True)
             else:
                 all_relevant_code = chat_env.get_codes(ignore_test_code = True)
-        self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
-                               "modality": chat_env.env_dict['modality'],
-                               "ideas": chat_env.env_dict['ideas'],
-                               "language": chat_env.env_dict['language'],
-                               "codes": all_relevant_code,
-                               "test_reports": test_reports,
-                               "exist_bugs_flag": exist_bugs_flag})
+        self.phase_env.update({
+                                "task": chat_env.env_dict['task_prompt'],
+                                "modality": chat_env.env_dict['modality'],
+                                "ideas": chat_env.env_dict['ideas'],
+                                "language": chat_env.env_dict['language'],
+                                "codes": all_relevant_code,
+                                "test_reports": test_reports,
+                                "exist_bugs_flag": exist_bugs_flag,
+                                "paths": assets_paths,
+                                'modules': modules,
+                                'module_structure': module_structure
+                            })
         log_and_print_online("**[Test Reports]**:\n\n{}".format(test_reports))
 
     def update_chat_env(self, chat_env) -> ChatEnv:
