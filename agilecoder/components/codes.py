@@ -298,6 +298,7 @@ class Codes:
         changed_files = []
         total_generated_line_num = len(list(filter(lambda x: len(x.strip()), generated_content.splitlines())))
         for key in new_codes.codebooks.keys():
+            if is_testing and key == file_name: continue
             if file_name is not None and not check_the_same_file(key, file_name):  continue
 
             total_new_length += len(new_codes.codebooks[key].splitlines())

@@ -1186,7 +1186,7 @@ class CodeReviewComment(Phase):
             assets_paths = glob.glob(f'{directory}/*.png') + glob.glob(f'{directory}/*/*.png')
             assets_paths = list(map(lambda x: x.replace(directory, '.'), assets_paths))
             assets_paths = '\n'.join(assets_paths)
-            self.image_comment = "\nThere is a serious bug because the source code is using non-existent images. Please consider using placeholder pixel images to fix the bug."
+            self.image_comment = "\nThere is a serious bug because the source code is using non-existent images. Please remove the corresponding code and consider using a color canvas or drawing objects with colored pixels instead to fix bugs."
         else:
             assets_paths = ''
             
@@ -1260,7 +1260,7 @@ class CodeReviewComment1(CodeReviewComment):
             _plain_non_path = ', '.join(non_paths)
             self.seminar_conclusion += f"The code has FileNotFound errors. The files {_plain_non_path} do not exist, so please modify correctly to fix. "
             if has_image:
-                self.seminar_conclusion += "Importantly, source code is using non-existent images, so consider using placeholder pixel images."
+                self.seminar_conclusion += "Importantly, source code is using non-existent images, so you must remove the corresponding code and consider using a color canvas or drawing objects with colored pixels instead."
 
         results = chat_env.get_high_overlap_code()
         content = "\nThere are high overlap among files: "
@@ -1877,17 +1877,21 @@ class TestModification(Phase):
             # needed_filepath = re.search(r"'(.+?)'", test_reports).group(1)
             lines = test_reports.splitlines()
             needed_filepaths = []
+            has_image = False
             for line in lines:
                 if 'FileNotFoundError' in line:
                     try:
                         needed_filepath = re.search(r'(.*?\.\w+)', line).group(1).replace('"', '').replace("'", '')
-                        # if needed_filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
+                        if needed_filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
+                            has_image = True
                         needed_filepaths.append(needed_filepath)
                     except:
                         pass
             if len(needed_filepaths):
                 _plain_path = ', '.join(needed_filepaths)
-                error_summary = error_summary + f". File {_plain_path} does not exist, thereby removing code lines related to this file to fix this error. If the source code is using images that do not exist, so please consider using placeholder pixel images to fix the bugs."
+                error_summary = error_summary + f". File {_plain_path} does not exist, thereby removing corresponding code lines related to this file to fix this error."
+                if has_image:
+                    error_summary += "Importantly, source code is using non-existent images, so the only way to fix this bug is that you must remove the corresponding code and consider using a color canvas or drawing objects with colored pixels instead."
             
             chat_env.count_file_system_call()
             self.phase_prompt = '\n'.join([
