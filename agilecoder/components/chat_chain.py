@@ -93,7 +93,7 @@ class ChatChain:
         for phase in self.config_phase:
             assistant_role_name = self.config_phase[phase]['assistant_role_name']
             user_role_name = self.config_phase[phase]['user_role_name']
-            phase_prompt = "\n\n".join(self.config_phase[phase]['phase_prompt'])
+            phase_prompt = "\n".join(self.config_phase[phase]['phase_prompt'])
             phase_class = getattr(self.phase_module, phase)
             phase_instance = phase_class(assistant_role_name=assistant_role_name,
                                          user_role_name=user_role_name,

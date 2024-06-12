@@ -367,14 +367,13 @@ def extract_trunk_text(text, keyword, is_lower = True):
     else:
         pattern = re.compile(r'{}(.+?)(?=\bPRODUCT_BACKLOG|\bACCEPTANCE_CRITERIA|\Z)'.format(keyword), re.DOTALL)
     match = re.search(pattern, text)
-    if match:
-        text = match.group(1).strip()
-        lines = text.splitlines()
-        results = []
-        for i, line in enumerate(lines):
-            if len(line.strip()) ==  0: break
-            results.append(line)
-        return '\n'.join(results)
+    text = match.group(1).strip()
+    lines = text.splitlines()
+    results = []
+    for i, line in enumerate(lines):
+        if len(line.strip()) ==  0: break
+        results.append(line)
+    return '\n'.join(results)
     
     
 class ProductBacklogCreating(Phase):
@@ -444,14 +443,13 @@ def extract_sprint_trunk_text(text, keyword, is_lower = True):
     else:
         pattern = re.compile(r'{}(.+?)(?=\bSPRINT_BACKLOG|\bSPRINT_ACCEPTANCE_CRITERIA|\Z)'.format(keyword), re.DOTALL)
     match = re.search(pattern, text)
-    if match:
-        text = match.group(1).strip()
-        lines = text.splitlines()
-        results = []
-        for i, line in enumerate(lines):
-            if len(line.strip()) ==  0: break
-            results.append(line)
-        return '\n'.join(results)
+    text = match.group(1).strip()
+    lines = text.splitlines()
+    results = []
+    for i, line in enumerate(lines):
+        if len(line.strip()) ==  0: break
+        results.append(line)
+    return '\n'.join(results)
     
     
 class SprintBacklogCreating(Phase):
