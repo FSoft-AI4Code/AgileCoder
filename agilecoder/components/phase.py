@@ -1168,14 +1168,15 @@ class CodeReviewComment(Phase):
 
     def update_phase_env(self, chat_env):
         
-        codes = chat_env.get_total_changed_lines()
+        # codes = chat_env.get_total_changed_lines()
         # chat_env.count_graph_call()
         changed_files = chat_env.get_changed_files()
         if len(changed_files) == 0:
             codes1 = chat_env.get_codes()
         else:
             codes1 = chat_env.get_changed_codes(changed_files)
-        if len(codes1) and len(codes) / len(codes1) > 1.3: codes = codes1
+        # if len(codes1) and len(codes) / len(codes1) > 1.3: 
+        codes = codes1
         # print('codescodes:', codes)
         if '.png' in codes:
             chat_env.generate_images_from_codes()
@@ -1391,24 +1392,24 @@ class TestErrorSummary(Phase):
         if 'FileNotFoundError' in test_reports:
             overwrite_prompt = True
             directory = chat_env.env_dict['directory']
-            assets_paths = glob.glob(f'{directory}/*.png') + glob.glob(f'{directory}/*/*.png')
+            assets_paths = glob.glob(f'{directory}/*.png') + glob.glob(f'{directory}/*/*.png') + glob.glob(f'{directory}/*.jpg') + glob.glob(f'{directory}/*/*.jpg')
             assets_paths = list(map(lambda x: x.replace(directory, '.'), assets_paths))
             
-            assets_paths = '\n'.join(assets_paths)
+            assets_paths = '\n'.join(assets_paths) or 'None'
             # needed_filepath = re.search(r"'(.+?)'", test_reports).group(1)
             lines = test_reports.splitlines()
             needed_filepaths = []
-            for line in lines:
-                if 'FileNotFoundError' in line:
-                    try:
-                        needed_filepath = re.search(r'(.*?\.\w+)', line).group(1).replace('"', '').replace("'", '')
-                        if needed_filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
-                            needed_filepaths.append(needed_filepath)
-                    except:
-                        pass
-            if len(needed_filepaths):
-                _plain_path = ', '.join(needed_filepaths)
-                error_summary = error_summary + f". File {_plain_path} does not exist, thereby removing code lines related to this file to fix this error."
+            # for line in lines:
+            #     if 'FileNotFoundError' in line:
+            #         try:
+            #             needed_filepath = re.search(r'(.*?\.\w+)', line).group(1).replace('"', '').replace("'", '')
+            #             if needed_filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
+            #                 needed_filepaths.append(needed_filepath)
+            #         except:
+            #             pass
+            # if len(needed_filepaths):
+            #     _plain_path = ', '.join(needed_filepaths)
+                # error_summary = error_summary + f". File {_plain_path} does not exist, thereby removing code lines related to this file to fix this error."
             
             chat_env.count_file_system_call()
             self.phase_prompt = '\n'.join([
@@ -1500,14 +1501,19 @@ class TestErrorSummary(Phase):
         if 'AttributeError' in test_reports:
             chat_env.count_attribute_error()
             error_line = test_reports.split('AttributeError')[-1]
-            class_name = re.search(r"'(.+?)'", error_line).group(1).split('.')[-1]
-            graph = chat_env.dependency_graph
-            # print('graph', graph)
-            if len(file_names):
+            match = re.search(r"'(.+?)'", error_line)
+            if match:
+                class_name = match.group(1).split('.')[-1]
+                graph = chat_env.dependency_graph
+                # print('graph', graph)
+                if len(file_names):
+                    relevant_files = graph.get(file_names[-1], [])
+                    for file in relevant_files:
+                        if 'class ' + class_name in chat_env.codes.codebooks[file]:
+                            file_names.append(file)
+            else:
                 relevant_files = graph.get(file_names[-1], [])
-                for file in relevant_files:
-                    if 'class ' + class_name in chat_env.codes.codebooks[file]:
-                        file_names.append(file)
+                file_names.extend(relevant_files)
         elif 'TypeError:' in test_reports and 'missing' in test_reports:
             chat_env.count_type_error()
             words = test_reports.strip().split()
@@ -1855,7 +1861,7 @@ class TestModification(Phase):
         if 'FileNotFoundError' in test_reports:
             overwrite_prompt = True
             directory = chat_env.env_dict['directory']
-            assets_paths = glob.glob(f'{directory}/*.png') + glob.glob(f'{directory}/*/*.png')
+            assets_paths = glob.glob(f'{directory}/*.png') + glob.glob(f'{directory}/*/*.png') + glob.glob(f'{directory}/*.jpg') + glob.glob(f'{directory}/*/*.jpg')
             assets_paths = list(map(lambda x: x.replace(directory, '.'), assets_paths))
             
             assets_paths = '\n'.join(assets_paths)
@@ -1866,8 +1872,8 @@ class TestModification(Phase):
                 if 'FileNotFoundError' in line:
                     try:
                         needed_filepath = re.search(r'(.*?\.\w+)', line).group(1).replace('"', '').replace("'", '')
-                        if needed_filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
-                            needed_filepaths.append(needed_filepath)
+                        # if needed_filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
+                        needed_filepaths.append(needed_filepath)
                     except:
                         pass
             if len(needed_filepaths):

@@ -359,7 +359,7 @@
       "'''",
       "    pass",
       "```",
-      "Please note that the code should be fully functional. Ensure to implement all functions. No placeholders (such as 'pass' in Python)."
+      "Please note that the code should be fully functional. Ensure to implement all functions in detail. No placeholders (such as 'pass' in Python)."
     ]
   },
   "WritingTestSuite": {
@@ -614,7 +614,7 @@
       "\"{paths}\"",
       "As the {assistant_role}, to satisfy the sprint backlog, you adhere to the following regulations of AgileCoder:",
       "\t1) all referenced classes should be imported;",
-      "\t2) all methods should be implemented;",
+      "\t2) all methods should be implemented,so so placehoders (like pass in Python) is prohibited;",
       "\t3) all methods need to have the necessary comments;",
       "\t4) prohibitively put code in a try-exception in the main.py;",
       "\t5) ensure that no code is duplicated and the answer is not allowed to repeat code;",
