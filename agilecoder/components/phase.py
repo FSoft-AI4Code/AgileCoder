@@ -633,8 +633,8 @@ class CheckProgressStatus(Phase):
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         if len(self.seminar_conclusion) > 0:
-            print('[CheckProgressStatus] self.seminar_conclusion', self.seminar_conclusion)
-            if 'DONE' in self.seminar_conclusion:
+            # print('[CheckProgressStatus] self.seminar_conclusion', self.seminar_conclusion)
+            if ' DONE' in self.seminar_conclusion:
                 chat_env.env_dict['end-sprint'] = True
                 return chat_env
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
@@ -1178,15 +1178,19 @@ class CodeReviewComment(Phase):
         # if len(codes1) and len(codes) / len(codes1) > 1.3: 
         codes = codes1
         # print('codescodes:', codes)
-        if '.png' in codes:
-            chat_env.generate_images_from_codes()
+        self.image_comment = ''
+        if '.png' in codes or '.jpg' in codes:
+        #     chat_env.generate_images_from_codes()
             directory = chat_env.env_dict['directory']
-            # print('directorydirectorydirectory:', directory)
+        #     # print('directorydirectorydirectory:', directory)
             assets_paths = glob.glob(f'{directory}/*.png') + glob.glob(f'{directory}/*/*.png')
             assets_paths = list(map(lambda x: x.replace(directory, '.'), assets_paths))
             assets_paths = '\n'.join(assets_paths)
+            self.image_comment = "\nThere is a serious bug because the source code is using non-existent images. Please consider using placeholder pixel images to fix the bug."
         else:
             assets_paths = ''
+            
+
         self.phase_env.update(
             {"task": chat_env.env_dict['task_prompt'],
              "modality": chat_env.env_dict['modality'],
@@ -1211,6 +1215,7 @@ class CodeReviewComment(Phase):
         for f1, f2 in results:
             content += f"({f1}, {f2}), "
         content += "\nThus, considering removing redundant code."
+        self.seminar_conclusion += self.image_comment
         if len(results) > 0:
             chat_env.env_dict['review_comments'] = self.seminar_conclusion + content
         else:
@@ -1245,13 +1250,17 @@ class CodeReviewComment1(CodeReviewComment):
 
         filepaths = list(set(re.findall(r'"(.*?\.\w+)"', codes) + re.findall(r"'(.*?\.\w+)'", codes)))
         non_paths = []
+        has_image = False
         for _filepath in filepaths:
             if not os.path.exists(_filepath):
-                if _filepath.split('.')[-1] not in ['png', 'jpg', 'jpeg']:
-                    non_paths.append(_filepath)
+                if _filepath.split('.')[-1] in ['png', 'jpg', 'jpeg']:
+                    has_image = True
+                non_paths.append(_filepath)
         if len(non_paths):
             _plain_non_path = ', '.join(non_paths)
-            self.seminar_conclusion += f"The code has FileNotFound errors. The files {_plain_non_path} do not exist, so please modify correctly to fix."
+            self.seminar_conclusion += f"The code has FileNotFound errors. The files {_plain_non_path} do not exist, so please modify correctly to fix. "
+            if has_image:
+                self.seminar_conclusion += "Importantly, source code is using non-existent images, so consider using placeholder pixel images."
 
         results = chat_env.get_high_overlap_code()
         content = "\nThere are high overlap among files: "
@@ -1826,7 +1835,7 @@ def extract_pytest_file_names(traceback):
         if x is not None:
             filename = x.group(1)
             continue
-        if line.startswith('_______________'): 
+        if line.startswith('____'): 
             function_name = re.findall(r"(\w+)", line)[1]
             if filename is not None:
                 results.append((filename, None, function_name))
@@ -1878,7 +1887,7 @@ class TestModification(Phase):
                         pass
             if len(needed_filepaths):
                 _plain_path = ', '.join(needed_filepaths)
-                error_summary = error_summary + f". File {_plain_path} does not exist, thereby removing code lines related to this file to fix this error."
+                error_summary = error_summary + f". File {_plain_path} does not exist, thereby removing code lines related to this file to fix this error. If the source code is using images that do not exist, so please consider using placeholder pixel images to fix the bugs."
             
             chat_env.count_file_system_call()
             self.phase_prompt = '\n'.join([
