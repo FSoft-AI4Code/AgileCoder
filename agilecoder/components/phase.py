@@ -1679,14 +1679,19 @@ class SprintTestErrorSummary(Phase):
             })
         if 'AttributeError' in test_reports:
             error_line = test_reports.split('AttributeError')[-1]
-            class_name = re.search(r"'(.+?)'", error_line).group(1).split('.')[-1]
+            match = re.search(r"'(.+?)'", error_line)
             graph = chat_env.dependency_graph
-            # print('graph', graph)
-            if len(file_names):
+            if match:
+                class_name = match.group(1).split('.')[-1]
+                # print('graph', graph)
+                if len(file_names):
+                    relevant_files = graph.get(file_names[-1], [])
+                    for file in relevant_files:
+                        if 'class ' + class_name in chat_env.codes.codebooks[file]:
+                            file_names.append(file)
+            else:
                 relevant_files = graph.get(file_names[-1], [])
-                for file in relevant_files:
-                    if 'class ' + class_name in chat_env.codes.codebooks[file]:
-                        file_names.append(file)
+                file_names.extend(relevant_files)
         elif 'TypeError:' in test_reports and 'missing' in test_reports:
             words = test_reports.strip().split()
             index = words.index('TypeError:')
