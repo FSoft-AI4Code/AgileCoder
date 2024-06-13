@@ -635,8 +635,9 @@ class CheckProgressStatus(Phase):
         if len(self.seminar_conclusion) > 0:
             # print('[CheckProgressStatus] self.seminar_conclusion', self.seminar_conclusion)
             if ' DONE' in self.seminar_conclusion:
-                chat_env.env_dict['end-sprint'] = True
-                return chat_env
+                if 'UNDONE' not in self.seminar_conclusion:
+                    chat_env.env_dict['end-sprint'] = True
+                    return chat_env
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
         return chat_env
 
@@ -928,6 +929,7 @@ class SprintReview(Phase):
         done_work_lines = '\n'.join(chat_env.env_dict['done-works']).splitlines()
         _lines = []
         for i, line in enumerate(done_work_lines):
+            if len(line.strip()) == 0: continue
             flag = check_if_string_starts_with_number(line)
             if flag == 1:
                 _lines.append(re.sub(r'\d+', '', line, count = 1))
@@ -1162,9 +1164,50 @@ class NextSprintBacklogModification(Phase):
         # print("chat_env.env_dict['current-sprint-backlog']", chat_env.env_dict['current-sprint-backlog'])
         # print("chat_env.env_dict['current-sprint-goals']", chat_env.env_dict['current-sprint-goals'])
         return chat_env
+
+
+def is_method_empty(method_node):
+    """
+    Check if the given method node has an empty implementation (contains only 'pass').
+    """
+    if len(method_node.body) == 1 and isinstance(method_node.body[0], ast.Pass):
+        return True
+    return False
+
+def check_empty_methods_from_text(class_text):
+    """
+    Check all methods in the class defined by the given text for empty implementation.
+    """
+    try:
+        parsed_code = ast.parse(class_text)
+        empty_methods = []
+        
+        # Traverse the AST to find class definitions
+        for node in parsed_code.body:
+            if isinstance(node, ast.ClassDef):
+                for item in node.body:
+                    if isinstance(item, ast.FunctionDef):
+                        if is_method_empty(item):
+                            empty_methods.append(item.name)
+        
+        return len(empty_methods) > 0
+    except: return False
 class CodeReviewComment(Phase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def get_empty_body_filenames(self, chat_env):
+        results = []
+        for filename, code in chat_env.codes.codebooks.items():
+            if filename.startswith('test') or filename.split('.')[0].endswith('test'): continue
+            if check_empty_methods_from_text(code):
+                results.append(filename)
+        return results
+    def get_empty_error(self, chat_env):
+        results = self.get_empty_body_filenames(chat_env)
+        if len(results):
+            text = ', '.join(results)
+            return f'\nThe files {text} contain empty body implementations, which is not allowed, so please provide the complete code for these files to correct this issue.'
 
     def update_phase_env(self, chat_env):
         
@@ -1216,6 +1259,9 @@ class CodeReviewComment(Phase):
             content += f"({f1}, {f2}), "
         content += "\nThus, considering removing redundant code."
         self.seminar_conclusion += self.image_comment
+        empty_error = self.get_empty_error(chat_env)
+        if empty_error is not None:
+            self.seminar_conclusion += empty_error
         if len(results) > 0:
             chat_env.env_dict['review_comments'] = self.seminar_conclusion + content
         else:
@@ -1267,6 +1313,9 @@ class CodeReviewComment1(CodeReviewComment):
         for f1, f2 in results:
             content += f"({f1}, {f2}), "
         content += "\nThus, considering removing redundant code."
+        empty_error = self.get_empty_error(chat_env)
+        if empty_error is not None:
+            self.seminar_conclusion += empty_error
         if len(results) > 0:
             chat_env.env_dict['review_comments'] = self.seminar_conclusion + content
         else:
@@ -1395,7 +1444,7 @@ class TestErrorSummary(Phase):
         (exist_bugs_flag, test_reports) = chat_env.exist_bugs(chat_env)
         # print("======test_reports", test_reports)
         log_and_print_online("======test_reports: " + test_reports)
-        file_names = extract_file_names(test_reports)
+        file_names = extract_file_names(test_reports, chat_env.env_dict['directory'])
         is_failed_test_case = False
         overwrite_prompt = False
         if 'FileNotFoundError' in test_reports:
@@ -1459,7 +1508,7 @@ class TestErrorSummary(Phase):
             ])
         else:
             module_structure = ''
-        if len(file_names) and not overwrite_prompt and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('lacks an entry point to start' not in test_reports):
+        if len(file_names) and not overwrite_prompt and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')) and ('lacks an entry point to start' not in test_reports):
             self.phase_prompt = '\n'.join([
                 "Our potentially buggy source codes and corresponding test reports are listed below: ",
                 "Programming Language: \"{language}\"",
@@ -1475,9 +1524,9 @@ class TestErrorSummary(Phase):
             is_failed_test_case = True
             chat_env.count_test_case_call()
             try:
-                _item = extract_file_names_and_lines(test_reports)[0]
+                _item = extract_file_names_and_lines(test_reports, chat_env.env_dict['directory'])[0]
             except:
-                _item = extract_pytest_file_names(test_reports)[0]
+                _item = extract_pytest_file_names(test_reports, chat_env.env_dict['directory'])[0]
             context = ''
             if _item[0] in chat_env.codes.codebooks:
                 _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
@@ -1516,7 +1565,12 @@ class TestErrorSummary(Phase):
                 class_name = match.group(1).split('.')[-1]
                 # print('graph', graph)
                 if len(file_names):
-                    relevant_files = graph.get(file_names[-1], [])
+                    relevant_files = []
+                    for _filename in file_names[::-1]:
+                        _files = graph.get(_filename, [])
+                        for _f in _files:
+                            if _f not in relevant_files:
+                                relevant_files.append(_f)
                     for file in relevant_files:
                         if 'class ' + class_name in chat_env.codes.codebooks[file]:
                             file_names.append(file)
@@ -1532,7 +1586,13 @@ class TestErrorSummary(Phase):
             # print('graph', graph)
             if len(file_names):
                 flag = False
-                relevant_files = graph.get(file_names[-1], [])
+                relevant_files = []
+                for _filename in file_names[::-1]:
+                    _files = graph.get(_filename, [])
+                    for _f in _files:
+                        if _f not in relevant_files:
+                            relevant_files.append(_f)
+
                 for file in relevant_files:
                     if 'class ' + class_name in chat_env.codes.codebooks[file]:
                         file_names.append(file)
@@ -1542,7 +1602,7 @@ class TestErrorSummary(Phase):
         elif 'ModuleNotFoundError' not in test_reports and 'ImportError' not in test_reports:
             graph = chat_env.dependency_graph
             chat_env.count_other_call()
-            if ('[Error] the software lacks an entry point to start' not in test_reports) or ('[Error] the testing script lacks an entry point to start.' not in test_reports):
+            if 'lacks an entry point to start' not in test_reports:
                 if len(file_names):
                     chat_env.count_graph_call()
                     relevant_files = graph.get(file_names[-1], [])
@@ -1551,12 +1611,16 @@ class TestErrorSummary(Phase):
             # for filename, code in chat_env.codes.codebooks.items():
             #     if class_name.lower() in filename:
             #         file_names.append(filename)
-
+        log_and_print_online('file_names==' + str(file_names))
         if len(file_names):
-            all_relevant_code = []
-            # code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
+            if len(file_names) == 1 and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')):
+                graph = chat_env.dependency_graph
+                if graph is not None:
+                    relevant_files = graph.get(file_names[-1], [])
+                    file_names.extend(relevant_files)
             if is_failed_test_case:
                 file_names = file_names[1:]
+                
             all_relevant_code = chat_env.get_changed_codes(file_names)
         else:
             if chat_env.dependency_graph  is not None:
@@ -1567,7 +1631,7 @@ class TestErrorSummary(Phase):
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
                     else:
                         all_relevant_code = chat_env.get_changed_codes(file_names)
-                elif '[Error] the software lacks an entry point to start' in test_reports:
+                elif 'the software lacks an entry point to start' in test_reports:
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                     if len(file_names) == 0:
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
@@ -1648,10 +1712,10 @@ class SprintTestErrorSummary(Phase):
         (exist_bugs_flag, test_reports) = chat_env.exist_bugs_ignoring_test_cases(chat_env)
         # print("======test_reports", test_reports)
         log_and_print_online("======test_reports: " + test_reports)
-        file_names = extract_file_names(test_reports)
+        file_names = extract_file_names(test_reports, chat_env.env_dict['directory'])
         is_failed_test_case = False
         is_success = "The software run successfully without errors."
-        if len(file_names) and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('lacks an entry point to start' not in test_reports) and 'ImportError:' not in test_reports:
+        if len(file_names) and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')) and ('lacks an entry point to start' not in test_reports) and 'ImportError:' not in test_reports:
             self.phase_prompt = '\n'.join([
                 "Our potentially buggy source codes and corresponding test reports are listed below: ",
                 "Programming Language: \"{language}\"",
@@ -1665,9 +1729,9 @@ class SprintTestErrorSummary(Phase):
             ])
             is_failed_test_case = True
             try:
-                _item = extract_file_names_and_lines(test_reports)[0]
+                _item = extract_file_names_and_lines(test_reports, chat_env.env_dict['directory'])[0]
             except:
-                _item = extract_pytest_file_names(test_reports)[0]
+                _item = extract_pytest_file_names(test_reports, chat_env.env_dict['directory'])[0]
             context = ''
             if _item[0] in chat_env.codes.codebooks:
                 _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
@@ -1685,7 +1749,13 @@ class SprintTestErrorSummary(Phase):
                 class_name = match.group(1).split('.')[-1]
                 # print('graph', graph)
                 if len(file_names):
-                    relevant_files = graph.get(file_names[-1], [])
+                    relevant_files = []
+                    for _filename in file_names[::-1]:
+                        _files = graph.get(_filename, [])
+                        for _f in _files:
+                            if _f not in relevant_files:
+                                relevant_files.append(_f)
+
                     for file in relevant_files:
                         if 'class ' + class_name in chat_env.codes.codebooks[file]:
                             file_names.append(file)
@@ -1700,7 +1770,13 @@ class SprintTestErrorSummary(Phase):
             # print('graph', graph)
             if len(file_names):
                 flag = False
-                relevant_files = graph.get(file_names[-1], [])
+                relevant_files = []
+                for _filename in file_names[::-1]:
+                    _files = graph.get(_filename, [])
+                    for _f in _files:
+                        if _f not in relevant_files:
+                            relevant_files.append(_f)
+
                 for file in relevant_files:
                     if 'class ' + class_name in chat_env.codes.codebooks[file]:
                         file_names.append(file)
@@ -1709,7 +1785,7 @@ class SprintTestErrorSummary(Phase):
                     file_names.extend(relevant_files)
         elif 'ModuleNotFoundError' not in test_reports and 'ImportError' not in test_reports:
             graph = chat_env.dependency_graph
-            if ('[Error] the software lacks an entry point to start' not in test_reports) and ('[Error] the testing script lacks an entry point to start.' not in test_reports):
+            if ('the software lacks an entry point to start' not in test_reports) and ('[Error] the testing script lacks an entry point to start.' not in test_reports):
                 if len(file_names):
                     relevant_files = graph.get(file_names[-1], [])
                     file_names.extend(relevant_files)
@@ -1720,9 +1796,14 @@ class SprintTestErrorSummary(Phase):
 
         if len(file_names):
             all_relevant_code = []
-            code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
+            if len(file_names) == 1 and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')):
+                graph = chat_env.dependency_graph
+                if graph is not None:
+                    relevant_files = graph.get(file_names[-1], [])
+                    file_names.extend(relevant_files)
             if is_failed_test_case:
                 file_names = file_names[1:]
+                
             all_relevant_code = chat_env.get_changed_codes(file_names)
         else:
             if chat_env.dependency_graph  is not None:
@@ -1732,7 +1813,7 @@ class SprintTestErrorSummary(Phase):
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
                     else:
                         all_relevant_code = chat_env.get_changed_codes(file_names)
-                elif '[Error] the software lacks an entry point to start' in test_reports:
+                elif 'the software lacks an entry point to start' in test_reports:
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                     if len(file_names) == 0:
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
@@ -1799,9 +1880,9 @@ class SprintTestErrorSummary(Phase):
         chat_env = self.update_chat_env(chat_env)
         return chat_env
 
-def extract_file_names(traceback_str):
+def extract_file_names(traceback_str, directory):
     file_names = []
-    
+    existing_files = os.listdir(directory)
     # Define a regular expression pattern to match file names in tracebacks
     file_name_pattern = r'File "(.*?)"'
     
@@ -1812,12 +1893,14 @@ def extract_file_names(traceback_str):
     for match in matches:
         file_name = match.group(1)
         if file_name in file_names: continue
+        if file_name not in existing_files: continue
         file_names.append(file_name)
     
     return file_names
 
-def extract_file_names_and_lines(traceback_str):
+def extract_file_names_and_lines(traceback_str, directory):
     results = []
+    existing_files = os.listdir(directory)
     
     # Define a regular expression pattern to match file names in tracebacks
     file_name_pattern = r'File "(.*?)", line (\d+), in (.+)'
@@ -1827,12 +1910,15 @@ def extract_file_names_and_lines(traceback_str):
     
     # Extract file names from the matches
     for match in matches:
-        results.append((match.group(1), match.group(2), match.group(3)))
+        filename = match.group(1)
+        if filename not in existing_files: continue
+        results.append((filename, match.group(2), match.group(3)))
     
     return results
-def extract_pytest_file_names(traceback):
+def extract_pytest_file_names(traceback, directory):
     lines = traceback.splitlines()
     file_name_pattern = r'File "(.*?)"'
+    existing_files = os.listdir(directory)
     results = []
     filename = None
     for line in lines:
@@ -1842,7 +1928,7 @@ def extract_pytest_file_names(traceback):
             continue
         if line.startswith('____'): 
             function_name = re.findall(r"(\w+)", line)[1]
-            if filename is not None:
+            if filename is not None and filename in existing_filesssssss:
                 results.append((filename, None, function_name))
     return results
 
@@ -1872,6 +1958,7 @@ class TestModification(Phase):
         test_reports = chat_env.env_dict['test_reports']
         error_summary = chat_env.env_dict['error_summary']
         overwrite_prompt = False
+        log_and_print_online('graph: ' + str(chat_env.dependency_graph))
         if 'FileNotFoundError' in test_reports:
             overwrite_prompt = True
             directory = chat_env.env_dict['directory']
@@ -1963,10 +2050,10 @@ class TestModification(Phase):
         
         module = ''
         modules = ''
-        file_names = extract_file_names(test_reports)
+        file_names = extract_file_names(test_reports, chat_env.env_dict['directory'])
         is_failed_test_case = False
         # print('file_names:', file_names)
-        if len(file_names) and not overwrite_prompt and (file_names[0].startswith('test_') or file_names[0].split('.')[0].endswith('_test')) and ('testing script lacks an entry point to start' not in test_reports):
+        if len(file_names) and not overwrite_prompt and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')) and ('testing script lacks an entry point to start' not in test_reports):
             self.phase_prompt = '\n'.join([
                 "Our potentially buggy source codes and corresponding test reports are listed below:",
                 "Programming Language: \"{language}\"",
@@ -1993,9 +2080,9 @@ class TestModification(Phase):
             is_failed_test_case = True
             chat_env.count_test_case_call()
             try:
-                _item = extract_file_names_and_lines(test_reports)[0]
+                _item = extract_file_names_and_lines(test_reports, chat_env.env_dict['directory'])[0]
             except:
-                _item = extract_pytest_file_names(test_reports)[0]
+                _item = extract_pytest_file_names(test_reports, chat_env.env_dict['directory'])[0]
             context = ''
             if _item[0] in chat_env.codes.codebooks:
                 _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
@@ -2054,7 +2141,13 @@ class TestModification(Phase):
                 class_name = match.group(1).split('.')[-1]
                 # print('graph', graph)
                 if len(file_names):
-                    relevant_files = graph.get(file_names[-1], [])
+                    relevant_files = []
+                    for _filename in file_names[::-1]:
+                        _files = graph.get(_filename, [])
+                        for _f in _files:
+                            if _f not in relevant_files:
+                                relevant_files.append(_f)
+
                     for file in relevant_files:
                         if 'class ' + class_name in chat_env.codes.codebooks[file]:
                             file_names.append(file)
@@ -2070,7 +2163,13 @@ class TestModification(Phase):
             chat_env.count_type_error()
             if len(file_names):
                 flag = False
-                relevant_files = graph.get(file_names[-1], [])
+                relevant_files = []
+                for _filename in file_names[::-1]:
+                    _files = graph.get(_filename, [])
+                    for _f in _files:
+                        if _f not in relevant_files:
+                            relevant_files.append(_f)
+
                 for file in relevant_files:
                     if 'class ' + class_name in chat_env.codes.codebooks[file]:
                         file_names.append(file)
@@ -2091,8 +2190,11 @@ class TestModification(Phase):
             #         file_names.append(filename)
         
         if len(file_names):
-            all_relevant_code = []
-            # code_sections = extract_code_and_filename(chat_env.get_codes(ignore_test_code = False))
+            if len(file_names) == 1 and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')):
+                graph = chat_env.dependency_graph
+                if graph is not None:
+                    relevant_files = graph.get(file_names[-1], [])
+                    file_names.extend(relevant_files)
             if is_failed_test_case:
                 file_names = file_names[1:]
             all_relevant_code = chat_env.get_changed_codes(file_names)
@@ -2106,7 +2208,7 @@ class TestModification(Phase):
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
                     else:
                         all_relevant_code = chat_env.get_changed_codes(file_names)
-                elif '[Error] the software lacks an entry point to start' in test_reports:
+                elif 'the software lacks an entry point to start' in test_reports:
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                     if len(file_names) == 0:
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)

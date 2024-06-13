@@ -535,7 +535,7 @@ class WritingFullTestSuite(ComposedPhase):
         max_workers = min(len(all_changed_files), 5)
         with concurrent.futures.ThreadPoolExecutor(max_workers = max_workers) as executor:
             for file_name in all_changed_files:
-                if file_name.startswith('test_') or file_name.split('.')[0].endswith('_test'): continue
+                if file_name.startswith('test') or file_name.split('.')[0].endswith('test'): continue
                 for phase_item in self.composition:
                     if phase_item["phaseType"] == "SimplePhase":  # right now we do not support nested composition
                         phase = phase_item['phase']

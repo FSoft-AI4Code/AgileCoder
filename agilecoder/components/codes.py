@@ -392,7 +392,7 @@ class Codes:
         for filename in self.codebooks.keys():
             if get_entry_point:
                 if has_entry_point(self.codebooks[filename]):
-                    if ignore_test_code and (filename.startswith('test_') or filename.split('.')[0].endswith('_test')): continue
+                    if ignore_test_code and (filename.startswith('test') or filename.split('.')[0].endswith('test')): continue
                     code = self.codebooks[filename]
                     if _simplify_code:
                         code = simplify_code(code)
@@ -400,8 +400,8 @@ class Codes:
                                                             "python" if filename.endswith(".py") else filename.split(".")[
                                                                 -1], code)
                 continue
-            if only_test_code and not (filename.startswith('test_') or filename.split('.')[0].endswith('_test')): continue
-            elif ignore_test_code and (filename.startswith('test_') or filename.split('.')[0].endswith('_test')): continue
+            if only_test_code and not (filename.startswith('test') or filename.split('.')[0].endswith('test')): continue
+            elif ignore_test_code and (filename.startswith('test') or filename.split('.')[0].endswith('test')): continue
             code = self.codebooks[filename]
             if _simplify_code:
                 code = simplify_code(code)
