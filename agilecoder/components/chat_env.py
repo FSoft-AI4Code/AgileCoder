@@ -189,6 +189,7 @@ class ChatEnv:
                     testing_commands = self.env_dict['testing_commands']
                     error_contents = ''
                 current_idx = 0
+                no_entry_point_error = False
                 for testing_command in testing_commands:
                     if testing_command == 'no_entry_point' or testing_command not in runnable_files:
                         if testing_command.startswith('test') or testing_command.split('.')[0].endswith('test'):
@@ -196,16 +197,19 @@ class ChatEnv:
                         
                             error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                             return_flag = True
+                            no_entry_point_error = True
                             break
                         elif testing_command != 'no_entry_point':
                             errs = "[Error] the software lacks an entry point to start. Please modify accordingly to make the program executable."
                             error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
                             return_flag = True
+                            no_entry_point_error = True
                             break
                         else:
                             errs = "[Error] the software lacks an entry point to start. Please modify accordingly to make the program executable."
                             error_contents += """There is a serious bug:\n{errs}""".format(testing_command = testing_command, errs = errs)
                             return_flag = True
+                            no_entry_point_error = True
                             break
                     if 'main.py' in self.codes.codebooks and testing_command == 'main.py':
                         command = "cd {}; ls -l; python main.py;".format(directory)
@@ -284,6 +288,9 @@ class ChatEnv:
                     if return_flag:
                         chat_env.env_dict['testing_commands'] = testing_commands[current_idx:]
                         return return_flag, error_contents
+                if no_entry_point_error:
+                    current_idx += 1
+                    chat_env.env_dict['testing_commands'] = testing_commands[current_idx:]
                 if return_flag:
                     return return_flag, error_contents
                 else:
