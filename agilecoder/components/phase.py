@@ -1511,9 +1511,9 @@ class TestErrorSummary(Phase):
             chat_env.count_attribute_error()
             error_line = test_reports.split('AttributeError')[-1]
             match = re.search(r"'(.+?)'", error_line)
+            graph = chat_env.dependency_graph
             if match:
                 class_name = match.group(1).split('.')[-1]
-                graph = chat_env.dependency_graph
                 # print('graph', graph)
                 if len(file_names):
                     relevant_files = graph.get(file_names[-1], [])
