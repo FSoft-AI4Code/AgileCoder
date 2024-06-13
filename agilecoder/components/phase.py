@@ -2041,16 +2041,21 @@ class TestModification(Phase):
                 "Now, use the format exemplified above and modify the problematic codes based on the error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE where FILENAME is the file name, LANGUAGE is the programming language and CODE is the source code; incomplete \"TODO\" codes are strictly prohibited). If no bugs are reported, please return only one line like \"<INFO> Finished\"."
             ])
         elif 'AttributeError' in test_reports:
-            error_line = test_reports.split('AttributeError')[-1]
-            class_name = re.search(r"'(.+?)'", error_line).group(1).split('.')[-1]
-            graph = chat_env.dependency_graph
-            # print('graph', graph)
             chat_env.count_attribute_error()
-            if len(file_names):
+            error_line = test_reports.split('AttributeError')[-1]
+            match = re.search(r"'(.+?)'", error_line)
+            graph = chat_env.dependency_graph
+            if match:
+                class_name = match.group(1).split('.')[-1]
+                # print('graph', graph)
+                if len(file_names):
+                    relevant_files = graph.get(file_names[-1], [])
+                    for file in relevant_files:
+                        if 'class ' + class_name in chat_env.codes.codebooks[file]:
+                            file_names.append(file)
+            else:
                 relevant_files = graph.get(file_names[-1], [])
-                for file in relevant_files:
-                    if 'class ' + class_name in chat_env.codes.codebooks[file]:
-                        file_names.append(file)
+                file_names.extend(relevant_files)
         elif 'TypeError:' in test_reports and 'missing' in test_reports:
             words = test_reports.strip().split()
             index = words.index('TypeError:')
