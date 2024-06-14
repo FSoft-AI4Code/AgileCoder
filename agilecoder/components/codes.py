@@ -55,24 +55,25 @@ def extract_class_names(source_code):
     return class_names
 
 def simplify_code(code):
-    codelines = code.splitlines()
-    outputs = []
-    flag = False
-    for line in codelines:
-        if line.strip().startswith('def'):
-            flag = True
-            is_docstring = 0
+    return code
+    # codelines = code.splitlines()
+    # outputs = []
+    # flag = False
+    # for line in codelines:
+    #     if line.strip().startswith('def'):
+    #         flag = True
+    #         is_docstring = 0
 
-        if flag and line.strip() in ['"""', "'''"]:
-            is_docstring += 1
-                # if not is_docstring:
-                #     flag = False
-        if flag and is_docstring == 2: 
-            outputs.append(line)
-            is_docstring += 1
-        if flag and is_docstring > 2: continue
-        outputs.append(line)
-    return '\n'.join(outputs)
+    #     if flag and line.strip() in ['"""', "'''"]:
+    #         is_docstring += 1
+    #             # if not is_docstring:
+    #             #     flag = False
+    #     if flag and is_docstring == 2: 
+    #         outputs.append(line)
+    #         is_docstring += 1
+    #     if flag and is_docstring > 2: continue
+    #     outputs.append(line)
+    # return '\n'.join(outputs)
 def has_entry_point(code):
     try:
         tree = ast.parse(code)

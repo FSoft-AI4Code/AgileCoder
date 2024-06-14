@@ -1192,6 +1192,74 @@ def check_empty_methods_from_text(class_text):
         
         return len(empty_methods) > 0
     except: return False
+
+import ast
+import os
+
+class AttributeChecker(ast.NodeVisitor):
+    def __init__(self):
+        self.errors = {}
+
+    def visit_ClassDef(self, node):
+        """Visit a class definition and collect attribute definitions."""
+        class_name = node.name
+        self.errors[class_name] = []
+
+        # Collect attribute definitions in the class body and methods
+        class_defs = self._collect_class_definitions(node)
+
+        # Check for undefined attribute usage
+        self._check_attribute_usage(node, class_defs, class_name)
+
+    def _collect_class_definitions(self, node):
+        """Collect attribute and method definitions in the class."""
+        class_defs = {'attributes': set(), 'methods': set()}
+        self.class_attrs = []
+        for stmt in node.body:
+            if isinstance(stmt, ast.FunctionDef):
+                class_defs['methods'].add(stmt.name)
+            elif isinstance(stmt, ast.Assign):
+                for target in stmt.targets:
+                    if isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) and target.value.id == 'self':
+                        print('das', target.attr)
+                        class_defs['attributes'].add(target.attr)
+        return class_defs
+
+    def _check_attribute_usage(self, node, class_defs, class_name):
+        """Check if attributes accessed are defined in the class."""
+        for stmt in node.body:
+            if isinstance(stmt, ast.FunctionDef):
+                self.generic_visit(stmt)
+                for subnode in ast.walk(stmt):
+                    if isinstance(subnode, ast.Attribute) and isinstance(subnode.value, ast.Name) and subnode.value.id == 'self':
+                        if subnode.attr not in class_defs['attributes'] and subnode.attr not in class_defs['methods'] and subnode.attr not in self.class_attrs:
+                            # print(self.class_attrs)
+                            self.errors[class_name].append(
+                                f"Error: Class '{class_name}' uses undefined attribute '{subnode.attr}' at line {subnode.lineno}"
+                            )
+
+    def visit_Assign(self, node):
+
+        for target in node.targets:
+            if isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) and target.value.id == 'self':
+                self.class_attrs.append(target.attr)
+        self.generic_visit(node)
+
+    def visit_Attribute(self, node):
+        """Check if attributes accessed are defined in the class."""
+        self.generic_visit(node)
+
+
+
+
+def analyze_file(code):
+    try:
+        tree = ast.parse(code)
+    except:
+        return {}
+    checker = AttributeChecker()
+    checker.visit(tree)
+    return checker.errors
 class CodeReviewComment(Phase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -1208,6 +1276,16 @@ class CodeReviewComment(Phase):
         if len(results):
             text = ', '.join(results)
             return f'\nThe files {text} contain empty body implementations, which is not allowed, so please provide the complete code for these files to correct this issue.'
+    def get_missing_attributes(self, chat_env):
+        total_error = []
+        for filename, code in chat_env.codes.codebooks.items():
+            if not filename.endswith('.py'): continue
+            errors = analyze_file(code)
+            for v in errors.values():
+                total_error.extend(v)
+        if len(total_error):
+            return ' '.join(total_error)
+
 
     def update_phase_env(self, chat_env):
         
@@ -1261,7 +1339,10 @@ class CodeReviewComment(Phase):
         self.seminar_conclusion += self.image_comment
         empty_error = self.get_empty_error(chat_env)
         if empty_error is not None:
-            self.seminar_conclusion += empty_error
+            self.seminar_conclusion += "\n" + empty_error
+        attr_error = self.get_missing_attributes(chat_env)
+        if attr_error is not None:
+            self.seminar_conclusion += "\nThere are attribute errors: " + attr_error
         if len(results) > 0:
             chat_env.env_dict['review_comments'] = self.seminar_conclusion + content
         else:
@@ -1315,7 +1396,10 @@ class CodeReviewComment1(CodeReviewComment):
         content += "\nThus, considering removing redundant code."
         empty_error = self.get_empty_error(chat_env)
         if empty_error is not None:
-            self.seminar_conclusion += empty_error
+            self.seminar_conclusion += "\n" + empty_error
+        attr_error = self.get_missing_attributes(chat_env)
+        if attr_error is not None:
+            self.seminar_conclusion += "\nThere are attribute errors: " + attr_error
         if len(results) > 0:
             chat_env.env_dict['review_comments'] = self.seminar_conclusion + content
         else:
@@ -1523,16 +1607,29 @@ class TestErrorSummary(Phase):
             overwrite_prompt = True
             is_failed_test_case = True
             chat_env.count_test_case_call()
+            find_test_case = False
             try:
-                _item = extract_file_names_and_lines(test_reports, chat_env.env_dict['directory'])[0]
+                _item = extract_file_names_and_lines(test_reports, chat_env.env_dict['directory'])
+                if _item is not None:
+                    if len(_item):
+                        find_test_case = True
+                        _item = _item[0]
+                else: raise RuntimeError
             except:
-                _item = extract_pytest_file_names(test_reports, chat_env.env_dict['directory'])[0]
+                _item = extract_pytest_file_names(test_reports, chat_env.env_dict['directory'])
+                if len(_item):
+                    find_test_case = True
+                    _item = _item[0]
+            
             context = ''
-            if _item[0] in chat_env.codes.codebooks:
-                _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
-                context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
-                                                                "python" if _item[0].endswith(".py") else _item[0].split(".")[
-                                                                    -1], _content)
+            if find_test_case:
+                if _item[0] in chat_env.codes.codebooks:
+                    _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
+                    context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
+                                                                    "python" if _item[0].endswith(".py") else _item[0].split(".")[
+                                                                        -1], _content)
+            if len(context) == 0:
+                context = chat_env.codes.codebooks[file_names[0]]
             self.phase_env.update({
                 'failed_test_case': context
             })
@@ -1909,12 +2006,14 @@ def extract_file_names_and_lines(traceback_str, directory):
     matches = re.finditer(file_name_pattern, traceback_str)
     
     # Extract file names from the matches
+    has_match = False
     for match in matches:
+        has_match = True
         filename = match.group(1)
         if filename not in existing_files: continue
         results.append((filename, match.group(2), match.group(3)))
-    
-    return results
+    if has_match: return results
+
 def extract_pytest_file_names(traceback, directory):
     lines = traceback.splitlines()
     file_name_pattern = r'File "(.*?)"'
