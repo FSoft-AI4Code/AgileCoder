@@ -341,11 +341,12 @@ class Codes:
                 total_changed_lines +=  "```\n" + unified_diff + "\n```\n"
 
                 log_and_print_online(update_codes_content)
-            
+                log_and_print_online('FILE==' + str(corres_key) + '--OLD==' + key)
                 self.codebooks[corres_key or key] = new_codes.codebooks[key]
                 changed_files.append(corres_key or key)
 
             flag = True
+        log_and_print_online('AFTERCODE==:' + str(self.codebooks.keys()))
         self.total_changed_lines = total_changed_lines
         self.changed_files = changed_files
         self.all_changed_files.update(self.changed_files)

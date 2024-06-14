@@ -1280,11 +1280,12 @@ class CodeReviewComment(Phase):
         total_error = []
         for filename, code in chat_env.codes.codebooks.items():
             if not filename.endswith('.py'): continue
+            if filename.startswith('test') or filename.split('.')[0].endswith('test'): continue
             errors = analyze_file(code)
             for v in errors.values():
                 total_error.extend(v)
         if len(total_error):
-            return ' '.join(total_error)
+            return ', '.join(total_error)
 
 
     def update_phase_env(self, chat_env):
@@ -1497,9 +1498,12 @@ class TestingPlan(Phase):
         # else:
         # codes = chat_env.get_codes(simplify_code = True, ignore_test_code = True, get_entry_point = True)
         chat_env.count_graph_call()
-        if chat_env.dependency_graph  is not None:
+        if chat_env.dependency_graph is not None:
             file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
-            codes = chat_env.get_changed_codes(file_names, True)
+            if len(file_names) == 0:
+                codes = chat_env.get_codes(ignore_test_code = False, simplify_code = True)
+            else:
+                codes = chat_env.get_changed_codes(file_names, True)
         else:
             codes = chat_env.get_codes(ignore_test_code = False, simplify_code = True)
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
@@ -1834,16 +1838,29 @@ class SprintTestErrorSummary(Phase):
                 "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly."
             ])
             is_failed_test_case = True
+            find_test_case = False
             try:
-                _item = extract_file_names_and_lines(test_reports, chat_env.env_dict['directory'])[0]
+                _item = extract_file_names_and_lines(test_reports, chat_env.env_dict['directory'])
+                if _item is not None:
+                    if len(_item):
+                        find_test_case = True
+                        _item = _item[0]
+                else: raise RuntimeError
             except:
-                _item = extract_pytest_file_names(test_reports, chat_env.env_dict['directory'])[0]
+                _item = extract_pytest_file_names(test_reports, chat_env.env_dict['directory'])
+                if len(_item):
+                    find_test_case = True
+                    _item = _item[0]
+            
             context = ''
-            if _item[0] in chat_env.codes.codebooks:
-                _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
-                context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
-                                                                "python" if _item[0].endswith(".py") else _item[0].split(".")[
-                                                                    -1], _content)
+            if find_test_case:
+                if _item[0] in chat_env.codes.codebooks:
+                    _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
+                    context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
+                                                                    "python" if _item[0].endswith(".py") else _item[0].split(".")[
+                                                                        -1], _content)
+            if len(context) == 0:
+                context = chat_env.codes.codebooks[file_names[0]]
             self.phase_env.update({
                 'failed_test_case': context
             })
@@ -2045,7 +2062,7 @@ def extract_pytest_file_names(traceback, directory):
             continue
         if line.startswith('____'): 
             function_name = re.findall(r"(\w+)", line)[1]
-            if filename is not None and filename in existing_filesssssss:
+            if filename is not None and filename in existing_files:
                 results.append((filename, None, function_name))
     return results
 
@@ -2196,16 +2213,29 @@ class TestModification(Phase):
             overwrite_prompt = True
             is_failed_test_case = True
             chat_env.count_test_case_call()
+            find_test_case = False
             try:
-                _item = extract_file_names_and_lines(test_reports, chat_env.env_dict['directory'])[0]
+                _item = extract_file_names_and_lines(test_reports, chat_env.env_dict['directory'])
+                if _item is not None:
+                    if len(_item):
+                        find_test_case = True
+                        _item = _item[0]
+                else: raise RuntimeError
             except:
-                _item = extract_pytest_file_names(test_reports, chat_env.env_dict['directory'])[0]
+                _item = extract_pytest_file_names(test_reports, chat_env.env_dict['directory'])
+                if len(_item):
+                    find_test_case = True
+                    _item = _item[0]
+            
             context = ''
-            if _item[0] in chat_env.codes.codebooks:
-                _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
-                context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
-                                                                "python" if _item[0].endswith(".py") else _item[0].split(".")[
-                                                                    -1], _content)
+            if find_test_case:
+                if _item[0] in chat_env.codes.codebooks:
+                    _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
+                    context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
+                                                                    "python" if _item[0].endswith(".py") else _item[0].split(".")[
+                                                                        -1], _content)
+            if len(context) == 0:
+                context = chat_env.codes.codebooks[file_names[0]]
             self.phase_env.update({
                 'failed_test_case': context
             })
