@@ -1807,6 +1807,15 @@ class SprintTestErrorSummary(Phase):
     def update_phase_env(self, chat_env):
         # chat_env.generate_images_from_codes()
         (exist_bugs_flag, test_reports) = chat_env.exist_bugs_ignoring_test_cases(chat_env)
+        attr_error = self.get_missing_attributes(chat_env)
+        if 'software run successfully without errors' in test_reports:
+            if attr_error is not None:
+                exist_bugs_flag = True
+                test_reports = "There are attribute errors: " + attr_error
+        else:
+            if attr_error is not None:
+                exist_bugs_flag = True
+                test_reports += attr_error
         # print("======test_reports", test_reports)
         log_and_print_online("======test_reports: " + test_reports)
         file_names = extract_file_names(test_reports, chat_env.env_dict['directory'])
@@ -1929,6 +1938,15 @@ class SprintTestErrorSummary(Phase):
                                "exist_bugs_flag": exist_bugs_flag})
         log_and_print_online("**[Test Reports]**:\n\n{}".format(test_reports))
 
+    def get_missing_attributes(self, chat_env):
+        total_error = []
+        for filename, code in chat_env.codes.codebooks.items():
+            if not filename.endswith('.py'): continue
+            errors = analyze_file(code)
+            for v in errors.values():
+                total_error.extend(v)
+        if len(total_error):
+            return ' '.join(total_error)
     def update_chat_env(self, chat_env) -> ChatEnv:
         # print("self.phase_env['test_reports']", self.phase_env['test_reports'])
         chat_env.env_dict['error_summary'] = self.seminar_conclusion

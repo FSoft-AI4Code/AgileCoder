@@ -357,7 +357,7 @@
       "'''",
       "an empty function",
       "'''",
-      "    pass",
+      "    print('an example')",
       "```",
       "Please note that the code should be fully functional. Ensure to implement all functions in detail. No placeholders (such as 'pass' in Python)."
     ]
@@ -421,7 +421,7 @@
       "'''",
       "an empty function",
       "'''",
-      "    pass",
+      "    print('an example')",
       "```",
       "You will start with the \"main\" file, then go to the ones that are imported by that file, and so on.",
       "Please note that the code should be fully functional. Ensure to implement all functions. No placeholders (such as 'pass' in Python)."
@@ -452,7 +452,7 @@
       "'''",
       "an empty function",
       "'''",
-      "    pass",
+      "    print('an example')",
       "```",
       "As the {assistant_role}, to make the code satisfy the required format, you should modify corresponding codes according to the comments and then return all codes strictly following the required format.",
       "Please note that you are not allowed to write new code or change the values of any fields and filenames, meaning that the new code is only different from the original code in terms of the format."
@@ -490,7 +490,7 @@
       "'''",
       "an empty function",
       "'''",
-      "    pass",
+      "    print('an example')",
       "```",
       "Please note that the code should be fully functional. Ensure to implement all functions. No placeholders (such as 'pass' in Python)."
     ]
@@ -854,7 +854,7 @@
       "'''",
       "an empty function",
       "'''",
-      "    pass",
+      "    print('an example')",
       "```",
       "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on failed test cases and the error summary. It is important to note that failed test case may be an incorrect test case, so you should comprehend the user's task, sprint backlog and sprint acceptance criteria to modify code correctly.",
       "Now, use the format exemplified above, and carefully review code and failed test cases to modify code correctly. Next, output complete and updated code files that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your response should include only the complete and updated code files and must not repeat unchanged files."
