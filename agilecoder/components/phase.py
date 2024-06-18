@@ -1959,6 +1959,7 @@ class SprintTestErrorSummary(Phase):
         total_error = []
         for filename, code in chat_env.codes.codebooks.items():
             if not filename.endswith('.py'): continue
+            if filename.startswith('test') or filename.split('.')[0].endswith('test'): continue
             errors = analyze_file(code)
             for v in errors.values():
                 total_error.extend(v)
