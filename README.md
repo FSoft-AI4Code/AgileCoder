@@ -35,15 +35,16 @@
 
 In AgileCoder, each agent is not just a participant but a stakeholder in the software development process, engaging in sprints that mimic real-world Agile practices. This setup enhances the adaptability and effectiveness of development workflows, aligning closely with modern software engineering demands. The system is designed to handle the complexities of real-world software projects, supporting incremental development and continuous integration seamlessly.
 
-<div align="center">
-  <img alt="demo" src="assets/overview.jpg"/>
-</div>
-
 
 Key Features of ***AgileCoder***:
 - Dynamic Role Assignment: Agents dynamically assume roles based on the project needs and user inputs, ensuring flexibility and optimal resource utilization.
 - Sprint-Based Development: The framework organizes development tasks into sprints, promoting rapid prototyping and frequent reassessment of project goals.
 - Dynamic Code Graph Generator: This innovative module automatically generates and updates a dependency graph whenever the codebase changes, enhancing the agents’ understanding of the code structure and interdependencies. This feature is crucial for maintaining high accuracy in code generation and modifications.
+
+
+<div align="center">
+  <img alt="demo" src="assets/overview.jpg"/>
+</div>
 
 
 ## Installation
