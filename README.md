@@ -30,7 +30,7 @@
 
 
 
-## Overview
+## 📖 Overview
 ***AgileCoder*** integrates Agile Methodology into a multi-agent system framework, enabling a collaborative environment where software agents assume specific Agile roles such as Product Manager, Scrum Master, Developer, Senior Developer, and Tester. These agents work together to develop software efficiently and iteratively, simulating a dynamic and adaptive software development team.
 
 In AgileCoder, each agent is not just a participant but a stakeholder in the software development process, engaging in sprints that mimic real-world Agile practices. This setup enhances the adaptability and effectiveness of development workflows, aligning closely with modern software engineering demands. The system is designed to handle the complexities of real-world software projects, supporting incremental development and continuous integration seamlessly.
@@ -41,11 +41,59 @@ Key Features of ***AgileCoder***:
 - Sprint-Based Development: The framework organizes development tasks into sprints, promoting rapid prototyping and frequent reassessment of project goals.
 - Dynamic Code Graph Generator: This innovative module automatically generates and updates a dependency graph whenever the codebase changes, enhancing the agents’ understanding of the code structure and interdependencies. This feature is crucial for maintaining high accuracy in code generation and modifications.
 
-
 <div align="center">
   <img alt="demo" src="assets/overview.jpg"/>
 </div>
 
+## 💻️ Quickstart
+To install the latest version of AgileCoder, please follow these steps:
+
+``
+pip install -e AgileCoder
+``
+
+
+### Configuration
+AgileCoder currently supports the Azure OpenAI service. To configure the necessary environment variables, please set the following:
+
+- **API_KEY**: Your Azure OpenAI API key.
+- **RESOURCE_ENDPOINT**: The endpoint URL for your Azure OpenAI resource.
+- **API_TYPE**: The type of Azure OpenAI API you are using (e.g., "azure").
+- **API_VERSION**: The version of the Azure OpenAI API you are using (e.g., "2022-12-01").
+- **API_ENGINE**: The name of the Azure OpenAI engine you want to use (e.g., "text-davinci-002").
+
+You can set these environment variables either in your system settings or by creating a ``.env`` file in the project root directory with the following format:
+```bash
+API_KEY=your_api_key
+RESOURCE_ENDPOINT=your_resource_endpoint
+API_TYPE=azure
+API_VERSION=2022-12-01
+API_ENGINE=text-davinci-002
+```
+  
+## Sample Command
+To generate software using AgileCoder, use the following command:
+
+``
+agilecoder --task "<your software requirements>"
+``
+
+Replace ``<your software requirements>`` with a description of the software you want AgileCoder to create.
+
+For example, to generate a Caro game in Python, run:
+
+``
+agilecoder --task "Create a Caro game in Python"
+``
+
+AgileCoder will process your requirements and generate the corresponding software based on the provided task description.
+You can specify additional options and flags to customize the behavior of AgileCoder. For more information on the available options, run:
+``
+agilecoder --help
+``
+
+This will display the help message with a list of supported options and their descriptions.
+Feel free to explore different software requirements and experiment with AgileCoder to generate various types of software projects tailored to your needs.
 # Dynamic Code Graph Generator (DCGG)
 <div align="center">
   <img alt="demo" src="assets/dcgg.png"/>
@@ -108,44 +156,14 @@ For **ProjectDev**, we evaluate the practical application of software projects g
 | Expenses (USD)            | 0.12    | **0.02**| 0.44          |
 | #Errors                   | 6       | 32      | **0**         |
 
-## Installation
-To install the latest version, please clone this repository, check out the branch *new-flow*, and then run the command
-
-``
-pip install -e AgileCoder
-``
 
 
-We currently supports Azure OpenAI service, so please set following environment variables:
 
-* API_KEY
-
-* RESOURCE_ENDPOINT
-
-* API_TYPE
-
-* API_VERSION
-
-* API_ENGINE
-## Get Started
-To produce your desired software, simply run the command
-
-``
-agilecoder --task "<your requirement about the product you want AgileCoder to create>"
-``
-
-For example,
-
-``
-agilecoder --task "create a caro game in python"
-``
-
-
-## Demo
+## ❓*What can AgileCoder do?*
 
 ![Demo](assets/demo.gif)
 
-*What can AgileCoder do?*
+
 
 <div align="center">
   <img alt="demo" src="assets/demo_image.png"/>
