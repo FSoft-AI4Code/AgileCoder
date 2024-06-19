@@ -82,11 +82,16 @@ agilecoder --task "create a caro game in python"
 
 ## Demo
 
+![Demo](assets/demo.gif)
+
 *What can AgileCoder do?*
 
 <div align="center">
   <img alt="demo" src="assets/demo_image.png"/>
 </div>
+
+More details can be found in [screenshots](assets/screenshots/)
+
 
 # Citing AgileCoder
 More details can be found in our [paper](https://arxiv.org/abs/2406.11912). 
