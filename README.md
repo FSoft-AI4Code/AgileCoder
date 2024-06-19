@@ -87,7 +87,7 @@ agilecoder --task "create a caro game in python"
   <img alt="demo" src="assets/demo_image.png"/>
 </div>
 
-# Citing The Vault
+# Citing AgileCoder
 More details can be found in our [paper](https://arxiv.org/abs/2406.11912). 
 
 If you're using AgileCoder in your research or applications, please cite using this BibTeX:
