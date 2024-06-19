@@ -70,7 +70,7 @@ API_VERSION=2022-12-01
 API_ENGINE=text-davinci-002
 ```
   
-## Sample
+## Sample Usage
 To generate software using AgileCoder, use the following command:
 
 ``
@@ -160,10 +160,8 @@ For **ProjectDev**, we evaluate the practical application of software projects g
 
 
 
-## ❓*What can AgileCoder do?*
-
-
-
+## Apps Gallery
+AgileCoder can generate a wide range of software with high accuracy; a gallery of executable software will be available soon.
 
 <div align="center">
   <img alt="demo" src="assets/demo_image.png"/>
