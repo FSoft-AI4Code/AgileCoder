@@ -109,7 +109,7 @@ For **ProjectDev**, we evaluate the practical application of software projects g
 | #Errors                   | 6       | 32      | **0**         |
 
 ## Installation
-To install the latest version, please clone this repository and then run the command
+To install the latest version, please clone this repository, check out the branch *new-flow*, and then run the command
 
 ``
 pip install -e AgileCoder
