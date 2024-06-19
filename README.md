@@ -49,9 +49,13 @@ Key Features of ***AgileCoder***:
 ## 💻️ Quickstart
 To install the latest version of AgileCoder, please follow these steps:
 
-``
-pip install -e AgileCoder
-``
+ 1. Clone this repository and check out the branch *new-flow*,
+ 2. Run the command
+
+    ``
+    pip install -e AgileCoder
+    ``
+
 
 
 ### Configuration
@@ -178,9 +182,9 @@ More details can be found in our [paper](https://arxiv.org/abs/2406.11912).
 
 If you're using AgileCoder in your research or applications, please cite using this BibTeX:
 ```bibtex
-@article{minh2024agile,
+@article{nguyen2024agilecoder,
   title={AgileCoder: Dynamic Collaborative Agents for Software Development based on Agile Methodology},
-  author={Minh Huynh Nguyen , Thang Phan Chau , Phong X. Nguyen , Nghi D. Q. Bui},
+  author={Minh Huynh Nguyen and Thang Phan Chau and Phong X. Nguyen and Nghi D. Q. Bui},
   journal={arXiv preprint arXiv:2406.11912},
   year={2024}
 }
