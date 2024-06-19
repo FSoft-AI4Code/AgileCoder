@@ -73,17 +73,17 @@ API_ENGINE=text-davinci-002
 ## Sample Usage
 To generate software using AgileCoder, use the following command:
 
-``
+```bash
 agilecoder --task "<your software requirements>"
-``
+```
 
 Replace ``<your software requirements>`` with a description of the software you want AgileCoder to create.
 
 For example, to generate a Caro game in Python, run:
 
-``
+```bash
 agilecoder --task "Create a Caro game in Python"
-``
+```
 
 AgileCoder will process your requirements and generate the corresponding software based on the provided task description.
 You can specify additional options and flags to customize the behavior of AgileCoder. For more information on the available options, run:
