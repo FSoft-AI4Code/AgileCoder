@@ -23,23 +23,22 @@
  </div>   
     
 ## Table of Contents
-  - [Introduction](#introduction)
-  - [Installation](#installation-guide)
-  - [Getting Started](#getting-started)
-  - [License](#license)
-## Demo
+  - [Overview](#overview)
+  - [Installation](#installation)
+  - [Get Started](#get-started)
+  - [Demo](#demo)
 
-What can AgileCoder do?
-
-<div align="center">
-  <img alt="license" src="assets/demo_image.png"/>
-</div>
 
 
 ## Overview
-***AgileCoder*** integrates Agile Methodology into a multi-agent system framework, enabling a collaborative environment where software agents assume specific Agile roles such as Product Owner, Developer, Reviewer, and Tester. These agents work together to develop software efficiently and iteratively, simulating a dynamic and adaptive software development team.
+***AgileCoder*** integrates Agile Methodology into a multi-agent system framework, enabling a collaborative environment where software agents assume specific Agile roles such as Product Manager, Scrum Master, Developer, Senior Developer, and Tester. These agents work together to develop software efficiently and iteratively, simulating a dynamic and adaptive software development team.
 
 In AgileCoder, each agent is not just a participant but a stakeholder in the software development process, engaging in sprints that mimic real-world Agile practices. This setup enhances the adaptability and effectiveness of development workflows, aligning closely with modern software engineering demands. The system is designed to handle the complexities of real-world software projects, supporting incremental development and continuous integration seamlessly.
+
+<div align="center">
+  <img alt="demo" src="assets/overview.jpg"/>
+</div>
+
 
 Key Features of ***AgileCoder***:
 - Dynamic Role Assignment: Agents dynamically assume roles based on the project needs and user inputs, ensuring flexibility and optimal resource utilization.
@@ -54,13 +53,6 @@ To install the latest version, please clone this repository and then run the com
 pip install -e AgileCoder
 ``
 
-Our library is now available on Pypi, so it can be easily installed by
-
-``
-pip install agilecoder
-``
-
-Note: The current version available on PyPI does not support the demonstration 
 
 We currently supports Azure OpenAI service, so please set following environment variables:
 
@@ -85,9 +77,12 @@ For example,
 ``
 agilecoder --task "create a caro game in python"
 ``
-## Demo
-To begin showcasing the Flask app, navigate to the directory `agilecoder/online_log` and execute the following command:
 
-``
-python app.py
-``
+
+## Demo
+
+*What can AgileCoder do?*
+
+<div align="center">
+  <img alt="demo" src="assets/demo_image.png"/>
+</div>
