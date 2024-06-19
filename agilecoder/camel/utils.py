@@ -140,17 +140,18 @@ def openai_api_key_required(func: F) -> F:
 
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        from agilecoder.camel.agents.chat_agent import ChatAgent
-        if not isinstance(self, ChatAgent):
-            raise ValueError("Expected ChatAgent")
-        if self.model == ModelType.STUB:
-            return func(self, *args, **kwargs)
-        elif 'OPENAI_API_KEY' in os.environ or 'API_KEY' in os.environ:
-            return func(self, *args, **kwargs)
-        elif 'CLAUDE' in os.environ:
-            return func(self, *args, **kwargs)
-        else:
-            raise ValueError('OpenAI API key not found.')
+        return func(self, *args, **kwargs)
+        # from agilecoder.camel.agents.chat_agent import ChatAgent
+        # if not isinstance(self, ChatAgent):
+        #     raise ValueError("Expected ChatAgent")
+        # if self.model == ModelType.STUB:
+        #     return func(self, *args, **kwargs)
+        # elif 'OPENAI_API_KEY' in os.environ or 'API_KEY' in os.environ:
+        #     return func(self, *args, **kwargs)
+        # elif 'CLAUDE' in os.environ:
+        #     return func(self, *args, **kwargs)
+        # else:
+        #     raise ValueError('OpenAI API key not found.')
 
     return wrapper
 

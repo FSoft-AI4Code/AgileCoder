@@ -240,16 +240,16 @@
       "\"{all_done_tasks}\"",
       "Current undone tasks:",
       "\"{all_undone_tasks}\"",
-      "As the {assistant_role}, to satisfy the user's demands, you should carefully decide whether to conclude the project or create a next sprint based on the product backlog, acceptance criteria, done works and undone works.",
-      "Specifically, you compare done works with the product backlog to determine whether any items in the product backlog or acceptance criteria are incomplete, and you carefully review undone works to check if the program has any errors.", 
-      "When all tasks in the product backlog and acceptance criteria are fully accomplished and the program is completely error-free, you should end the project by returning the response with the content: \"<INFO> DONE.\".",
-      "Otherwise, your answer includes the content: \"<INFO> UNDONE.\", indicating that the product backlog has not been accomplished or the program has some existing bugs, so you must create a next sprint to complete remaining tasks and fix all existing bugs.",
-      "Importantly, you are not allowed to conclude the project if there is any existing bug.",
-      "Think step by step and reason yourself to the right decisions before making a decision to make sure we get it right. Your answer should include reasons to justify your decision.",
-      "Additionally, you must adhere to the following regulations:",
-      "\t1) the project is concluded only if all the tasks in the product backlog and acceptance criteria are accomplished without any errors,",
-      "\t2) if the software has any bugs and errors, you should not conclude the project, and you should focus on making the software executable successfully.",
-      "Note that your answer must follow the required format above."
+      "As the {assistant_role}, your responsibilities are to:",
+      "\t1) Evaluate Project Status: Determine whether to conclude the project or create the next sprint based on the product backlog, acceptance criteria, current done tasks, and current undone tasks.",
+      "\t2) Compare and Review: Compare the current done tasks with the product backlog to identify any incomplete items, and review the undone tasks to check for any existing errors in the program.",
+      "\t3) Decision Making: If all tasks in the product backlog and acceptance criteria are fully accomplished and the program is completely error-free, end the project with the response: \"<INFO> DONE.\". If any item in the product backlog is incomplete or the program has existing bugs, respond with: \"<INFO> UNDONE.\", indicating the need for a next sprint to complete the remaining tasks and fix all existing bugs.",
+      "There are regulations to follow:",
+      "\t1) The project is concluded only if all tasks in the product backlog and acceptance criteria are accomplished without any errors.",
+      "\t2) If there are any bugs or errors, you must not conclude the project and should focus on making the software executable successfully.",
+      "\t3) Proposing new tasks different from the product backlog is prohibited.",
+      "Think step by step, reason carefully, and justify your decision. Your answer should include the reasons for your decision.",
+      "Note: Your response must follow the required format."
     ]
   },
   "NextSprintBacklogModification": {
@@ -286,30 +286,30 @@
     "assistant_role_name": "Product Owner",
     "user_role_name": "Development Team",
     "phase_prompt": [
-      "According to the user's task, our software designs, the sprint backlog, our developed source code, and corresponding test reports and summaries are listed below: ",
+      "According to the user's task, our software designs, sprint backlog, acceptance criteria, function signatures and docstrings of our developed source code, and corresponding test reports and summaries are listed below: ",
       "Task: \"{task}\".",
       "Modality: \"{modality}\".",
       "Programming Language: \"{language}\"",
       "Sprint backlog:\n\"{current_programming_task}\"",
       "Sprint acceptance criteria:\n\"{current_acceptance_criteria}\"",
-      "Source Codes:",
+      "Function Signatures and Docstrings of Source Codes:",
       "\"{codes}\"",
       "Test Reports of Source Codes:",
       "\"{test_reports}\"",
       "Error Summary of Test Reports:",
       "\"{error_summary}\"",
-      "To complete the current sprint, we have addressed the sprint backlog and acceptance criteria. We have implemented and tested the source code, and produced test reports and error summaries.",
+      "To complete the current sprint, we have addressed the sprint backlog and acceptance criteria. We have implemented and tested the source code, and produced test reports and error summaries. Importantly, the provided code is simplified, containing only function signatures and docstrings without detailed implementations.",
       "As the {assistant_role}, it is now time to review each item in the sprint backlog to determine its completion status.",
       "Your tasks are as below:",
-      "\t1) Review each item in the sprint backlog and acceptance criteria,",
-      "\t2) Categorize each item as Done Work or Undone Work,",
-      "\t3) Review test reports and error summaries to idenitify any existing bugs or failed test cases as Undone Work.",
+      "\t1) Review Sprint Backlog, Acceptance Criteria, Simplified Source Code, Test Reports, and Error Summaries: Examine each item in the sprint backlog and the acceptance criteria, and then compare them with the source code to check which items are done successfully or incomplete,",
+      "\t2) Categorize Work: after reviewing, classify each item as either Done Work or Undone Work. An item is considered Done if it is implemented successfully without bugs; otherwise, it should be categorized as Undone.",
+      "\t3) Identify Bugs and Failed Test Cases: Analyze the test reports and error summaries to identify any existing bugs or failed test cases, categorizing these as Undone Work,",
       "Please provide your answer in the following format:",
       "Done Work:",
       "DONE_WORK",
       "Undone Work:",
       "UNDONE_WORK",
-      "where DONE_WORK are carefully completed and tested works, UNDONE_WORK includes unfinished works or existing bugs."
+      "where DONE_WORK includes carefully completed and tested works, UNDONE_WORK includes unfinished works or existing bugs."
     ]
   },
   "RolesEngagement": {
@@ -798,13 +798,13 @@
     "assistant_role_name": "Programmer",
     "user_role_name": "Software Test Engineer",
     "phase_prompt": [
-      "Our potentially buggy source codes and corresponding test reports are listed below: ",
+      "Here is the information about the function signatures, docstrings of the source code, and the corresponding test report:",
       "Programming Language: \"{language}\"",
-      "Source Codes:",
+      "Function Signatures and Docstrings of Source Codes:",
       "\"{codes}\"",
       "Test Reports of Source Codes:",
       "\"{test_reports}\"",
-      "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly."
+      "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly. Additionally, be aware that the provided code is simplified, containing only function signatures and docstrings without detailed implementations."
     ]
   },
   "TestingPlan": {

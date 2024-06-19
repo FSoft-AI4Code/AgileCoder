@@ -1244,6 +1244,11 @@ class AttributeChecker(ast.NodeVisitor):
             if isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) and target.value.id == 'self':
                 self.class_attrs.append(target.attr)
         self.generic_visit(node)
+    def visit_AnnAssign(self, node):
+        target = node.target
+        if isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) and target.value.id == 'self':
+            self.class_attrs.append(target.attr)
+        self.generic_visit(node)
 
     def visit_Attribute(self, node):
         """Check if attributes accessed are defined in the class."""
