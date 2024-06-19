@@ -25,8 +25,8 @@
     
 ## Table of Contents
   - [Overview](#overview)
-  - [Installation](#installation)
-  - [Get Started](#get-started)
+  - [Quick Start](#quick-start)
+  - [Dynamic Code Graph Generator](#dynamic-code-graph-generator)
   - [Demo](#demo)
 
 
