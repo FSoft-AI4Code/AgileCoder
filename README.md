@@ -47,16 +47,10 @@ Key Features of ***AgileCoder***:
 </div>
 
 ## 💻️ Quickstart
-To install the latest version of AgileCoder, please follow these steps:
-
- 1. Clone this repository and check out the branch *new-flow*,
- 2. Run the command
-
-    ``
-    pip install -e AgileCoder
-    ``
-
-
+AgileCoder can be installed easily through pip:
+``
+pip install -e AgileCoder
+``
 
 ### Configuration
 AgileCoder currently supports the Azure OpenAI service. To configure the necessary environment variables, please set the following:
