@@ -9,3 +9,6 @@ dist/
 agilecoder.egg-info/
 key.json
 ui/
+.env*
+*.json
+*.sh

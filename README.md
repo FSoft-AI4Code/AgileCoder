@@ -27,6 +27,14 @@
   - [Installation](#installation-guide)
   - [Getting Started](#getting-started)
   - [License](#license)
+## Demo
+
+What can AgileCoder do?
+
+<div align="center">
+  <img alt="license" src="assets/demo_image.png"/>
+</div>
+
 
 ## Overview
 ***AgileCoder*** integrates Agile Methodology into a multi-agent system framework, enabling a collaborative environment where software agents assume specific Agile roles such as Product Owner, Developer, Reviewer, and Tester. These agents work together to develop software efficiently and iteratively, simulating a dynamic and adaptive software development team.
