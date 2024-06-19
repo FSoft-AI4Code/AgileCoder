@@ -105,20 +105,13 @@ Feel free to explore different software requirements and experiment with AgileCo
 </div>
 We propose Dynamic Code Graph Generator, a static-analysis based module that generates a Code Dependency Graph whenever agents make changes to the codebase. The Code Dependency Graph captures the relationships across files, serving as a reliable source for agents to retrieve the most relevant contexts for generating and modifying code accurately within the workflow.
 
-**Key Features**:
+**Key Benefits**:
 
 - Real-time graph generation: The Dynamic Code Graph Generator will analyze the codebase and generate an updated Code Dependency Graph whenever changes are made by the agents.
 - Dependency analysis: The module will identify and capture dependencies between files, functions, and modules within the codebase, providing a comprehensive overview of the relationships among various code components.
 - Context retrieval: Agents will be able to query the Code Dependency Graph to retrieve the most relevant contexts (files, functions, or modules) related to the code being generated or edited. This will ensure that the agents have access to the necessary information to make accurate code modifications.
 - Language-agnostic: The Dynamic Code Graph Generator will be designed to support multiple programming languages, making it adaptable to different codebases and development environments.
 - Scalability: The module will be optimized to handle large codebases efficiently, ensuring that the graph generation process remains fast and responsive even as the codebase grows.
-
-**Benefits**:
-
-- Improved code accuracy: By providing agents with the most relevant contexts, the Dynamic Code Graph Generator will enable them to generate and modify code more accurately, reducing the likelihood of introducing errors or inconsistencies.
-- Enhanced collaboration: The Code Dependency Graph will facilitate better collaboration among agents by providing a shared understanding of the codebase's structure and relationships.
-- Increased efficiency: With quick access to relevant contexts, agents will be able to complete code generation and modification tasks more efficiently, streamlining the overall development workflow.
-- Maintainability: The Dynamic Code Graph Generator will help maintain the codebase's integrity by ensuring that agents have a clear understanding of the dependencies and relationships within the code.
 
 # Evaluation 
 We will evaluate the performance of AgileCoder on two types of datasets to assess its effectiveness in generating code for different scenarios:
