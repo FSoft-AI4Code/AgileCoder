@@ -70,7 +70,7 @@ API_VERSION=2022-12-01
 API_ENGINE=text-davinci-002
 ```
   
-## Sample Command
+## Sample
 To generate software using AgileCoder, use the following command:
 
 ``
@@ -93,6 +93,15 @@ agilecoder --help
 
 This will display the help message with a list of supported options and their descriptions.
 Feel free to explore different software requirements and experiment with AgileCoder to generate various types of software projects tailored to your needs.
+
+## Sample Results
+
+### Terminal 
+![Demo](assets/demo.gif)
+
+### Web UI
+[![Watch the video](assets/thumbnail.png)](assets/demo_UI.webm)
+
 # Dynamic Code Graph Generator (DCGG)
 <div align="center">
   <img alt="demo" src="assets/dcgg.png"/>
@@ -153,7 +162,6 @@ For **ProjectDev**, we evaluate the practical application of software projects g
 
 ## ❓*What can AgileCoder do?*
 
-![Demo](assets/demo.gif)
 
 
 
