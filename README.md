@@ -86,3 +86,24 @@ agilecoder --task "create a caro game in python"
 <div align="center">
   <img alt="demo" src="assets/demo_image.png"/>
 </div>
+
+# Citing The Vault
+More details can be found in our [paper](https://arxiv.org/abs/2406.11912). 
+
+If you're using AgileCoder in your research or applications, please cite using this BibTeX:
+```bibtex
+@article{minh2024agile,
+  title={AgileCoder: Dynamic Collaborative Agents for Software Development based on Agile Methodology},
+  author={Minh Huynh Nguyen , Thang Phan Chau , Phong X. Nguyen , Nghi D. Q. Bui},
+  journal={arXiv preprint arXiv:2406.11912},
+  year={2024}
+}
+```
+
+# Contact us
+If you have any questions, comments or suggestions, please do not hesitate to contact us.
+- Website: [fpt-aicenter](https://www.fpt-aicenter.com/ai-residency/)
+- Email: support.ailab@fpt.com
+
+# License
+[MIT License](LICENSE)
