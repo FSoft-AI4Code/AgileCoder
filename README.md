@@ -5,21 +5,22 @@
     <br>
 <p>
 <div align="center">
-  <a href="https://opensource.org/license/apache-2-0/">
+<!--   <a href="https://opensource.org/license/apache-2-0/">
   <img alt="license" src="https://img.shields.io/badge/License-Apache%202.0-green.svg"/>
   </a>
    <a href="https://www.python.org/downloads/release/python-380/">
   <img alt="python" src="https://img.shields.io/badge/python-3.8+-yellow.svg"/>
-  </a> 
+  </a>  -->
 
-
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT) [![Python 3.8](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/) [![arXiv](https://img.shields.io/badge/arXiv-2305.06156-b31b1b.svg)](https://arxiv.org/abs/2406.11912)
     
 # AgileCoder: A Multi-Agents Software Development Framework based on Agile Methodology
 
 <!-- 
 [![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](https://github.com/bdqnghi/CodeTF_personal/blob/main/LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/release/python-390/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) -->
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) 
+-->
  </div>   
     
 ## Table of Contents
