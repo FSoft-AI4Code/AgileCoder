@@ -37,6 +37,8 @@
 
 Central to AgileCoder is the _Dynamic Code Graph Generator_ module, which generates a code graph that captures the dependencies within the current codebase. This graph is dynamically updated whenever the code changes, enabling agents to accurately retrieve relevant contexts from the codebase. By providing accurate context retrieval, **AgileCoder ensures more precise code generation and refinement throughout the workflow, setting it apart from state-of-the-art methods like ChatDev or MetaGPT, which often simply include the entire existing codebase in prompts without considering specific contexts.  The evaluation using HumanEval, MBPP, and our manually curated datasets on complex software requirements (named ProjectDev) to produce complete software demonstrates that we outperform ChatDev and MetaGPT.**
 
+Website: https://fsoft-ai4code.github.io/agilecoder/
+
 <div align="center">
   <img alt="demo" src="assets/overview.jpg"/>
 </div>
