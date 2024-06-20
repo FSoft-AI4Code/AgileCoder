@@ -32,15 +32,9 @@
 
 
 ## 📖 Overview
-***AgileCoder*** integrates Agile Methodology into a multi-agent system framework, enabling a collaborative environment where software agents assume specific Agile roles such as Product Manager, Scrum Master, Developer, Senior Developer, and Tester. These agents work together to develop software efficiently and iteratively, simulating a dynamic and adaptive software development team.
-
-In AgileCoder, each agent is not just a participant but a stakeholder in the software development process, engaging in sprints that mimic real-world Agile practices. This setup enhances the adaptability and effectiveness of development workflows, aligning closely with modern software engineering demands. The system is designed to handle the complexities of real-world software projects, supporting incremental development and continuous integration seamlessly.
-
-
-Key Features of ***AgileCoder***:
-- Dynamic Role Assignment: Agents dynamically assume roles based on the project needs and user inputs, ensuring flexibility and optimal resource utilization.
-- Sprint-Based Development: The framework organizes development tasks into sprints, promoting rapid prototyping and frequent reassessment of project goals.
-- Dynamic Code Graph Generator: This innovative module automatically generates and updates a dependency graph whenever the codebase changes, enhancing the agents’ understanding of the code structure and interdependencies. This feature is crucial for maintaining high accuracy in code generation and modifications.
+***AgileCoder*** is a novel multi-agent framework for software development that draws inspiration from the widely-used Agile Methodology in professional software engineering. The key innovation lies in its task-oriented approach, where instead of assigning fixed roles to agents, **AgileCoder mimics real-world software development by creating a backlog of tasks and dividing the development process into sprints, with the backlog being dynamically updated at each sprint. 
+**
+entral to AgileCoder is the _Dynamic Code Graph Generator_ module, which generates a code graph that captures the dependencies within the current codebase. This graph is dynamically updated whenever the code changes, enabling agents to accurately retrieve relevant contexts from the codebase. By providing accurate context retrieval, **AgileCoder ensures more precise code generation and refinement throughout the workflow, setting it apart from state-of-the-art methods like ChatDev or MetaGPT, which often simply include the entire existing codebase in prompts without considering specific contexts.  The evaluation using HumanEval, MBPP, and our manually curated datasets on complex software requirements (named ProjectDev) to produce complete software demonstrates that we outperform ChatDev and MetaGPT.**
 
 <div align="center">
   <img alt="demo" src="assets/overview.jpg"/>
