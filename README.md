@@ -25,9 +25,10 @@
     
 ## Table of Contents
   - [Overview](#overview)
+      - [Dynamic Code Graph Generator](#dynamic-code-graph-generator)     
   - [Quick Start](#quick-start)
-  - [Dynamic Code Graph Generator](#dynamic-code-graph-generator)
-  - [Demo](#demo)
+  - [Evaluation](evaluation)
+  - [Apps Gallery](#apps-gallery)
 
 
 
@@ -42,6 +43,20 @@ Website: https://fsoft-ai4code.github.io/agilecoder/
 <div align="center">
   <img alt="demo" src="assets/overview.jpg"/>
 </div>
+
+## Dynamic Code Graph Generator (DCGG)
+<div align="center">
+  <img alt="demo" src="assets/dcgg.png"/>
+</div>
+We propose Dynamic Code Graph Generator, a static-analysis based module that generates a Code Dependency Graph whenever agents make changes to the codebase. The Code Dependency Graph captures the relationships across files, serving as a reliable source for agents to retrieve the most relevant contexts for generating and modifying code accurately within the workflow.
+
+**Key Benefits**:
+
+- Real-time graph generation: The Dynamic Code Graph Generator will analyze the codebase and generate an updated Code Dependency Graph whenever changes are made by the agents.
+- Dependency analysis: The module will identify and capture dependencies between files, functions, and modules within the codebase, providing a comprehensive overview of the relationships among various code components.
+- Context retrieval: Agents will be able to query the Code Dependency Graph to retrieve the most relevant contexts (files, functions, or modules) related to the code being generated or edited. This will ensure that the agents have access to the necessary information to make accurate code modifications.
+- Language-agnostic: The Dynamic Code Graph Generator will be designed to support multiple programming languages, making it adaptable to different codebases and development environments.
+- Scalability: The module will be optimized to handle large codebases efficiently, ensuring that the graph generation process remains fast and responsive even as the codebase grows.
 
 ## 💻️ Quickstart
 AgileCoder can be installed easily through pip:
@@ -99,19 +114,7 @@ Feel free to explore different software requirements and experiment with AgileCo
 ### Web UI
 [![Watch the video](assets/thumbnail.png)](assets/demo_UI.webm)
 
-# Dynamic Code Graph Generator (DCGG)
-<div align="center">
-  <img alt="demo" src="assets/dcgg.png"/>
-</div>
-We propose Dynamic Code Graph Generator, a static-analysis based module that generates a Code Dependency Graph whenever agents make changes to the codebase. The Code Dependency Graph captures the relationships across files, serving as a reliable source for agents to retrieve the most relevant contexts for generating and modifying code accurately within the workflow.
 
-**Key Benefits**:
-
-- Real-time graph generation: The Dynamic Code Graph Generator will analyze the codebase and generate an updated Code Dependency Graph whenever changes are made by the agents.
-- Dependency analysis: The module will identify and capture dependencies between files, functions, and modules within the codebase, providing a comprehensive overview of the relationships among various code components.
-- Context retrieval: Agents will be able to query the Code Dependency Graph to retrieve the most relevant contexts (files, functions, or modules) related to the code being generated or edited. This will ensure that the agents have access to the necessary information to make accurate code modifications.
-- Language-agnostic: The Dynamic Code Graph Generator will be designed to support multiple programming languages, making it adaptable to different codebases and development environments.
-- Scalability: The module will be optimized to handle large codebases efficiently, ensuring that the graph generation process remains fast and responsive even as the codebase grows.
 
 # Evaluation 
 We will evaluate the performance of AgileCoder on two types of datasets to assess its effectiveness in generating code for different scenarios:
