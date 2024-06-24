@@ -28,8 +28,7 @@ install_requires=[
         "anthropic",
         "pygame",
         "numpy",
-        "tree-sitter",
-        "tree-sitter-python @ git+https://github.com/tree-sitter/tree-sitter-python.git@master"
+        "tree-sitter"
       ],
 packages=find_packages(),
 zip_safe=False)

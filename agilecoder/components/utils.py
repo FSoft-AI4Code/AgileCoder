@@ -231,10 +231,14 @@ def extract_function_from_class(file_content, function_names):
         for node in tree.body:
             if isinstance(node, ast.ClassDef):
                 for class_node in node.body:
+                    # print('class node', class_node.col_offset)
                     if isinstance(class_node, ast.FunctionDef) and class_node.name == function_name:
-                        function_code = ast.get_source_segment(file_content, class_node)
+                        _function_code_lines = ast.get_source_segment(file_content, class_node).splitlines()
+                        _function_code_lines = list(map(lambda x: ' ' * class_node.col_offset + x, _function_code_lines))
+                        function_code = '\n'.join(_function_code_lines)
                         break
         if function_code is None: return file_content
         function_code_lines.extend(function_code.splitlines())
+    
     results = class_code + function_code_lines
     return '\n'.join(results)
