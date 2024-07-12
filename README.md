@@ -43,6 +43,11 @@ Website: https://fsoft-ai4code.github.io/agilecoder/
   <img alt="demo" src="assets/overview.jpg"/>
 </div>
 
+## 💻️ Quickstart
+AgileCoder can be installed easily through pip:
+```python
+pip install -e AgileCoder
+```
 
 ### Configuration
 AgileCoder currently supports the Azure OpenAI service. To configure the necessary environment variables, please set the following:
@@ -86,12 +91,7 @@ agilecoder --help
 This will display the help message with a list of supported options and their descriptions.
 Feel free to explore different software requirements and experiment with AgileCoder to generate various types of software projects tailored to your needs.
 
-## Sample Results
-
-### Terminal 
-![Demo](assets/demo.gif)
-
-### Web UI
+## Demo Web UI
 [![Watch the video](assets/thumbnail.png)](assets/demo_UI.webm)
 
 
