@@ -22,7 +22,9 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) 
 -->
  </div>   
-    
+
+![Demo](assets/demo.gif)
+
 ## Table of Contents
   - [Overview](#overview)
       - [Dynamic Code Graph Generator](#dynamic-code-graph-generator)     
@@ -36,33 +38,14 @@
 ***AgileCoder*** is a novel multi-agent framework for software development that draws inspiration from the widely-used Agile Methodology in professional software engineering. The key innovation lies in its task-oriented approach, where instead of assigning fixed roles to agents, ***AgileCoder mimics real-world software development by creating a backlog of tasks and dividing the development process into sprints, with the backlog being dynamically updated at each sprint.***
 
 
-Central to AgileCoder is the _Dynamic Code Graph Generator_ module, which generates a code graph that captures the dependencies within the current codebase. This graph is dynamically updated whenever the code changes, enabling agents to accurately retrieve relevant contexts from the codebase. By providing accurate context retrieval, **AgileCoder ensures more precise code generation and refinement throughout the workflow, setting it apart from state-of-the-art methods like ChatDev or MetaGPT, which often simply include the entire existing codebase in prompts without considering specific contexts.  The evaluation using HumanEval, MBPP, and our manually curated datasets on complex software requirements (named ProjectDev) to produce complete software demonstrates that we outperform ChatDev and MetaGPT.**
-
 Website: https://fsoft-ai4code.github.io/agilecoder/
 
 <div align="center">
   <img alt="demo" src="assets/overview.jpg"/>
 </div>
 
-## Dynamic Code Graph Generator (DCGG)
-<div align="center">
-  <img alt="demo" src="assets/dcgg.png"/>
-</div>
-We propose Dynamic Code Graph Generator, a static-analysis based module that generates a Code Dependency Graph whenever agents make changes to the codebase. The Code Dependency Graph captures the relationships across files, serving as a reliable source for agents to retrieve the most relevant contexts for generating and modifying code accurately within the workflow.
 
-**Key Benefits**:
 
-- Real-time graph generation: The Dynamic Code Graph Generator will analyze the codebase and generate an updated Code Dependency Graph whenever changes are made by the agents.
-- Dependency analysis: The module will identify and capture dependencies between files, functions, and modules within the codebase, providing a comprehensive overview of the relationships among various code components.
-- Context retrieval: Agents will be able to query the Code Dependency Graph to retrieve the most relevant contexts (files, functions, or modules) related to the code being generated or edited. This will ensure that the agents have access to the necessary information to make accurate code modifications.
-- Language-agnostic: The Dynamic Code Graph Generator will be designed to support multiple programming languages, making it adaptable to different codebases and development environments.
-- Scalability: The module will be optimized to handle large codebases efficiently, ensuring that the graph generation process remains fast and responsive even as the codebase grows.
-
-## 💻️ Quickstart
-AgileCoder can be installed easily through pip:
-``
-pip install -e AgileCoder
-``
 
 ### Configuration
 AgileCoder currently supports the Azure OpenAI service. To configure the necessary environment variables, please set the following:
