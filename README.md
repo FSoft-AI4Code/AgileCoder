@@ -27,7 +27,6 @@
 
 ## Table of Contents
   - [Overview](#overview)
-      - [Dynamic Code Graph Generator](#dynamic-code-graph-generator)     
   - [Quick Start](#quick-start)
   - [Evaluation](evaluation)
   - [Apps Gallery](#apps-gallery)
@@ -43,8 +42,6 @@ Website: https://fsoft-ai4code.github.io/agilecoder/
 <div align="center">
   <img alt="demo" src="assets/overview.jpg"/>
 </div>
-
-
 
 
 ### Configuration
