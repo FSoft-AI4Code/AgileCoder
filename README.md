@@ -157,7 +157,7 @@ If you're using AgileCoder in your research or applications, please cite using t
 ```bibtex
 @article{nguyen2024agilecoder,
   title={AgileCoder: Dynamic Collaborative Agents for Software Development based on Agile Methodology},
-  author={Minh Huynh Nguyen and Thang Phan Chau and Phong X. Nguyen and Nghi D. Q. Bui},
+  author={Nguyen, Minh Huynh and Chau, Thang Phan and Nguyen, Phong X and Bui, Nghi DQ},
   journal={arXiv preprint arXiv:2406.11912},
   year={2024}
 }
