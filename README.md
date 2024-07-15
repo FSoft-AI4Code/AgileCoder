@@ -92,6 +92,9 @@ This will display the help message with a list of supported options and their de
 Feel free to explore different software requirements and experiment with AgileCoder to generate various types of software projects tailored to your needs.
 
 ## Demo Web UI
+
+![Demo](assets/demo_v2.gif)
+
 [![Watch the video](assets/thumbnail.png)](assets/demo_UI.webm)
 
 
