@@ -41,6 +41,7 @@ def dfs(adj_list, node, visited, result):
     result.append(node)
 
 def get_test_order(adj_list, testing_file_map):
+    if adj_list is None: return []
     def dfs(node, visited, stack):
         visited.add(node)
         for neighbor in adj_list.get(node, []):

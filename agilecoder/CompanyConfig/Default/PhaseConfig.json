@@ -10,6 +10,7 @@
       "Excel: can present information via .xlsx files.",
       "PDF: can present information via .pdf files.",
       "Website: can present personal resume, tutorial, products, or ideas, via .html files.",
+      "Web App: can implement web-based app, software, tool, etc, via python.",
       "Application: can implement visualized game, software, tool, etc, via python.",
       "Dashboard: can display a panel visualizing real-time information.",
       "Mind Map: can represent ideas, with related concepts arranged around a core concept.",

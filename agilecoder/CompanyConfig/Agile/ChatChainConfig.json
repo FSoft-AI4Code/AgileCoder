@@ -9,8 +9,8 @@
     {
       "phase": "LanguageChoose",
       "phaseType": "SimplePhase",
-      "max_turn_step": -1,
-      "need_reflect": "True"
+      "max_turn_step": 5,
+      "need_reflect": "False"
     },
     {
       "phase": "ProductBacklogCreating",
@@ -515,6 +515,7 @@
     "Code Reviewer",
     "Software Test Engineer",
     "User",
+    "Technical Lead",
     "Product Owner",
     "Development Team"
   ],

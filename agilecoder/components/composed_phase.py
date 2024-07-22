@@ -144,17 +144,18 @@ class ComposedPhase(ABC):
                     log_and_print_online(
                         f"**[Execute Detail]**\n\nexecute SimplePhase:[{phase}] in ComposedPhase:[{self.phase_name}], cycle {cycle_index}")
                     if phase in self.phases:
-                        self.phases[phase].phase_env = self.phase_env
-                        self.phases[phase].update_phase_env(chat_env)
+                        _phase = copy.deepcopy(self.phases[phase])
+                        _phase.phase_env = self.phase_env
+                        _phase.update_phase_env(chat_env)
                         
-                        if self.break_cycle(self.phases[phase].phase_env):
+                        if self.break_cycle(_phase.phase_env):
                             return chat_env
                         
                         if phase in ['ProductBacklogModification', 'SprintBacklogModification', 'SprintReview', 'NextSprintBacklogCreating']:
                             for i in range(3):
                                 try:
                                     _chat_env = copy.deepcopy(chat_env)
-                                    _chat_env = self.phases[phase].execute(_chat_env,
+                                    _chat_env = _phase.execute(_chat_env,
                                                                         self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
                                                                         need_reflect)
                                     chat_env = _chat_env
@@ -162,12 +163,12 @@ class ComposedPhase(ABC):
                                 except: 
                                     pass
                         else:
-                            chat_env = self.phases[phase].execute(chat_env,
+                            chat_env = _phase.execute(chat_env,
                                                                         self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
                                                                         need_reflect)
                         # print('@' * 20)
                         # print('self.phases[phase].phase_env', self.phases[phase].phase_env)
-                        if self.break_cycle(self.phases[phase].phase_env):
+                        if self.break_cycle(_phase.phase_env):
                             return chat_env
                         # chat_env = self.phases[phase].update_chat_env(chat_env)
                         if chat_env.env_dict.get('end-sprint', False):
@@ -331,6 +332,7 @@ class CodeAndFormat(ComposedPhase):
 
     def break_cycle(self, phase_env) -> bool:
         # print('phase_env', 'has_correct_format' in phase_env, phase_env.get('has_correct_format',  False))
+        if phase_env.get('allow_no_code', False): return True
         if 'has_correct_format' in phase_env and phase_env['has_correct_format']:
             return True
         else:
@@ -454,11 +456,12 @@ class BugFixing(ComposedPhase):
                     log_and_print_online(
                         f"**[Execute Detail]**\n\nexecute SimplePhase:[{phase}] in ComposedPhase:[{self.phase_name}]")
                     if phase in self.phases:
-                        self.phases[phase].phase_env = self.phase_env
+                        _phase = copy.deepcopy(self.phases[phase])
+                        _phase.phase_env = self.phase_env
                         if phase_item['phase'] != 'TestErrorSummary':
-                            self.phases[phase].update_phase_env(chat_env)
+                            _phase.update_phase_env(chat_env)
                      
-                        chat_env = self.phases[phase].execute(chat_env,
+                        chat_env = _phase.execute(chat_env,
                                                             self.chat_turn_limit_default if max_turn_step <= 0 else max_turn_step,
                                                             need_reflect)
                         log_and_print_online("chat_env.env_dict['test_reports']: " + chat_env.env_dict['test_reports'])

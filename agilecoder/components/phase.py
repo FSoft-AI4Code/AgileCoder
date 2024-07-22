@@ -344,21 +344,50 @@ class LanguageChoose(Phase):
                                "ideas": chat_env.env_dict['ideas']})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
-        if len(self.seminar_conclusion) > 0 and "<INFO>" in self.seminar_conclusion:
-            chat_env.env_dict['language'] = self.seminar_conclusion.split("<INFO>")[-1].lower().replace(".", "").strip()
-        elif len(self.seminar_conclusion) > 0:
-            chat_env.env_dict['language'] = self.seminar_conclusion.strip()
-        else:
-            chat_env.env_dict['language'] = "Python"
+        # if len(self.seminar_conclusion) > 0 and "<INFO>" in self.seminar_conclusion:
+        #     chat_env.env_dict['language'] = self.seminar_conclusion.split("<INFO>")[-1].lower().replace(".", "").strip()
+        # elif len(self.seminar_conclusion) > 0:
+        #     chat_env.env_dict['language'] = self.seminar_conclusion.strip()
+        # else:
+        #     chat_env.env_dict['language'] = "Python"
+        programming_languages = extract_pl_framework_text(self.seminar_conclusion, "Programming languages").strip()
+        frameworks = extract_pl_framework_text(self.seminar_conclusion, "Frameworks and libraries").strip()
+        chat_env.env_dict['language'] = programming_languages
+        chat_env.env_dict['frameworks'] = frameworks
+        # print('frameworks', frameworks)
+        # print('programming_languages', programming_languages)
         return chat_env
 
-import re
+class DesigningFolderStructure(Phase):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_phase_env(self, chat_env):
+        plain_product_backlog = '\n'.join(chat_env.env_dict['product-backlog'])
+        plain_acceptance_criteria = '\n'.join(chat_env.env_dict['acceptance-criteria'])
+        self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
+                               "modality": chat_env.env_dict['modality'],
+                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
+                                'plain_product_backlog': plain_product_backlog,
+                               'plain_acceptance_criteria': plain_acceptance_criteria,
+                               "ideas": chat_env.env_dict['ideas']})
+
+    def update_chat_env(self, chat_env) -> ChatEnv:
+        # if len(self.seminar_conclusion) > 0 and "<INFO>" in self.seminar_conclusion:
+        #     chat_env.env_dict['language'] = self.seminar_conclusion.split("<INFO>")[-1].lower().replace(".", "").strip()
+        # elif len(self.seminar_conclusion) > 0:
+        #     chat_env.env_dict['language'] = self.seminar_conclusion.strip()
+        # else:
+        #     chat_env.env_dict['language'] = "Python"
+        chat_env.env_dict['folder_structure'] = self.seminar_conclusion.strip().split('Folder structure:')[1].strip()
+        return chat_env
 
 def check_if_string_starts_with_number(text):
     pattern = r"^\d"
     if re.search(pattern,  text):
         return 1
-    elif text.strip().startswith('-'):
+    elif text.startswith('-'):
         return 2
     return 0
 def extract_trunk_text(text, keyword, is_lower = True):
@@ -375,7 +404,17 @@ def extract_trunk_text(text, keyword, is_lower = True):
         results.append(line)
     return '\n'.join(results)
     
-    
+def extract_pl_framework_text(text, keyword):
+    pattern = re.compile(r'{}:(.+?)(?=\bProgramming languages:|\bFrameworks and libraries:|\Z)'.format(keyword), re.DOTALL)
+    match = re.search(pattern, text)
+    text = match.group(1).strip()
+    lines = text.splitlines()
+    results = []
+    for i, line in enumerate(lines):
+        if len(line.strip()) ==  0: break
+        results.append(line)
+    return '\n'.join(results)
+
 class ProductBacklogCreating(Phase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -384,6 +423,7 @@ class ProductBacklogCreating(Phase):
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
+                               "frameworks": chat_env.env_dict['frameworks'],
                                "ideas": chat_env.env_dict['ideas']})
 
     def update_chat_env(self, chat_env) -> ChatEnv:
@@ -733,7 +773,7 @@ class WritingTestSuite(Phase):
 
     def update_phase_env(self, chat_env):
         gui = "" if not chat_env.config.gui_design \
-            else "The software should be equipped with graphical user interface (GUI) so that user can visually and graphically use it; so you must choose a GUI framework (e.g., in Python, you can implement GUI via tkinter, Pygame, Flexx, PyGUI, etc,)."
+            else "The software should be equipped with user interface (GUI) so that user can visually and graphically use it; so you must choose a UI framework (e.g., in Python, you can implement UI via streamlit for web apps, tkinter, Pygame, Flexx, PyGUI for desktop applications,)."
                 # print('chat_env', self.seminar_conclusion)
         # if chat_env.env_dict.get('num-sprints', 0) > 1:
         #     codes =  chat_env.get_changed_codes(find_ancestors(chat_env.dependency_graph, chat_env.get_all_changed_files()),  True) 
@@ -907,6 +947,7 @@ class SprintReview(Phase):
     def update_chat_env(self, chat_env) -> ChatEnv:
         # chat_env.env_dict['review_comments'] = self.seminar_conclusion
         if len(self.seminar_conclusion):
+            # print('self.seminar_conclusion', self.seminar_conclusion)
             coms = self.seminar_conclusion.split('Undone Work:')
             undone_work = coms[1].strip()
             _undone_work = []
@@ -928,6 +969,7 @@ class SprintReview(Phase):
         chat_env.env_dict['done-works'].append(done_work)
         done_work_lines = '\n'.join(chat_env.env_dict['done-works']).splitlines()
         _lines = []
+        idx = 0
         for i, line in enumerate(done_work_lines):
             if len(line.strip()) == 0: continue
             flag = check_if_string_starts_with_number(line)
@@ -939,7 +981,9 @@ class SprintReview(Phase):
                 _lines.append(line)
             while not _lines[-1][0].isalpha():
                 _lines[-1] = _lines[-1][1:]
-            _lines[-1] = str(i + 1) + '. ' + _lines[-1]
+            if _lines[-1][0] != ' ':
+                _lines[-1] = str(idx + 1) + '. ' + _lines[-1]
+                idx += 1
         chat_env.env_dict['done-works'] = _lines
         chat_env.env_dict['undone-works'] = [undone_work]
         # chat_env.env_dict['undone-works'].append(undone_work)
@@ -1193,8 +1237,6 @@ def check_empty_methods_from_text(class_text):
         return len(empty_methods) > 0
     except: return False
 
-import ast
-import os
 
 class AttributeChecker(ast.NodeVisitor):
     def __init__(self):
@@ -1522,10 +1564,26 @@ class TestingPlan(Phase):
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         if len(self.seminar_conclusion) > 0:
-            commands = re.findall(r"python (\w+\.py)", self.seminar_conclusion)
-            existing_commands = list(filter(lambda x: x in chat_env.codes.codebooks, commands))
+            # commands = re.findall(r"python (\w+\.py)", self.seminar_conclusion)
+            commands = re.findall(r'.+?\.\w+', self.seminar_conclusion)
+            pattern = re.compile(f'\w+\.\w+')
+            files = []
+            for command in commands:
+                _file = pattern.findall(command)
+                if len(_file) == 0: _file = ''
+                else: _file = _file[0]
+                if _file.strip().startswith('#'): 
+                    _file = ''
+                files.append(_file)
+            # existing_commands = list(filter(lambda x: x in chat_env.codes.codebooks, commands))
+            existing_commands = []
+            for command, _file in zip(commands, files):
+                if command[0] in [' ', '.', ',', '`', '(', '#', '-'] or command[0].isdigit(): continue
+                if _file in chat_env.codes.codebooks:
+                    existing_commands.append(command)
             chat_env.env_dict['commands'] = existing_commands
-            # print('commands', commands)
+            print('commands', commands)
+            print('existing commands', existing_commands)
         return chat_env
 
 class TestErrorSummary(Phase):
@@ -1601,7 +1659,9 @@ class TestErrorSummary(Phase):
             ])
         else:
             module_structure = ''
-        if len(file_names) and not overwrite_prompt and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')) and ('lacks an entry point to start' not in test_reports):
+        log_and_print_online("Condition: " + str(len(file_names) and (not overwrite_prompt) and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')) and ('lacks an entry point to start' not in test_reports)))
+        log_and_print_online("Condition: " + str(len(file_names)) + " - " + str(overwrite_prompt) + ' - ' + str(file_names))
+        if len(file_names) and (not overwrite_prompt) and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')) and ('lacks an entry point to start' not in test_reports):
             self.phase_prompt = '\n'.join([
                 "Our potentially buggy source codes and corresponding test reports are listed below: ",
                 "Programming Language: \"{language}\"",
@@ -1633,7 +1693,7 @@ class TestErrorSummary(Phase):
             context = ''
             if find_test_case:
                 if _item[0] in chat_env.codes.codebooks:
-                    _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
+                    _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], [_item[2]])
                     context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
                                                                     "python" if _item[0].endswith(".py") else _item[0].split(".")[
                                                                         -1], _content)
@@ -1737,7 +1797,7 @@ class TestErrorSummary(Phase):
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
                     else:
                         all_relevant_code = chat_env.get_changed_codes(file_names)
-                elif 'the software lacks an entry point to start' in test_reports:
+                elif 'lacks an entry point to start' in test_reports:
                     file_names = get_non_leaf_and_intermediate_files(chat_env.dependency_graph)
                     if len(file_names) == 0:
                         all_relevant_code = chat_env.get_codes(ignore_test_code = True)
@@ -1860,7 +1920,7 @@ class SprintTestErrorSummary(Phase):
             context = ''
             if find_test_case:
                 if _item[0] in chat_env.codes.codebooks:
-                    _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
+                    _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], [_item[2]])
                     context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
                                                                     "python" if _item[0].endswith(".py") else _item[0].split(".")[
                                                                         -1], _content)
@@ -1921,6 +1981,31 @@ class SprintTestErrorSummary(Phase):
             # for filename, code in chat_env.codes.codebooks.items():
             #     if class_name.lower() in filename:
             #         file_names.append(filename)
+        if 'NameError:' in test_reports or 'ImportError' in test_reports:
+            directory = chat_env.env_dict['directory']
+            module_dict = get_classes_in_folder(directory)
+            module_structure = []
+            chat_env.count_class_call()
+            for k, classes in module_dict.items():
+                if len(classes) == 0: continue
+                module_structure.append(k)
+                for c in classes:
+                    module_structure.append(f'\t- class {c}')
+            module_structure = '\n'.join(module_structure)
+            overwrite_prompt = True
+            self.phase_prompt = '\n'.join([
+                "Our developed source codes, corresponding test reports and module structure are listed below: ",
+                "Programming Language: \"{language}\"",
+                "Buggy Source Codes:",
+                "\"{codes}\"",
+                "Test Reports of Source Codes:",
+                "\"{test_reports}\"",
+                "Module Structure:",
+                "\"{module_structure}\"",
+                "According to my test reports, please locate and summarize the bugs that cause the problem. You should carefully review source code, test reports and available modules to figure out problems correctly."
+            ])
+        else:
+            module_structure = ''
 
         if len(file_names):
             all_relevant_code = []
@@ -1957,6 +2042,7 @@ class SprintTestErrorSummary(Phase):
                                "language": chat_env.env_dict['language'],
                                "codes": all_relevant_code,
                                "test_reports": test_reports,
+                               'module_structure': module_structure,
                                "exist_bugs_flag": exist_bugs_flag})
         log_and_print_online("**[Test Reports]**:\n\n{}".format(test_reports))
 
@@ -2146,7 +2232,16 @@ class TestModification(Phase):
                 "'''",
                 "CODE",
                 "```",
-                "Now, use the format exemplified above and modify the problematic codes based on the error summary. If you cannot find the assets from the existing paths, you should consider removing relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). If no bugs are reported, please return only one line like \"<INFO> Finished\"."
+                "Example of the format:",
+                "a.py",
+                "```python",
+                "def f():",
+                "'''",
+                "an empty function",
+                "'''",
+                "    print('an example')",
+                "```",
+                "Now, use the format exemplified above and modify the problematic codes based on the error summary. If you cannot find the assets from the existing paths, you should consider removing relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited)."
             ])
         else:
             assets_paths = ''
@@ -2183,7 +2278,16 @@ class TestModification(Phase):
                 "'''",
                 "CODE",
                 "```",
-                "Now, use the format exemplified above and modify the problematic codes. If you cannot fix this error, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). If no bugs are reported, please return only one line like \"<INFO> Finished\"."
+                "Example of the format:",
+                "a.py",
+                "```python",
+                "def f():",
+                "'''",
+                "an empty function",
+                "'''",
+                "    print('an example')",
+                "```",
+                "Now, use the format exemplified above and modify the problematic codes. If you cannot fix this error, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your response should include only the complete and updated code files and must not repeat unchanged files. If no bugs are reported, please return only one line like \"<INFO> Finished\"."
             ])
         else:
             module_structure = ''
@@ -2193,7 +2297,7 @@ class TestModification(Phase):
         file_names = extract_file_names(test_reports, chat_env.env_dict['directory'])
         is_failed_test_case = False
         # print('file_names:', file_names)
-        if len(file_names) and not overwrite_prompt and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')) and ('testing script lacks an entry point to start' not in test_reports):
+        if len(file_names) and (not overwrite_prompt) and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')) and ('testing script lacks an entry point to start' not in test_reports):
             self.phase_prompt = '\n'.join([
                 "Our potentially buggy source codes and corresponding test reports are listed below:",
                 "Programming Language: \"{language}\"",
@@ -2213,8 +2317,17 @@ class TestModification(Phase):
                 "'''",
                 "CODE",
                 "```",
+                "Example of the format:",
+                "a.py",
+                "```python",
+                "def f():",
+                "'''",
+                "an empty function",
+                "'''",
+                "    print('an example')",
+                "```",
                 "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the failed test case and the error summary.",
-                "Now, use the format exemplified above and modify the problematic codes based on the failed test case and error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes changed codes and is prohibited from repeating unchanged codes. If no bugs are reported, please return only one line like \"<INFO> Finished\"."
+                "Now, use the format exemplified above and modify the problematic codes based on the failed test case and error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE; incomplete \"TODO\" codes are strictly prohibited). Your answer just includes changed codes and is prohibited from repeating unchanged codes. Your response should include only the complete and updated code files and must not repeat unchanged files. If no bugs are reported, please return only one line like \"<INFO> Finished\"."
             ])
             overwrite_prompt = True
             is_failed_test_case = True
@@ -2235,8 +2348,9 @@ class TestModification(Phase):
             
             context = ''
             if find_test_case:
+                # print('_item:', _item)
                 if _item[0] in chat_env.codes.codebooks:
-                    _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], _item[2])
+                    _content = extract_function_from_class(chat_env.codes.codebooks[_item[0]], [_item[2]])
                     context += "{}\n```{}\n{}\n```\n\n".format(_item[0],
                                                                     "python" if _item[0].endswith(".py") else _item[0].split(".")[
                                                                         -1], _content)
@@ -2247,7 +2361,7 @@ class TestModification(Phase):
             })
         # print('file_names', file_names)
         # log_and_print_online('BUGGY CONTEXT: ' + context)
-        if 'ModuleNotFoundError' in test_reports and not overwrite_prompt:
+        if 'ModuleNotFoundError' in test_reports and (not overwrite_prompt):
             for match in re.finditer(r"No module named '(\S+)'", test_reports, re.DOTALL):
                 module = match.group(1)
             modules = list(map(lambda x: '- ' + os.path.basename(x).split('.')[0], glob.glob(chat_env.env_dict['directory'] + '/*.py')))
@@ -2283,7 +2397,7 @@ class TestModification(Phase):
                 "```",
                 "As the {assistant_role}, to satisfy the new user's demand and make the software execute smoothly and robustly, you should modify the codes based on the error summary.",
                 "There is a raised issue relevant to ModuleNotFoundError because you have not implemented the required module {missing_module}. To fix this error, you must take a great care to current source code to implement the module {missing_module} accurately.",
-                "Now, use the format exemplified above and modify the problematic codes based on the error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE where FILENAME is the file name, LANGUAGE is the programming language and CODE is the source code; incomplete \"TODO\" codes are strictly prohibited). If no bugs are reported, please return only one line like \"<INFO> Finished\"."
+                "Now, use the format exemplified above and modify the problematic codes based on the error summary. If you cannot find the assets from the existing paths, you should consider remove relevant code and features. Output the codes that you fixed based on the test reported and corresponding explanations (strictly follow the format defined above, including FILENAME, LANGUAGE, DOCSTRING and CODE where FILENAME is the file name, LANGUAGE is the programming language and CODE is the source code; incomplete \"TODO\" codes are strictly prohibited). Your response should include only the complete and updated code files and must not repeat unchanged files. If no bugs are reported, please return only one line like \"<INFO> Finished\"."
             ])
         elif 'AttributeError' in test_reports:
             chat_env.count_attribute_error()
@@ -2344,10 +2458,11 @@ class TestModification(Phase):
         
         if len(file_names):
             if len(file_names) == 1 and (file_names[0].startswith('test') or file_names[0].split('.')[0].endswith('test')):
-                graph = chat_env.dependency_graph
-                if graph is not None:
-                    relevant_files = graph.get(file_names[-1], [])
-                    file_names.extend(relevant_files)
+                if 'lacks an entry point to start' not in test_reports:
+                    graph = chat_env.dependency_graph
+                    if graph is not None:
+                        relevant_files = graph.get(file_names[-1], [])
+                        file_names.extend(relevant_files)
             if is_failed_test_case:
                 file_names = file_names[1:]
             all_relevant_code = chat_env.get_changed_codes(file_names)
@@ -2388,7 +2503,11 @@ class TestModification(Phase):
 
     def update_chat_env(self, chat_env) -> ChatEnv:
         # log_and_print_online("TEST MODIFICATION:", self.seminar_conclusion)
-       
+        if self.seminar_conclusion.replace('"', '').strip().lower() == '<INFO> Finished'.lower():
+            self.phase_env.update({
+                'allow_no_code': True
+            })
+
         has_correct_format = chat_env.update_codes(self.seminar_conclusion)
         # chat_env.rewrite_codes()
         # log_and_print_online("**[Software Info]**:\n\n {}".format(get_info(chat_env.env_dict['directory'],self.log_filepath)))

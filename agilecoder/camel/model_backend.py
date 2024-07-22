@@ -13,6 +13,7 @@
 # =========== Copyright 2023 @ CAMEL-AI.org. All Rights Reserved. ===========
 from abc import ABC, abstractmethod
 from typing import Any, Dict
+import requests
 import os
 import openai
 import tiktoken
@@ -110,6 +111,72 @@ def convert_claude_to_openai(claude_output):
 
     return openai_output
 
+def convert_ollama_to_openai(output):
+    openai_output = {
+            "choices": [
+        {
+            "content_filter_results": {
+            "hate": {
+                "filtered": False,
+                "severity": "safe"
+            },
+            "self_harm": {
+                "filtered": False,
+                "severity": "safe"
+            },
+            "sexual": {
+                "filtered": False,
+                "severity": "safe"
+            },
+            "violence": {
+                "filtered": False,
+                "severity": "safe"
+            }
+            },
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+            "content": str(output['message']['content']),
+            "role": "user"
+            }
+        }
+        ],
+        "created": 1716105669,
+        "id": "chatcmpl-9QVldRhe4q0z7qIz3uZ6oFq7E5lvw",
+        "model": output['model'],
+        "object": "chat.completion",
+        "prompt_filter_results": [
+        {
+            "prompt_index": 0,
+            "content_filter_results": {
+            "hate": {
+                "filtered": False,
+                "severity": "safe"
+            },
+            "self_harm": {
+                "filtered": False,
+                "severity": "safe"
+            },
+            "sexual": {
+                "filtered": False,
+                "severity": "safe"
+            },
+            "violence": {
+                "filtered": False,
+                "severity": "safe"
+            }
+            }
+        }
+        ],
+        "system_fingerprint": None,
+        "usage": {
+        "completion_tokens": -1,
+        "prompt_tokens": -1,
+        "total_tokens": -1
+        }
+        }
+
+    return openai_output
 class ModelBackend(ABC):
     r"""Base class for different model backends.
     May be OpenAI API, a local LLM, a stub for unit tests, etc."""
@@ -183,7 +250,53 @@ class OpenAIModel(ModelBackend):
             raise RuntimeError("Unexpected return from OpenAI API")
         return response
 
+class Ollama(ModelBackend):
+    r"""OpenAI API in a unified ModelBackend interface."""
 
+    def __init__(self, model_type: ModelType, model_config_dict: Dict) -> None:
+        super().__init__()
+        self.model_type = model_type
+        self.model_config_dict = model_config_dict
+
+    
+
+    def run(self, *args, **kwargs) -> Dict[str, Any]:
+        string = "\n".join([message["content"] for message in kwargs["messages"]])
+        encoding = tiktoken.get_encoding("cl100k_base")
+        num_prompt_tokens = len(encoding.encode(string))
+        gap_between_send_receive = 15 * len(kwargs["messages"])
+        num_prompt_tokens += gap_between_send_receive
+
+        # num_max_token_map = {
+        #     "gpt-3.5-turbo": 4096,
+        #     "gpt-3.5-turbo-16k": 16384,
+        #     "gpt-3.5-turbo-0613": 4096,
+        #     "gpt-3.5-turbo-16k-0613": 16384,
+        #     "gpt-4": 8192,
+        #     "gpt-4-0613": 8192,
+        #     "gpt-4-32k": 4096,
+        # }
+        # num_max_token = num_max_token_map[self.model_type.value]
+        # num_max_completion_tokens = num_max_token - num_prompt_tokens
+        # self.model_config_dict['max_tokens'] = num_max_completion_tokens
+        
+        kwargs['model'] = 'llama3'
+        # import pdb; pdb.set_trace()
+        url = "http://localhost:11434/api/chat"
+        data = {
+            "model": "llama3",
+            "messages": kwargs['messages'],
+            "stream": False
+        }
+        response = requests.post(url, json=data).json()
+        response = convert_ollama_to_openai(response)
+        # log_and_print_online(
+        #     "**[OpenAI_Usage_Info Receive]**\nprompt_tokens: {}\ncompletion_tokens: {}\ntotal_tokens: {}\n".format(
+        #         response["usage"]["prompt_tokens"], response["usage"]["completion_tokens"],
+        #         response["usage"]["total_tokens"]))
+        if not isinstance(response, Dict):
+            raise RuntimeError("Unexpected return from OpenAI API")
+        return response
 
 class AI4CodeAnthropicVertex(AnthropicVertex):
     def __init__(self, **kwargs):
@@ -413,8 +526,10 @@ class ModelFactory:
             None
         }:
             model_class = OpenAIModel
-        elif model_type in {ModelType.CLAUDE }:
+        elif model_type in {ModelType.CLAUDE}:
             model_class = ClaudeAIModel
+        elif model_type in {ModelType.OLLAMA_LLAMA3}:
+            model_class = Ollama
         elif model_type in {ModelType.ANTHROPIC_CLAUDE}:
             model_class = AuthropicClaudeAIModel
         elif model_type == ModelType.STUB:

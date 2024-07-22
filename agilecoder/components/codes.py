@@ -76,24 +76,31 @@ def simplify_code(code):
 def has_entry_point(code):
     try:
         tree = ast.parse(code)
-
-        # Check for if __name__ == "__main__": condition
-      
-        # Check for standalone code (no functions or classes)
+    except SyntaxError:
+        return False
+    def _apply(_tree):
         all_flags = []
-        for node in ast.iter_child_nodes(tree):
+        for node in ast.iter_child_nodes(_tree):
             if isinstance(node, ast.Call):
                 return True
             elif not isinstance(node, (ast.Assign, ast.AugAssign, ast.Import, ast.ImportFrom, ast.Module, ast.FunctionDef, ast.ClassDef)):
                 
-                all_flags.append(has_entry_point(node))
+                all_flags.append(_apply(node))
         
         if len(all_flags): return any(all_flags)        
         
         return False
-    except SyntaxError:
-        return False
-
+    all_flags = []
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.Call):
+            return True
+        elif not isinstance(node, (ast.Assign, ast.AugAssign, ast.Import, ast.ImportFrom, ast.Module, ast.FunctionDef, ast.ClassDef)):
+            
+            all_flags.append(_apply(node))
+    
+    if len(all_flags): return any(all_flags)        
+    
+    return False
 class Codes:
     def __init__(self, generated_content="", is_testing = False):
         self.directory: str = None

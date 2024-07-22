@@ -1,7 +1,7 @@
 {
   "DemandAnalysis": {
     "assistant_role_name": "Product Owner",
-    "user_role_name": "User",
+    "user_role_name": "Technical Lead",
     "phase_prompt": [
       "AgileCoder has made products in the following form before:",
       "Image: can present information in line chart, bar chart, flow chart, cloud chart, Gantt chart, etc.",
@@ -9,6 +9,7 @@
       "PowerPoint: can present information via .pptx files.",
       "Excel: can present information via .xlsx files.",
       "PDF: can present information via .pdf files.",
+      "Web App: can implement web-based app, software, tool, etc, via python.",
       "Website: can present personal resume, tutorial, products, or ideas, via .html files.",
       "Desktop Application: can implement visualized game, software, tool, etc, via python.",
       "Dashboard: can display a panel visualizing real-time information.",
@@ -19,14 +20,20 @@
   },
   "LanguageChoose": {
     "assistant_role_name": "Product Owner",
-    "user_role_name": "User",
+    "user_role_name": "Development Team",
     "phase_prompt": [
       "According to the new user's task and the modality listed below: ",
       "Task: \"{task}\".",
       "Modality: \"{modality}\".",
-      "We have decided to complete the task through a executable software implemented via one or many programming languages. ",
+      "We have decided to complete the task through a executable software implemented via one or many programming languages.",
       "As the {assistant_role}, to satisfy the new user's demand and make the software realizable, you should propose suitable programming languages. If python can complete this task via Python, please answer Python; otherwise, answer another programming languages (e.g., Java, C++, etc,). If users wants to create a website, please consider HTML and CSS to complete the tasks.",
-      "Note that we must ONLY discuss the target programming languages and do not discuss anything else! Once we all have expressed our opinion(s) and agree with the results of the discussion unanimously, any of us must actively terminate the discussion and conclude the best programming languages we have discussed without any other words or reasons, importantly return only one line with the format: \"<INFO> LANGUAGES\" where LANGUAGES represents programming languages. Your answer strictly follows the required format."
+      "After that, you should propose frameworks and libraries that are the most suitable and in line with the user task, modality and the proposed programming languages. Importantly, if there are multiple candidates, please propose the most appropriate ones and they should not overlap.",
+      "Your answer must follow the following format and you are not allowed to change the required format:",
+      "Programming languages:",
+      "PROGRAMMING_LANGUAGES",
+      "Frameworks and libraries:",
+      "FRAMEWORKS_AND_LIBRARIES",
+      "where PROGRAMMING_LANGUAGES represent proposed programming languages and FRAMEWORKS_AND_LIBRARIES are frameworks and libraries."
     ]
   },
   "ProductBacklogCreating": {
@@ -37,7 +44,8 @@
       "Task: \"{task}\".",
       "Modality: \"{modality}\".",
       "Programming Language: \"{language}\"",
-      "We have decided to complete the task through a executable software with multiple files implemented via {language}. As the {assistant_role}, to satisfy the user's demands, you must write the Product Backlog and the corresponding Acceptance Criteria.",
+      "Frameworks and libraries: \"{frameworks}\"",
+      "We have decided to complete the task through a executable software with multiple files implemented via {language}, specifically, using {frameworks}. As the {assistant_role}, to satisfy the user's demands, you must write the Product Backlog and the corresponding Acceptance Criteria.",
       "Think step by step and reason yourself to the right decisions to make sure we get it right.",
       "You must also prioritize product backlog items with the important items appearing at the first.",
       "Your answer must follow the following format:",
@@ -47,6 +55,26 @@
       "ACCEPTANCE_CRITERIA",
       "where PRODUCT_BACKLOG is the product backlog for the user's task and ACCEPTANCE_CRITERIA is the corresponding acceptance criteria of the product backlog.",
       "Importantly, you must consider the skills of the development team to write the feasible product backlog. Advanced features like AI and sounds can not be implemented properly."
+    ]
+  },
+  "DesigningFolderStructure": {
+    "assistant_role_name": "Technical Lead",
+    "user_role_name": "Product Owner",
+    "phase_prompt": [
+      "According to the new user's task, our software design and the product backlog listed below: ",
+      "Task: \"{task}\"",
+      "Modality: \"{modality}\"",
+      "Programming Language: \"{language}\"",
+      "Frameworks and libraries: \"{frameworks}\"",
+      "Product backlog:\n\"{plain_product_backlog}\"",
+      "Acceptance criteria:\n\"{plain_acceptance_criteria}\"",
+      "We have decided to complete the user task by accomplishing the product backlog and acceptance criteria to create an executable software with multiple files implemented via {language}, specifically, using {frameworks}.",
+      "As the {assistant_role}, to satisfy the new user's demand and accomplish the product backlog, and make the software realizable, you should propose the folder structure of source code that are best practices and in line with the programming languages and frameworks.",
+      "Importantly, it should be noted that features such as images and sound are infeasible, so disregard them in the folder structure.",
+      "You answer should follow the format below:",
+      "Folder structure:",
+      "FOLDER_STRUCTURE",
+      "where FOLDER_STRUCTURE is proposed to accomplish the product backlog."
     ]
   },
   "ProductBacklogReview": {
@@ -124,15 +152,14 @@
       "{all_done_tasks}",
       "Undone tasks:",
       "{all_undone_tasks}",
-      "We have decided to incorporate Agile Scrum with multiple sprints to complete the task through a executable software with multiple files implemented via {language}. As the {user_role}, to satisfy the user's demands, I suggest the following the next sprint:",
+      "We have decided to incorporate Agile Scrum with multiple sprints to complete the task through a executable software with multiple files implemented via {language}. As the {user_role}, to satisfy the user's demands, I suggest the following the next sprint towards the user task completion:",
       "Sprint backlog:\n\"{current_programming_task}\"",
       "Sprint acceptance criteria:\n\"{current_acceptance_criteria}\"",
       "As the {assistant_role}, you should review and provide useful feedback about the sprint backlog and sprint acceptance criteria by obeying the regulations below",
       "\t1) considering the proficiency of the members, all the tasks are feasible and finished by at least one member,",
-      "\t2) the sprint backlog must not incorporate enhanced features like AI and sound effects unless explicitly specified in the user's task,",
+      "\t2) the sprint backlog must not incorporate enhanced features like AI, sound effects, and code refactoring unless explicitly specified in the user's task,",
       "\t3) all tasks in the sprint backlog must come from the product backlog, meaning that it is prohibited to propose tasks that do not appear in the product backlog and any such tasks should be removed,",
       "\t4) the acceptance criteria should be detailed, clear and testable for Tester to write test cases,",
-      "\t5) Importantly, when done tasks match the entire product backlog and the product backlog is fully accomplished, we should conclude the project and we should not create any additional sprints.",
       "Now, you should check the above regulations one by one and review the sprint backlog and sprint acceptance criteria in detail, propose one comment with the highest priority about them, and give me instructions on how to fix to ensure the sprint backlog aligns well with the regulations above. Tell me your comment with the highest priority and corresponding suggestions on revision. If the sprint backlog is perfect and you have no comment on them, return only one line like \"<INFO> Finished\"."
     ]
   },
@@ -266,12 +293,12 @@
       "\"{all_done_tasks}\"",
       "Undone tasks:",
       "\"{all_undone_tasks}\"",
-      "We have decided to complete the task through multiple sprints. Based on the product backlog, done and undone works, we propose the next sprint and we have corresponding comments as below:",
+      "We have decided to complete the task through multiple sprints, but the user task has not been accomplished. Therefore, based on the product backlog, done and undone works, we propose the next sprint and we have corresponding comments as below:",
       "Sprint backlog:\n\"{current_programming_task}\"",
       "Sprint acceptance criteria:\n\"{current_acceptance_criteria}\"",
       "Comments on sprint backlog and sprint acceptance criteria:",
       "\"{sprint_backlog_comments}\"",
-      "As the {assistant_role}, to satisfy the user's demand and ensure that the sprint backlog and sprint acceptance criteria are feasible and can be accomplished, you should review comments to modify corresponding sprint backlog according to the comments. Then output the full and complete sprint backlog based on the comments. Return the output strictly following the required format and you are not allowed to change the required format:",
+      "As the {assistant_role}, to satisfy the user's demand and ensure that the sprint backlog and sprint acceptance criteria are feasible and can be accomplished, you should review comments to modify the proposed sprint backlog according to the comments. Then output the full and complete sprint backlog based on the comments. Return the output strictly following the required format and you are not allowed to change the required format:",
       "Sprint backlog:",
       "SPRINT_BACKLOG",
       "Sprint acceptance criteria:",
@@ -304,6 +331,7 @@
       "\t1) Review Sprint Backlog, Acceptance Criteria, Simplified Source Code, Test Reports, and Error Summaries: Examine each item in the sprint backlog and the acceptance criteria, and then compare them with the source code to check which items are done successfully or incomplete,",
       "\t2) Categorize Work: after reviewing, classify each item as either Done Work or Undone Work. An item is considered Done if it is implemented successfully without bugs; otherwise, it should be categorized as Undone.",
       "\t3) Identify Bugs and Failed Test Cases: Analyze the test reports and error summaries to identify any existing bugs or failed test cases, categorizing these as Undone Work,",
+      "\t4) It is incorrect to assume that the methods lack implementations based on this code, so please just focus on assessing the sprint backlog and assume the methods are fully implemented.",
       "Please provide your answer in the following format:",
       "Done Work:",
       "DONE_WORK",
@@ -804,23 +832,23 @@
       "\"{codes}\"",
       "Test Reports of Source Codes:",
       "\"{test_reports}\"",
-      "According to my test reports, please locate and summarize the bugs that cause the problem. Importantly, it should be noted that the failed test case may be an incorrect test case, so you should carefully review code, failed test case, sprint backlog and acceptance criteria to figure out problems correctly. Additionally, be aware that the provided code is simplified, containing only function signatures and docstrings without detailed implementations."
+      "Based on the test reports, please locate and summarize the bugs causing the issue. It is important to note that the failed test case might be incorrect. Therefore, carefully review the code, the failed test case, the sprint backlog, and the acceptance criteria to accurately identify the problems. Additionally, be aware that the provided code is simplified, containing only function signatures and docstrings without detailed implementations. It is incorrect to assume that the methods lack implementations based on this code."
     ]
   },
   "TestingPlan": {
     "assistant_role_name": "Software Test Engineer",
     "user_role_name": "Programmer",
     "phase_prompt": [
-      "According to the user's task, our designed product modality, the sprint backlog, and our developed source codes are listed below: ",
+      "According to the user's task, our designed product modality, the sprint backlog, and the function signatures, docstrings of our developed and executable code files are listed below: ",
       "User's task: \"{task}\".",
       "Modality: \"{modality}\".",
       "Programming Language: \"{language}\"",
       "Sprint backlog:\n\"{current_programming_task}\"",
-      "Codes:",
+      "Function Signatures and Docstrings of Executable Code Filess:",
       "\"{codes}\"",
-      "As the {assistant_role}, to make that the code above satisfies the sprint backlog and acceptance criteria, and runs flawlessly, you must write commands to:",
-      "\t1) run the software to test the GUI,",
-      "\t2) test the correctness of the code above.",
+      "As the {assistant_role}, to make that the code above satisfies the sprint backlog and acceptance criteria, and runs flawlessly, you must design a detailed and accurate testing plan:",
+      "\t1) write commands to run the software to test the GUI,",
+      "\t2) define a detailed procedure consisting of steps to comprehensively test the logic of the software that can be modelled by test cases for automated testing.",
       "Also, you strictly follow the format:",
       "Commands:",
       "COMMANDS",

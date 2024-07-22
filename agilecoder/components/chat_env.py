@@ -37,23 +37,31 @@ import ast
 def has_entry_point(code):
     try:
         tree = ast.parse(code)
-
-        # Check for if __name__ == "__main__": condition
-      
-        # Check for standalone code (no functions or classes)
+    except SyntaxError:
+        return False
+    def _apply(_tree):
         all_flags = []
-        for node in ast.iter_child_nodes(tree):
+        for node in ast.iter_child_nodes(_tree):
             if isinstance(node, ast.Call):
                 return True
             elif not isinstance(node, (ast.Assign, ast.AugAssign, ast.Import, ast.ImportFrom, ast.Module, ast.FunctionDef, ast.ClassDef)):
                 
-                all_flags.append(has_entry_point(node))
+                all_flags.append(_apply(node))
         
         if len(all_flags): return any(all_flags)        
         
         return False
-    except SyntaxError:
-        return False
+    all_flags = []
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.Call):
+            return True
+        elif not isinstance(node, (ast.Assign, ast.AugAssign, ast.Import, ast.ImportFrom, ast.Module, ast.FunctionDef, ast.ClassDef)):
+            
+            all_flags.append(_apply(node))
+    
+    if len(all_flags): return any(all_flags)        
+    
+    return False
 class ChatEnv:
     def __init__(self, chat_env_config: ChatEnvConfig):
         self.config = chat_env_config
@@ -159,19 +167,29 @@ class ChatEnv:
                     is_python = True
                     if has_entry_point(code):
                         runnable_files.append(file)
-                        if not (('test' in file) or ('test' in file)):
+                        if not (file.startswith('test') or file.split('.')[0].endswith('test')):
                             program_files.append(file)
                 return_flag = False
+                original_program_files_len = len(program_files)
+                log_and_print_online('runnable_files: ' + str(runnable_files))
                 if 'testing_commands' not in self.env_dict:
                     chat_env.count_graph_call()
                     testing_commands = self.env_dict['commands']
                     _testing_commands = list(filter(lambda x: x.startswith('test') or x.split('.')[0].endswith('test'), get_test_order(chat_env.dependency_graph, chat_env.testing_file_map)))
+                    _testing_commands = list(map(lambda x: 'python ' + x, _testing_commands))
+                    
                     additional_commands = list(set(testing_commands) - set(_testing_commands))
                     # print('additional_commands', additional_commands)
                     # additional_commands = list(filter(lambda x: x in runnable_files, additional_commands))
+                    _program_files = []
+                    for _program_file in program_files:
+                        if not any(_program_file in __file for __file in additional_commands):
+                            _program_files.append(_program_file)
+                    program_files = _program_files
+                    program_files = list(map(lambda x: 'python ' + x, program_files))
                     testing_commands = _testing_commands + additional_commands + program_files
-                    if len(program_files) == 0:
-                        testing_commands.append('no_entry_point')
+                    # if original_program_files_len == 0:
+                    #     testing_commands.append('no_entry_point')
                     # testing_commands = _testing_commands + additional_commands
                     # for file in program_files:
                     #     if file not in testing_commands:
@@ -180,10 +198,11 @@ class ChatEnv:
                     
                     # testing_commands.extend(runnable_files)
                     for file in runnable_files:
-                        if file not in testing_commands:
-                            testing_commands.append(file)
+                        # if file not in testing_commands:
+                        if not any(file in _command for _command in testing_commands):
+                            testing_commands.append('python ' + file)
                     # testing_commands.extend(['-m unittest'])
-                    
+                    print('TESTING ORDER=', testing_commands)
                     # testing_commands = list(set(testing_commands))
                 else:
                     testing_commands = self.env_dict['testing_commands']
@@ -191,31 +210,32 @@ class ChatEnv:
                 current_idx = 0
                 no_entry_point_error = False
                 for testing_command in testing_commands:
-                    if testing_command == 'no_entry_point' or testing_command not in runnable_files:
-                        if testing_command.startswith('test') or testing_command.split('.')[0].endswith('test'):
+                    log_and_print_online('testing_command=:' + testing_command)
+                    if (original_program_files_len == 0 and testing_command == 'no_entry_point') or testing_command.split()[-1] not in runnable_files:
+                        if testing_command.split()[-1].startswith('test') or testing_command.split()[-1].split('.')[0].endswith('test'):
                             errs = "[Error] the testing script lacks an entry point to start. Please modify accordingly to run test cases."
                         
-                            error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
+                            error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command.split()[-1], errs = errs)
                             return_flag = True
                             no_entry_point_error = True
                             break
                         elif testing_command != 'no_entry_point':
-                            errs = "[Error] the software lacks an entry point to start. Please modify accordingly to make the program executable."
-                            error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
+                            errs = "[Error] this file lacks an entry point to start. Please modify accordingly to make the program executable."
+                            error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command.split()[-1], errs = errs)
                             return_flag = True
                             no_entry_point_error = True
                             break
-                        else:
-                            errs = "[Error] the software lacks an entry point to start. Please modify accordingly to make the program executable."
-                            error_contents += """There is a serious bug:\n{errs}""".format(testing_command = testing_command, errs = errs)
+                        elif original_program_files_len == 0:
+                            errs = "[Error] this file lacks an entry point to start. Please modify accordingly to make the program executable."
+                            error_contents += """There is a serious bug:\n{errs}""".format(testing_command = testing_command.split()[-1], errs = errs)
                             return_flag = True
                             no_entry_point_error = True
                             break
-                    if 'main.py' in self.codes.codebooks and testing_command == 'main.py':
-                        command = "cd {}; ls -l; python main.py;".format(directory)
-                    else:
-                        command = "cd {}; ls -l; python ".format(directory) + testing_command
-                    # print('COMMAND:', command)
+                    # if 'main.py' in self.codes.codebooks and testing_command == 'main.py':
+                    #     command = "cd {}; ls -l; python main.py;".format(directory)
+                    # else:
+                    command = "cd {}; ls -l; ".format(directory) + testing_command
+                    print('COMMAND:', command)
                     process = subprocess.Popen(command,
                                     shell=True,
                                     preexec_fn=os.setsid,
@@ -266,16 +286,16 @@ class ChatEnv:
                                             errs = extract_first_error_traceback(errs, 1)
                                 
                                 # return True, errs
-                                error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
+                                error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command.split()[-1], errs = errs)
                                 return_flag = True
-                        elif testing_command.startswith('test') or testing_command.split('.')[0].endswith('test'):
+                        elif testing_command.split()[-1].startswith('test') or testing_command.split()[-1].split('.')[0].endswith('test'):
                             if 'FAILED' in std_output and '**************' not in std_output:
                                 std_output = extract_top_k_errors(std_output, k = 1)
-                                error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
+                                error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command.split()[-1], std_output = std_output)
                                 return_flag = True
 
                         elif 'failures' in std_output.lower() and 'failed' in std_output.lower():
-                            error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
+                            error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command.split()[-1], std_output = std_output)
                             return_flag = True
 
                             # else:
@@ -328,34 +348,44 @@ class ChatEnv:
                     # print('FILE:', file, code)
                     if not file.endswith('.py'): continue
                     is_python = True
+                    # print('-' * 10)
+                    # print(code)
                     if has_entry_point(code):
                         runnable_files.append(file)
-                        if not (('test' in file) or ('test' in file)):
+                        if not (file.startswith('test') or file.split('.')[0].endswith('test')):
                             program_files.append(file)
+                
+                if is_python and len(program_files) == 0:
+                    return True, "[Error] There is a serious bug since the software lacks an entry point to start. Please modify accordingly to make the program executable."
+
                 return_flag = False
                     
                 testing_commands = self.env_dict['commands']
                 _testing_commands = list(filter(lambda x: x.startswith('test') or x.split('.')[0].endswith('test'), get_test_order(chat_env.dependency_graph, chat_env.testing_file_map)))
+                _testing_commands = list(map(lambda x: 'python ' + x, _testing_commands))
                 additional_commands = list(set(testing_commands) - set(_testing_commands))
                 # print('additional_commands', additional_commands)
                 # additional_commands = list(filter(lambda x: x in runnable_files, additional_commands))
+                _program_files = []
+                for _program_file in program_files:
+                    if not any(_program_file in __file for __file in additional_commands):
+                        _program_files.append(_program_file)
+                program_files = _program_files
+                program_files = list(map(lambda x: 'python ' + x, program_files))
                 testing_commands = additional_commands + program_files
+                print('*'*10, testing_commands)
                 error_contents = ''
                 
-                if len(program_files) == 0:
-                    return True, "[Error] There is a serious bug since the software lacks an entry point to start. Please modify accordingly to make the program executable."
-            
+                print('TESTING ORDER=', testing_commands)
                 for testing_command in testing_commands:
-                    if testing_command not in runnable_files:
+                    if testing_command.split()[-1] not in runnable_files:
                         
                         errs = "[Error] the software lacks an entry point to start. Please modify accordingly to make the program executable."
-                        error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
+                        error_contents += """\nError Traceback for Running File "{testing_command}":\n{errs}""".format(testing_command = testing_command.split()[-1], errs = errs)
                         return_flag = True
                         continue
-                    if 'main.py' in self.codes.codebooks and testing_command == 'main.py':
-                        command = "cd {}; ls -l; python main.py;".format(directory)
-                    else:
-                        command = "cd {}; ls -l; python ".format(directory) + testing_command
+                    
+                    command = "cd {}; ls -l; ".format(directory) + testing_command
                     # print('COMMAND:', command)
                     process = subprocess.Popen(command,
                                     shell=True,
@@ -407,16 +437,16 @@ class ChatEnv:
                                             errs = extract_first_error_traceback(errs, 1)
                                 
                                 # return True, errs
-                                error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command, errs = errs)
+                                error_contents += """\nError Traceback for running File "{testing_command}":\n{errs}""".format(testing_command = testing_command.split()[-1], errs = errs)
                                 return_flag = True
-                        elif testing_command.startswith('test') or testing_command.split('.')[0].endswith('test'):
+                        elif testing_command.split()[-1].startswith('test') or testing_command.split()[-1].split('.')[0].endswith('test'):
                             if 'FAILED' in std_output and '**************' not in std_output:
                                 std_output = extract_top_k_errors(std_output, k = 1)
-                                error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
+                                error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command.split()[-1], std_output = std_output)
                                 return_flag = True
 
                         elif 'failures' in std_output.lower() and 'failed' in std_output.lower():
-                            error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command, std_output = std_output)
+                            error_contents += """\nError Traceback for running File "{testing_command}":\n{std_output}""".format(testing_command = testing_command.split()[-1], std_output = std_output)
                             return_flag = True
                             # else:
                             #     return False, success_info
