@@ -161,13 +161,13 @@ class ChatChain:
         Returns: None
 
         """
-        for phase_item in self.chain[:5]:
+        for phase_item in self.chain[:6]:
             self.execute_step(phase_item)
         for i in range(self.max_num_sprints - 1):
             if self.chat_env.env_dict.get('end-sprint', False):
                 break
-            self.execute_step(self.chain[5])
-        for phase_item in self.chain[6:]:
+            self.execute_step(self.chain[6])
+        for phase_item in self.chain[7:]:
             self.execute_step(phase_item)
 
     def get_logfilepath(self):

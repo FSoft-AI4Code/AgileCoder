@@ -227,6 +227,8 @@ class Phase(ABC):
             question = """Conclude the programming language being discussed for software development, in the format: "*" where '*' represents a programming language." """
         elif phase_name == "EnvironmentDoc":
             question = """According to the codes and file format listed above, write a requirements.txt file to specify the dependencies or packages required for the project to run properly." """
+        elif phase_name == "DesigningFolderStructure":
+            question = """According to the user's task, product backlog, programming language, and frameworks listed above, please conclude the conversation by reaching a consensus on the folder structure of source code with the format:\nFolder structure:\nFOLDER_STRUCTURE\nwhere FOLDER_STRUCTURE is proposed to accomplish the product backlog.""".strip()
         else:
             raise ValueError(f"Reflection of phase {phase_name}: Not Assigned.")
 
@@ -358,6 +360,25 @@ class LanguageChoose(Phase):
         # print('programming_languages', programming_languages)
         return chat_env
 
+def create_folders_and_files(structure):            
+    lines = structure.strip().split('\n')    
+    levels = []
+    for line in lines:
+        if len(line.strip()) == 0: break
+        current_indent_level = len(line) - len(line.lstrip('└├──│ '))
+        line = line.strip('└├──│ ')
+        levels.append((current_indent_level, line))
+    groups = [] 
+    paths = [''] * len(lines)   
+    for i, (line, level) in enumerate(zip(lines, levels)):
+        for j, (l1, f1) in enumerate(levels[:i][::-1]):
+            if level[0] > l1:
+                paths[i] = os.path.join(paths[i- j - 1], level[1])
+                break
+    _paths = []
+    for p in paths:
+        if p != '': _paths.append(p)
+    return _paths
 class DesigningFolderStructure(Phase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -380,7 +401,13 @@ class DesigningFolderStructure(Phase):
         #     chat_env.env_dict['language'] = self.seminar_conclusion.strip()
         # else:
         #     chat_env.env_dict['language'] = "Python"
-        chat_env.env_dict['folder_structure'] = self.seminar_conclusion.strip().split('Folder structure:')[1].strip()
+        print("self.seminar_conclusion.strip()", self.seminar_conclusion.strip())
+        folder_structure = self.seminar_conclusion.strip().split('Folder structure:')[1].strip()
+        lines = folder_structure.splitlines()
+        if lines[0].endswith('/'):
+            lines[0] = './'
+        chat_env.env_dict['folder_structure'] = '\n'.join(lines)
+        print('create_folders_and_files', create_folders_and_files(chat_env.env_dict['folder_structure']))
         return chat_env
 
 def check_if_string_starts_with_number(text):
@@ -502,6 +529,7 @@ class SprintBacklogCreating(Phase):
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
                                "ideas": chat_env.env_dict['ideas'],
                                'plain_product_backlog': plain_product_backlog,
                                'plain_acceptance_criteria': plain_acceptance_criteria})
@@ -589,6 +617,7 @@ class NextSprintBacklogCreating(Phase):
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
                                "ideas": chat_env.env_dict['ideas'],
                                'plain_product_backlog': plain_product_backlog,
                                'plain_acceptance_criteria': plain_acceptance_criteria,
@@ -742,6 +771,8 @@ class Coding(Phase):
                                "modality": chat_env.env_dict['modality'],
                                "ideas": chat_env.env_dict['ideas'],
                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
+                               'folder_structure': chat_env.env_dict['folder_structure'],
                             #    "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
                                "current_sprint_backlog": chat_env.env_dict['current-sprint-backlog'],
                                'current_programming_task': chat_env.env_dict['current-programming-task'],
@@ -785,6 +816,7 @@ class WritingTestSuite(Phase):
                                "modality": chat_env.env_dict['modality'],
                                "ideas": chat_env.env_dict['ideas'],
                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
                                "current_sprint_backlog": chat_env.env_dict['current-sprint-backlog'],
                                'current_programming_task': chat_env.env_dict['current-programming-task'],
                                'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria']
@@ -835,7 +867,9 @@ class InheritCoding(Phase):
                                "modality": chat_env.env_dict['modality'],
                                "ideas": chat_env.env_dict['ideas'],
                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
                                 "codes": chat_env.get_codes(simplify_code = True),
+                                'folder_structure': chat_env.env_dict['folder_structure'],
                             #    "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
                                "current_sprint_backlog": chat_env.env_dict['current-sprint-backlog'],
                                'current_programming_task': chat_env.env_dict['current-programming-task'],
@@ -1000,6 +1034,7 @@ class ProductBacklogReview(Phase):
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
                                'plain_product_backlog': plain_product_backlog,
                                'plain_acceptance_criteria': plain_acceptance_criteria
                                })
@@ -1018,6 +1053,7 @@ class SprintBacklogReview(Phase):
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
                                'plain_product_backlog': plain_product_backlog,
                                'plain_acceptance_criteria': plain_acceptance_criteria,
                                 # "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
@@ -1040,6 +1076,7 @@ class NextSprintBacklogReview(Phase):
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
                                'plain_product_backlog': plain_product_backlog,
                                'plain_acceptance_criteria': plain_acceptance_criteria,
                                 # "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
@@ -1062,6 +1099,7 @@ class ProductBacklogModification(Phase):
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
                                'plain_product_backlog': plain_product_backlog,
                                'plain_acceptance_criteria': plain_acceptance_criteria,
                                "product_backlog_comments": chat_env.env_dict['product_backlog_comments']})
@@ -1118,6 +1156,7 @@ class SprintBacklogModification(Phase):
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
                                'plain_product_backlog': plain_product_backlog,
                                "product_backlog_comments": chat_env.env_dict['product_backlog_comments'],
                             #    "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
@@ -1168,6 +1207,7 @@ class NextSprintBacklogModification(Phase):
         self.phase_env.update({"task": chat_env.env_dict['task_prompt'],
                                "modality": chat_env.env_dict['modality'],
                                "language": chat_env.env_dict['language'],
+                                "frameworks": chat_env.env_dict['frameworks'],
                                'plain_product_backlog': plain_product_backlog,
                                "product_backlog_comments": chat_env.env_dict['product_backlog_comments'],
                             #    "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
@@ -1368,6 +1408,7 @@ class CodeReviewComment(Phase):
              "codes": codes,
              "paths": assets_paths,
              'changed_files': changed_files,
+             'folder_structure': chat_env.env_dict['folder_structure'],
             #   "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
              'current_programming_task': chat_env.env_dict['current-programming-task'],
              'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
@@ -1476,6 +1517,7 @@ class CodeReviewModification(Phase):
                                "ideas": chat_env.env_dict['ideas'],
                                "language": chat_env.env_dict['language'],
                                "codes": codes,
+                               'folder_structure': chat_env.env_dict['folder_structure'],
                                 # "current_sprint_goals": chat_env.env_dict['current-sprint-goals'],
                                'current_programming_task': chat_env.env_dict['current-programming-task'],
                                'current_acceptance_criteria': chat_env.env_dict['current-acceptance-criteria'],
@@ -1814,6 +1856,7 @@ class TestErrorSummary(Phase):
                                 "language": chat_env.env_dict['language'],
                                 "codes": all_relevant_code,
                                 "test_reports": test_reports,
+                                'folder_structure': chat_env.env_dict['folder_structure'],
                                 "exist_bugs_flag": exist_bugs_flag,
                                 "paths": assets_paths,
                                 'modules': modules,
@@ -2042,6 +2085,7 @@ class SprintTestErrorSummary(Phase):
                                "language": chat_env.env_dict['language'],
                                "codes": all_relevant_code,
                                "test_reports": test_reports,
+                               'folder_structure': chat_env.env_dict['folder_structure'],
                                'module_structure': module_structure,
                                "exist_bugs_flag": exist_bugs_flag})
         log_and_print_online("**[Test Reports]**:\n\n{}".format(test_reports))
@@ -2492,6 +2536,7 @@ class TestModification(Phase):
                                "modality": chat_env.env_dict['modality'],
                                "ideas": chat_env.env_dict['ideas'],
                                "language": chat_env.env_dict['language'],
+                                'folder_structure': chat_env.env_dict['folder_structure'],
                                "test_reports": test_reports,
                                "error_summary": error_summary,
                                "paths": assets_paths,

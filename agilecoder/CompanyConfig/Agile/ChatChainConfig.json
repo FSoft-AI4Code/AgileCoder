@@ -38,6 +38,12 @@
       ]
     },
     {
+      "phase": "DesigningFolderStructure",
+      "phaseType": "SimplePhase",
+      "max_turn_step": 5,
+      "need_reflect": "True"
+    },
+    {
       "phase": "SprintCompletion",
       "phaseType": "ComposedPhase",
       "cycleNum": 1,
