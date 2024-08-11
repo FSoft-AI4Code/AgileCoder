@@ -175,3 +175,7 @@ If you have any questions, comments or suggestions, please do not hesitate to co
 
 # License
 [MIT License](LICENSE)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=FSoft-AI4Code/AgileCoder&type=Date)](https://star-history.com/#FSoft-AI4Code/AgileCoder&Date)
