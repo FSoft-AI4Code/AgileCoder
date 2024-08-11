@@ -171,7 +171,7 @@ If you're using AgileCoder in your research or applications, please cite using t
 # Contact us
 If you have any questions, comments or suggestions, please do not hesitate to contact us.
 - Website: [fpt-aicenter](https://www.fpt-aicenter.com/ai-residency/)
-- Email: support.ailab@fpt.com
+- Email: bdqnghi@gmail.com
 
 # License
 [MIT License](LICENSE)
