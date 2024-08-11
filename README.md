@@ -46,8 +46,10 @@ Website: https://fsoft-ai4code.github.io/agilecoder/
 ## 💻️ Quickstart
 AgileCoder can be installed easily through pip:
 ```python
-pip install -e AgileCoder
+pip install agilecoder
 ```
+
+If you want to clone the repository, be sure to switch to the *new-flow* branch to access the latest source code.
 
 ### Configuration
 AgileCoder currently supports the Azure OpenAI service. To configure the necessary environment variables, please set the following:
