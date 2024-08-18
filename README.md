@@ -68,7 +68,7 @@ API_TYPE=azure
 API_VERSION=your_api_version
 API_ENGINE=your_api_engine
 ```
-For other models, please refer to setup_model.md
+For other models, please refer to [setup_model.md](setup_model.md)
 ## Sample Usage
 To generate software using AgileCoder, use the following command:
 
