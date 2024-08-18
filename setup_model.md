@@ -35,6 +35,7 @@ Please host your model on the url `http://localhost:11434/api/chat`, and set the
 MODEL_NAME=<model_name>
 ```
 where MODEL_NAME is the model name supported by Ollama, e.g. llama3
+
 Run AgileCoder by running the command below:
 ```bash
 agilecoder --task <yourtask> --model "OLLAMA"
