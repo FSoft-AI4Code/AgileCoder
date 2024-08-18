@@ -202,7 +202,7 @@ class OpenAIModel(ModelBackend):
         self.model_type = model_type
         self.model_config_dict = model_config_dict
 
-        if self.model_type == ModelType.GPT_3_5_AZURE or self.model_type==ModelType.GPT_4_32k:
+        if self.model_type == ModelType.GPT_3_5_AZURE:
             RESOURCE_ENDPOINT = os.environ['RESOURCE_ENDPOINT']
             API_TYPE = os.environ['API_TYPE']
             API_VERSION = os.environ['API_VERSION']
@@ -266,7 +266,7 @@ class Ollama(ModelBackend):
         num_prompt_tokens = len(encoding.encode(string))
         gap_between_send_receive = 15 * len(kwargs["messages"])
         num_prompt_tokens += gap_between_send_receive
-
+        _model_name = os.environ['MODEL_NAME']
         # num_max_token_map = {
         #     "gpt-3.5-turbo": 4096,
         #     "gpt-3.5-turbo-16k": 16384,
@@ -280,11 +280,11 @@ class Ollama(ModelBackend):
         # num_max_completion_tokens = num_max_token - num_prompt_tokens
         # self.model_config_dict['max_tokens'] = num_max_completion_tokens
         
-        kwargs['model'] = 'llama3'
+        kwargs['model'] = _model_name
         # import pdb; pdb.set_trace()
         url = "http://localhost:11434/api/chat"
         data = {
-            "model": "llama3",
+            "model": _model_name,
             "messages": kwargs['messages'],
             "stream": False
         }
@@ -371,8 +371,8 @@ class ClaudeAIModel(ModelBackend):
 
         num_max_token_map = {
             "claude-3-haiku-20240307": 4096,
-            "claude-3-opus-20240307": 4096,
-            "claude-3-sonneet-20240307": 4096,
+            "claude-3-opus-20240229": 4096,
+            "claude-3-sonneet-20240229": 4096,
             'claude':4096
         }
         kwargs['model'] = 'claude-3-opus-20240229'
@@ -388,11 +388,12 @@ class ClaudeAIModel(ModelBackend):
 
         # breakpoint()
         # print('0'*100)
+        _model_name = os.environ['MODEL_NAME']
         new_kwargs = {}
         new_kwargs['system'] = kwargs['messages'][0]['content']
         kwargs['messages'][1]['role'] = 'user'
         messages = kwargs['messages'][1:2]
-        new_kwargs['model'] ='claude-3-haiku-20240307'
+        new_kwargs['model'] = _model_name
         valid_kwargs = ['system', 'messages', 'model','max_tokens']  
         
         filtered_kwargs = {key: value for key, value in self.model_config_dict.items() if key in valid_kwargs}
@@ -446,7 +447,7 @@ class AuthropicClaudeAIModel(ModelBackend):
         # kwargs['model'] = 'claude-3-opus-20240229'
         # num_max_token = num_max_token_map[self.model_type.value]
         # num_max_completion_tokens = num_max_token - num_prompt_tokens
-        self.model_config_dict['max_tokens'] = num_max_token_map[self.model_type.value]
+        self.model_config_dict['max_tokens'] = num_max_token_map.get(self.model_type.value, 4096)
         # self.model_config_dict
         # if self.model_type == ModelType.GPT_3_5_CODE_VISTA:
         #     kwargs['engine'] = os.environ['API_ENGINE']
@@ -456,11 +457,12 @@ class AuthropicClaudeAIModel(ModelBackend):
 
         # breakpoint()
         # print('0'*100)
+        _model_name = os.environ['MODEL_NAME']
         new_kwargs = {}
         new_kwargs['system'] = kwargs['messages'][0]['content']
         kwargs['messages'][1]['role'] = 'user'
         messages = kwargs['messages'][1:2]
-        new_kwargs['model'] ='claude-3-haiku-20240307'
+        new_kwargs['model'] = _model_name
         valid_kwargs = ['system', 'messages', 'model','max_tokens']  
         
         filtered_kwargs = {key: value for key, value in self.model_config_dict.items() if key in valid_kwargs}
@@ -528,7 +530,7 @@ class ModelFactory:
             model_class = OpenAIModel
         elif model_type in {ModelType.CLAUDE}:
             model_class = ClaudeAIModel
-        elif model_type in {ModelType.OLLAMA_LLAMA3}:
+        elif model_type in {ModelType.OLLAMA}:
             model_class = Ollama
         elif model_type in {ModelType.ANTHROPIC_CLAUDE}:
             model_class = AuthropicClaudeAIModel

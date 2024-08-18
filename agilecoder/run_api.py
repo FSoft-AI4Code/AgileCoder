@@ -72,7 +72,7 @@ def run_task(args):
     home_path = os.path.expanduser("~")
     warehouse_path = os.path.join(home_path, "AgileCoder", "WareHouse")
     os.makedirs(warehouse_path, exist_ok = True)
-    args2type = {'GPT_3_5_TURBO': ModelType.GPT_3_5_TURBO, 'GPT_4': ModelType.GPT_4, 'GPT_4_32K': ModelType.GPT_4_32k, 'GPT_3_5_AZURE': ModelType.GPT_3_5_AZURE, 'CLAUDE': ModelType.CLAUDE, 'ANTHROPIC_CLAUDE': ModelType.ANTHROPIC_CLAUDE, 'OLLAMA_LLAMA3': ModelType.OLLAMA_LLAMA3}
+    args2type = {'GPT_3_5_TURBO': ModelType.GPT_3_5_TURBO, 'GPT_4': ModelType.GPT_4, 'GPT_4_32K': ModelType.GPT_4_32k, 'GPT_3_5_AZURE': ModelType.GPT_3_5_AZURE, 'CLAUDE': ModelType.CLAUDE, 'ANTHROPIC_CLAUDE': ModelType.ANTHROPIC_CLAUDE, 'OLLAMA': ModelType.OLLAMA}
     chat_chain = ChatChain(args.max_num_sprints,
                         config_path=config_path,
                         config_phase_path=config_phase_path,
