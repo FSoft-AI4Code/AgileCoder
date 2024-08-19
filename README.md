@@ -52,7 +52,7 @@ pip install agilecoder
 If you want to clone the repository, be sure to switch to the *new-flow* branch to access the latest source code.
 
 ### Configuration
-AgileCoder currently supports various models, including OpenAI, Azure OpenAI, Anthropic, and Ollama. For instance, to configure the necessary environment variables for the Azure OpenAI service, please set the following:
+AgileCoder currently supports various models, including OpenAI, Azure OpenAI, Anthropic, and your self-hosted models, which can be hosted by Ollama. For instance, to configure the necessary environment variables for the Azure OpenAI service, please set the following:
 
 - **API_KEY**: Your Azure OpenAI API key.
 - **RESOURCE_ENDPOINT**: The endpoint URL for your Azure OpenAI resource.
