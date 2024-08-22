@@ -23,8 +23,11 @@
 -->
  </div>   
 
+ ![Demo](assets/demo_web.gif)
+<!--
 ![Demo](assets/caro_1.png)
 ![Demo](assets/caro_2.png)
+-->
 ## Table of Contents
   - [Overview](#overview)
   - [Quick Start](#quick-start)
