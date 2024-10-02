@@ -105,7 +105,7 @@ Feel free to explore different software requirements and experiment with AgileCo
 
 
 # Evaluation 
-We will evaluate the performance of AgileCoder on two types of datasets to assess its effectiveness in generating code for different scenarios:
+We evaluate the performance of AgileCoder on two types of datasets to assess its effectiveness in generating code for different scenarios:
 - Competitive Programming: HumanEval and MBPP
 - Complex Software Requirements: We curate a new dataset called **ProjectDev**, which contains complex software requirements for generating complete software projects. This dataset will be designed to evaluate AgileCoder's ability to handle more intricate and real-world software development scenarios.
 
